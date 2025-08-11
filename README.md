@@ -5,20 +5,20 @@ Plateforme de suivi de progression golfique.
 ## Stack et Architecture
 - Backend: Node.js + Express.js, MongoDB + Mongoose
 - Frontend: React (Vite)
-- Sécurité: bcrypt, JWT, RBAC, helmet, cors, rate limiting
+- SÃ©curitÃ©: bcrypt, JWT, RBAC, helmet, cors, rate limiting
 - CI/CD: GitHub Actions (`.github/workflows/ci.yml`)
 - Gouvernance: CODEOWNERS, protections de branche `main`
 
 Arborescence (extrait):
-- `backend/` — API Express, dépendances Mongoose/Express
+- `backend/` â€” API Express, dÃ©pendances Mongoose/Express
 - `frontend/`  App React/Vite
 - `.github/workflows/ci.yml`  pipeline CI
 - `docs/`  documentation projet
 
 ## Workflow Git
-- Développer sur branche feature: `feature/*`
+- DÃ©velopper sur branche feature: `feature/*`
 - Ouvrir une PR vers `main`
-- CI (checks stricts: `frontend-build`, `backend-install`) doit être verte
+- CI (checks stricts: `frontend-build`, `backend-install`) doit Ãªtre verte
 - Merge (squash), suppression automatique de la branche
 - Reviews non obligatoires (CODEOWNERS non bloquant)
 
@@ -27,33 +27,32 @@ Arborescence (extrait):
 - Job `frontend-build`: `npm ci` + build dans `frontend/`
 - Status checks requis et stricts sur `main`
 
-## Fonctionnalités en place
-- Dépôt initialisé, arborescence frontend/backend
-- CI GitHub Actions opérationnelle (backend install + frontend build)
-- Protection de branche `main` (PR obligatoire, checks stricts, historique linéaire, pas de forcepush)
+## FonctionnalitÃ©s en place
+- DÃ©pÃ´t initialisÃ©, arborescence frontend/backend
+- CI GitHub Actions opÃ©rationnelle (backend install + frontend build)
+- Protection de branche `main` (PR obligatoire, checks stricts, historique linÃ©aire, pas de forcepush)
 - Fichier `CODEOWNERS` global (`@Arbiter90350 @Melonil`)  non bloquant
-- `.env` ignoré, secrets via GitHub Secrets
+- `.env` ignorÃ©, secrets via GitHub Secrets
 
-## Roadmap (logiques métier à implémenter)
-- Authentification et rôles (JWT + bcrypt, RBAC serveur: `player` | `instructor` | `admin`)
-- Modèle utilisateur (email unique, indexations, validations)
-- Parcours/Progression: états explicites, règles de progression, historisation
-- Sessions d’entraînement, drills, scoring; tableaux de bord de progression
-- QCM/évaluations et suivi des résultats
-- Stockage des médias (PDF/vidéos) sur OVH Object Storage (jamais en DB)
+## Roadmap (logiques mÃ©tier Ã  implÃ©menter)
+- Authentification et rÃ´les (JWT + bcrypt, RBAC serveur: `player` | `instructor` | `admin`)
+- ModÃ¨le utilisateur (email unique, indexations, validations)
+- Parcours/Progression: Ã©tats explicites, rÃ¨gles de progression, historisation
+- Sessions dâ€™entraÃ®nement, drills, scoring; tableaux de bord de progression
+- QCM/Ã©valuations et suivi des rÃ©sultats
+- Stockage des mÃ©dias (PDF/vidÃ©os) sur OVH Object Storage (jamais en DB)
 - Notifications email (ex: SendGrid/SMTP) avec anti brute-force sur endpoints sensibles
-- Journalisation structurée et audit (sans données sensibles)
-- Sécurité: headers (helmet), CORS restreint, rate limiting ciblé, validation dentrée (`express-validator`)
-- Frontend: pages sécurisées avec guards, i18n à clés, formulaires (`react-hook-form` + `zod`)
+- Journalisation structurÃ©e et audit (sans donnÃ©es sensibles)
+- SÃ©curitÃ©: headers (helmet), CORS restreint, rate limiting ciblÃ©, validation dentrÃ©e (`express-validator`)
+- Frontend: pages sÃ©curisÃ©es avec guards, i18n Ã  clÃ©s, formulaires (`react-hook-form` + `zod`)
 - Tests: unitaires (fonctions critiques, RBAC), CI
 - Performance: pagination, index Mongo pertinents, `lean()` en lecture
-- Déploiement: Nginx (CSP/HSTS, gzip/brotli, cache), Dockerisation (optionnel)
+- DÃ©ploiement: Nginx (CSP/HSTS, gzip/brotli, cache), Dockerisation (optionnel)
 
-## Démarrage local (extrait)
-- Node/NPM installés
-- `cp .env.example .env` puis compléter les variables
-- `npm ci` dans `backend/` et `frontend/`
-- Lancer chaque partie (scripts à définir selon besoins)
+## DÃ©marrage local (extrait)
+1. Copier `.env.example` vers `.env` et complÃ©ter
+2. Installer les dÃ©pendances: `npm ci` dans `backend/` et `frontend/`
+3. Lancer chaque partie avec les scripts dÃ©diÃ©s (Ã  prÃ©ciser)
 
-## Licences et crédits
-Projet pédagogique  configuration CI/CD et protections prêtes pour itérations produit.
+## Licence & crÃ©dits
+Projet pÃ©dagogique â€” configuration CI/CD et protections prÃªtes pour itÃ©rations produit.
