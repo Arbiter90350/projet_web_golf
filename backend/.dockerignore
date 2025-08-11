@@ -1,0 +1,24 @@
+# Ignorer les dépendances locales et fichiers non nécessaires pour l'image Docker
+node_modules
+npm-debug.log
+pnpm-lock.yaml
+yarn.lock
+.pnpm-store
+
+# Logs et couvertures
+logs
+*.log
+coverage
+
+# Environnements et secrets
+.env
+.env.*
+
+# VCS et fichiers système
+.git
+.gitignore
+.DS_Store
+
+# Artefacts divers
+.tmp
+.cache

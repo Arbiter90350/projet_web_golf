@@ -1,0 +1,76 @@
+services:
+  # Base de données MongoDB
+  database:
+    image: mongo:latest
+    container_name: fairway-db
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-password}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-fairway}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - fairway-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fairway-backend
+    restart: always
+    ports:
+      - "5001:5000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - MONGO_URI=${MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=5000
+      - FRONTEND_URL=${FRONTEND_URL}
+      # Autorise les origines CORS en développement (Vite 5173) et localhost (port 80)
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173,http://localhost}
+      # Configuration Email
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-smtp}
+      - EMAIL_FROM=${EMAIL_FROM}
+      # SMTP OVH Exchange
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    depends_on:
+      - database
+    networks:
+      - fairway-network
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Passe la variable au build Vite pour être injectée dans le bundle
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5001/api/v1}
+    container_name: fairway-frontend
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    networks:
+      - fairway-network
+
+# Configuration des volumes et réseaux
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  fairway-network:
+    driver: bridge

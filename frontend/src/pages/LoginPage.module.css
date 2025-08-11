@@ -1,0 +1,137 @@
+/* LoginPage.module.css */
+
+.loginPage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  /* Arrière-plan + voile léger pour stabiliser la colorimétrie sous Chrome */
+  background: linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)),
+    url('https://images.unsplash.com/photo-1587174486073-ae5e3c2e6a44?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
+  background-color: var(--brand-bg); /* fallback couleur */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  color-scheme: light;
+}
+
+.loginContainer {
+  background-color: var(--card-bg);
+  padding: 2.5rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  margin: 0 1rem; /* garde-fou responsive tout en restant centré */
+  animation: fadeInUp 300ms ease both;
+}
+
+/* En-tête de marque (logo) */
+.brandHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.logo {
+  width: 84px;
+  height: auto;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+  user-select: none;
+}
+
+.title {
+  color: var(--text-strong);
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.inputGroup label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+
+.input {
+  padding: 0.75rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.input:hover {
+  border-color: #b8b8b8;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.button {
+  padding: 0.85rem 1.5rem;
+  background-color: var(--brand-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: var(--brand-primary-hover);
+}
+
+.button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.link {
+  margin-top: 1rem;
+  color: var(--brand-primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* Message d'erreur centré et lisible (si utilisé en inline) */
+.error {
+  margin: 0.75rem auto 1rem auto;
+  padding: 0.75rem 1rem;
+  max-width: 380px;
+  text-align: center;
+  color: #c0392b;
+  background: #fdecea;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}

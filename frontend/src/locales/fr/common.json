@@ -1,0 +1,27 @@
+{
+  "email_placeholder": "votre@email.com",
+  "back_to_login": "Retour à la page de connexion",
+  "sending": "Envoi...",
+  "show_password": "Afficher le mot de passe",
+  "hide_password": "Masquer le mot de passe",
+  "errors": {
+    "unexpected_error": "Une erreur inattendue est survenue."
+  },
+  "fields": {
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirm_password": "Confirmer le mot de passe",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "new_password": "Nouveau mot de passe"
+  },
+  "password": {
+    "strength_prefix": "Robustesse du mot de passe:",
+    "strength": {
+      "very_weak": "Très faible",
+      "weak": "Faible",
+      "medium": "Moyen",
+      "strong": "Fort"
+    }
+  }
+}
