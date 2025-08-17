@@ -14,6 +14,7 @@ Arborescence (extrait):
 - `frontend/`  App React/Vite
 - `.github/workflows/ci.yml`  pipeline CI
 - `docs/`  documentation projet
+  - `docs/vps-hardening.md`  guide de durcissement VPS (SSH/UFW/Fail2ban/updates)
 
 ## Workflow Git et CI/CD
 
