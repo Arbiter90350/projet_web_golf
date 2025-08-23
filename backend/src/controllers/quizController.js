@@ -117,7 +117,7 @@ exports.deleteQuiz = async (req, res, next) => {
   }
 };
 
-// @desc    Submit answers for a quiz
+// @desc    Submit answers for a quiz (multi-réponses)
 // @route   POST /api/v1/quizzes/:id/submit
 // @access  Private (Player)
 exports.submitQuiz = async (req, res, next) => {
@@ -131,20 +131,28 @@ exports.submitQuiz = async (req, res, next) => {
       return res.status(404).json({ status: 'error', message: 'Quiz not found' });
     }
 
-    const userAnswers = req.body.answers; // Expected format: [{ questionId: '...', answerId: '...' }]
+    // Expected format: [{ questionId: '...', answerIds: ['...', ...] }]
+    const userAnswers = Array.isArray(req.body.answers) ? req.body.answers : [];
 
     let correctAnswersCount = 0;
-    quiz.questions.forEach(question => {
-      const userAnswer = userAnswers.find(ua => ua.questionId === question._id.toString());
-      if (userAnswer) {
-        const correctAnswer = question.answers.find(ans => ans.isCorrect);
-        if (correctAnswer && userAnswer.answerId === correctAnswer._id.toString()) {
-          correctAnswersCount++;
-        }
-      }
+    quiz.questions.forEach((question) => {
+      const userAnswer = userAnswers.find((ua) => ua.questionId === question._id.toString());
+      const correctIds = question.answers.filter((a) => a.isCorrect).map((a) => a._id.toString()).sort();
+
+      const selectedIds = Array.isArray(userAnswer?.answerIds)
+        ? userAnswer.answerIds.map(String).sort()
+        : [];
+
+      // Réponse juste si l'ensemble des réponses sélectionnées == ensemble des bonnes réponses
+      const isCorrect = correctIds.length === selectedIds.length &&
+        correctIds.every((id, idx) => id === selectedIds[idx]);
+
+      if (isCorrect) correctAnswersCount++;
     });
 
-    const score = (correctAnswersCount / quiz.questions.length) * 100;
+    const score = quiz.questions.length > 0
+      ? (correctAnswersCount / quiz.questions.length) * 100
+      : 0;
     const passed = score >= quiz.passingScore;
 
     const progressData = {

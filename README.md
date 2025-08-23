@@ -16,6 +16,22 @@ Arborescence (extrait):
 - `docs/`  documentation projet
   - `docs/vps-hardening.md`  guide de durcissement VPS (SSH/UFW/Fail2ban/updates)
 
+## Configuration d'environnement (API URL)
+
+Pour éviter les erreurs d'appels API (401/404/ECONNREFUSED), alignez la variable `VITE_API_URL` selon le mode d'exécution:
+
+- Dev local (Vite + backend en local, port 5000):
+  - Fichier: `frontend/.env.development`
+  - Valeur: `VITE_API_URL=http://localhost:5000/api/v1`
+- Docker (docker-compose):
+  - Le backend écoute en conteneur 5000, exposé sur l'hôte 5001 (`ports: "5001:5000"`).
+  - Valeur par défaut transmise au build frontend: `http://localhost:5001/api/v1` (voir `docker-compose.yml`).
+- Production (même origine via Nginx):
+  - Servir le frontend et proxy `/api` vers le backend.
+  - Valeur recommandée: `VITE_API_URL=/api/v1`.
+
+Note: le client Axios normalise l'URL et ajoute `/api/v1` si absent (`frontend/src/services/api.ts`).
+
 ## Workflow Git et CI/CD
 
 - Développer sur une branche `feature/*`.

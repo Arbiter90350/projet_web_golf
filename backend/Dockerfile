@@ -19,5 +19,8 @@ EXPOSE 5000
 # Définir les variables d'environnement
 ENV NODE_ENV=production
 
+# Script d'entrée: peut exécuter un seed conditionnellement puis démarrer l'app
+RUN chmod +x ./docker-entrypoint.sh || true
+
 # Commande de démarrage
-CMD ["npm", "start"]
+CMD ["./docker-entrypoint.sh"]

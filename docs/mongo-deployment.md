@@ -35,7 +35,8 @@ APP_USER=__APP_USER__
 APP_PASSWORD=__APP_PASS__
 ```
 
-Créer le script d’initialisation pour l’utilisateur applicatif `/srv/mongo/init/01-create-app-user.js`:
+Créer l
+e script d’initialisation pour l’utilisateur applicatif `/srv/mongo/init/01-create-app-user.js`:
 ```javascript
 // Crée l’utilisateur applicatif avec droits minimaux
 const appDb = process.env.APP_DB || 'fph_prod';

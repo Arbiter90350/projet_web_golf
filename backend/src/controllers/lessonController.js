@@ -12,52 +12,12 @@ exports.getLessons = async (req, res, next) => {
         return res.status(404).json({ status: 'error', message: 'Course not found' });
     }
 
-    // If user is instructor of the course or admin, return all lessons
-    if (req.user.role === 'admin' || (req.user.role === 'instructor' && course.instructor.toString() === req.user.id)) {
-        const lessons = await Lesson.find({ course: req.params.courseId }).sort('order');
-        return res.status(200).json({
-            status: 'success',
-            count: lessons.length,
-            data: lessons
-        });
-    }
-
-    // For players, implement sequential progression logic
-    const allLessons = await Lesson.find({ course: req.params.courseId }).sort('order');
-    const lessonIds = allLessons.map(lesson => lesson._id);
-
-    const userProgress = await UserProgress.find({
-        user: req.user.id,
-        lesson: { $in: lessonIds }
-    });
-
-    const progressMap = new Map();
-    userProgress.forEach(progress => {
-        progressMap.set(progress.lesson.toString(), progress.status);
-    });
-
-    const accessibleLessons = [];
-    for (let i = 0; i < allLessons.length; i++) {
-        const lesson = allLessons[i];
-        if (i === 0) { // First lesson is always accessible
-            accessibleLessons.push(lesson);
-        } else {
-            const previousLesson = allLessons[i - 1];
-            const previousLessonProgress = progressMap.get(previousLesson._id.toString());
-
-            if (previousLessonProgress === 'completed') {
-                accessibleLessons.push(lesson);
-            } else {
-                // Stop here, user can't access further lessons
-                break;
-            }
-        }
-    }
-
-    res.status(200).json({
-      status: 'success',
-      count: accessibleLessons.length,
-      data: accessibleLessons
+    // Free navigation: return all lessons sorted by order for any authenticated user
+    const lessons = await Lesson.find({ course: req.params.courseId }).sort('order');
+    return res.status(200).json({
+        status: 'success',
+        count: lessons.length,
+        data: lessons
     });
   } catch (error) {
     next(error);

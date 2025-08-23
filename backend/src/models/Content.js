@@ -4,8 +4,8 @@ const contentSchema = new mongoose.Schema({
   contentType: {
     type: String,
     required: true,
-    enum: ['video', 'pdf'],
-    message: 'Content type must be either video or pdf'
+    enum: ['video', 'pdf', 'doc'],
+    message: 'Content type must be either video, pdf or doc'
   },
   url: {
     type: String,

@@ -17,6 +17,12 @@ const courseSchema = new mongoose.Schema({
     required: true,
     ref: 'User' // Reference to the User model
   },
+  // Ordre d'affichage du module (croissant). Requêté et modifié par l'instructeur.
+  order: {
+    type: Number,
+    default: 0,
+    index: true
+  },
   lessons: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Lesson'
@@ -31,6 +37,8 @@ const courseSchema = new mongoose.Schema({
 
 // Create an index for instructor to quickly find courses by a specific instructor
 courseSchema.index({ instructor: 1 });
+// Index composé pour ordonner efficacement les cours par instructeur
+courseSchema.index({ instructor: 1, order: 1 });
 
 const Course = mongoose.model('Course', courseSchema);
 
