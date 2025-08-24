@@ -19,7 +19,10 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
-      - run: npm ci
+      - name: Install dependencies (clean, avoid npm ci lock mismatch)
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
 
   frontend-build:
     runs-on: ubuntu-latest
