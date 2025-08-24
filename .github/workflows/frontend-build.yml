@@ -42,6 +42,11 @@ jobs:
           rm -rf node_modules package-lock.json
           npm install
 
+      - name: Ensure Rollup native binary on Linux
+        if: runner.os == 'Linux'
+        run: |
+          npm install --no-save @rollup/rollup-linux-x64-gnu@^4.24.0
+
       - name: Build (Vite)
         env:
           VITE_API_URL: /api/v1
