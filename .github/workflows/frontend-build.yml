@@ -33,9 +33,14 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: Install dependencies (clean workaround for npm optional deps bug)
+        # Contexte: npm peut ne pas installer les optionalDependencies spécifiques à la plateforme
+        # (ex: @rollup/rollup-linux-x64-gnu) lorsqu'un package-lock.json généré sur un autre OS est présent.
+        # Voir: https://github.com/npm/cli/issues/4828
+        # Solution: installation propre sans lock existant pour laisser npm résoudre les binaires natifs Linux.
         run: |
-          npm ci || npm install
+          rm -rf node_modules package-lock.json
+          npm install
 
       - name: Build (Vite)
         env:
