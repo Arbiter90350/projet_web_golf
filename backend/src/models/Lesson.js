@@ -10,6 +10,17 @@ const lessonSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Lesson order is required']
   },
+  // Mode de validation de la sous-partie: lecture simple, validation par instructeur, ou QCM
+  validationMode: {
+    type: String,
+    enum: ['read', 'pro', 'qcm'],
+    default: 'read'
+  },
+  // Contenu texte/HTML affiché dans la modale (pas de PDF requis)
+  description: {
+    type: String,
+    trim: true
+  },
   course: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,

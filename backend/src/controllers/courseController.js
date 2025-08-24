@@ -1,5 +1,6 @@
 const Course = require('../models/Course');
 const User = require('../models/User');
+const mongoose = require('mongoose');
 
 // @desc    Create a new course
 // @route   POST /api/v1/courses
@@ -8,6 +9,12 @@ exports.createCourse = async (req, res, next) => {
   try {
     // The user's ID is added to req.user by the 'protect' middleware
     req.body.instructor = req.user.id;
+    // Assigner un ordre par défaut à la fin de la liste de l'instructeur
+    const last = await Course.find({ instructor: req.user.id }).sort({ order: -1 }).limit(1);
+    const nextOrder = (last?.[0]?.order ?? -1) + 1;
+    if (typeof req.body.order !== 'number') {
+      req.body.order = nextOrder;
+    }
 
     const course = await Course.create(req.body);
 
@@ -20,6 +27,51 @@ exports.createCourse = async (req, res, next) => {
   }
 };
 
+// @desc    Reorder courses (batch) for an instructor (or all for admin)
+// @route   PUT /api/v1/courses/reorder
+// @access  Private (Instructor, Admin)
+exports.reorderCourses = async (req, res, next) => {
+  try {
+    const { ids } = req.body || {};
+    if (!Array.isArray(ids) || ids.some((v) => typeof v !== 'string')) {
+      return res.status(400).json({ status: 'error', message: 'Invalid payload: expected { ids: string[] }' });
+    }
+
+    const stringIds = ids.map(String);
+    const validIds = stringIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    if (validIds.length !== stringIds.length) {
+      return res.status(400).json({ status: 'error', message: 'Invalid course IDs in payload' });
+    }
+
+    const isAdmin = req.user && req.user.role === 'admin';
+    const scopeFilter = isAdmin ? {} : { instructor: req.user.id };
+
+    // Verify authorization for each id
+    const authorized = await Course.find({ _id: { $in: validIds }, ...scopeFilter }).select('_id');
+    const allowedSet = new Set(authorized.map((c) => c._id.toString()));
+
+    const ops = validIds
+      .map((id, index) => ({ id, index }))
+      .filter(({ id }) => allowedSet.has(id))
+      .map(({ id, index }) => ({
+        updateOne: {
+          filter: { _id: id },
+          update: { $set: { order: index } },
+        },
+      }));
+
+    if (ops.length === 0) {
+      return res.status(400).json({ status: 'error', message: 'No authorized courses to reorder' });
+    }
+
+    await Course.bulkWrite(ops);
+
+    res.status(200).json({ status: 'success', data: { updated: ops.length } });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get all courses
 // @route   GET /api/v1/courses
 // @access  Public (with filtering for players)
@@ -27,15 +79,17 @@ exports.getCourses = async (req, res, next) => {
   try {
     let query;
 
-    // If the user is a player, only show published courses
+    // Filtrage selon le rôle et tri par ordre puis date de création
     if (req.user && req.user.role === 'player') {
       query = Course.find({ isPublished: true });
+    } else if (req.user && req.user.role === 'instructor') {
+      query = Course.find({ instructor: req.user.id });
     } else {
-      // Instructors and Admins can see all courses
+      // Admins can see all courses
       query = Course.find();
     }
 
-    const courses = await query.populate('instructor', 'firstName lastName');
+    const courses = await query.sort({ order: 1, createdAt: 1 }).populate('instructor', 'firstName lastName');
 
     res.status(200).json({
       status: 'success',

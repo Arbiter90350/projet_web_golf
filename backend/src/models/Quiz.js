@@ -11,7 +11,7 @@ const quizSchema = new mongoose.Schema({
     required: [true, 'Passing score is required'],
     min: 0,
     max: 100,
-    default: 80
+    default: 70
   },
   // Each quiz is associated with one lesson.
   lesson: {

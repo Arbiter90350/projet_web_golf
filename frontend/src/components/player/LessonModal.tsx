@@ -1,0 +1,128 @@
+import { useEffect, useState } from 'react';
+import Modal from '../../components/Modal';
+import api from '../../services/api';
+import { useTranslation } from 'react-i18next';
+
+export type LessonRef = {
+  _id: string;
+  title: string;
+  validationMode: 'read' | 'pro' | 'qcm';
+};
+
+export default function LessonModal({
+  open,
+  lesson,
+  onClose,
+  onMarked,
+}: {
+  open: boolean;
+  lesson: LessonRef | null;
+  onClose: () => void;
+  onMarked?: () => void; // callback après "Marquer comme lu"
+}) {
+  const { t } = useTranslation();
+  const [loading, setLoading] = useState(false);
+  const [contents, setContents] = useState<Array<{ _id: string; contentType: 'video' | 'pdf' | 'doc'; url: string }>>([]);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [lessonInfo, setLessonInfo] = useState<{ description?: string } | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!open || !lesson) return;
+      setLoading(true);
+      try {
+        // Récupère d'abord les infos de la leçon
+        const lessonRes = await api.get(`/lessons/${lesson._id}`);
+        const info = (lessonRes?.data?.data ?? null) as { description?: string } | null;
+        setLessonInfo(info);
+      } catch {
+        // Si on ne parvient pas à charger la leçon, on ne peut pas continuer
+        setLessonInfo(null);
+      }
+
+      try {
+        // Récupère ensuite les contenus, sans impacter la description en cas d'échec
+        const contentsRes = await api.get(`/lessons/${lesson._id}/contents`);
+        const arr = Array.isArray(contentsRes?.data?.data) ? contentsRes.data.data : [];
+        setContents(arr);
+      } catch {
+        setContents([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [open, lesson]);
+
+  const handleMarkAsRead = async () => {
+    if (!lesson || lesson.validationMode !== 'read') return;
+    try {
+      setActionLoading(true);
+      await api.patch(`/progress/lessons/${lesson._id}/read`);
+      if (onMarked) onMarked();
+    } catch {
+      // noop
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title={lesson?.title || t('lessons.content')}>
+      {loading ? (
+        <div>{t('lessons.loading_content')}</div>
+      ) : (
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          {lessonInfo?.description && (
+            <div className="tile">
+              <div style={{ marginBottom: 8 }}>
+                <strong style={{ fontSize: 14 }}>{t('lessons.explanation')}</strong>
+              </div>
+              <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{lessonInfo.description}</div>
+            </div>
+          )}
+
+          {contents.length === 0 && !lessonInfo?.description ? (
+            <div className="tile">{t('lessons.no_content')}</div>
+          ) : (
+            contents.map((c) => (
+              <div key={c._id} className="tile">
+                <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <strong style={{ fontSize: 14 }}>{t(`lessons.content_type.${c.contentType}`)}</strong>
+                  <a href={c.url} target="_blank" rel="noreferrer">{t('common.open_in_new_tab')}</a>
+                </div>
+                {c.contentType === 'video' ? (
+                  c.url.includes('youtube') || c.url.includes('youtu.be') ? (
+                    <iframe title="video" src={c.url} style={{ width: '100%', height: 360, border: 'none', borderRadius: 8 }} allowFullScreen />
+                  ) : (
+                    <video controls src={c.url} style={{ width: '100%', borderRadius: 8 }} />
+                  )
+                ) : c.contentType === 'pdf' ? (
+                  <iframe title="pdf" src={c.url} style={{ width: '100%', height: 480, border: 'none', borderRadius: 8 }} />
+                ) : (
+                  <div>{t('lessons.document')}: <a href={c.url} target="_blank" rel="noreferrer">{t('common.open_in_new_tab')}</a></div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Actions selon validationMode */}
+      {lesson?.validationMode === 'read' && (
+        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+          <button onClick={handleMarkAsRead} disabled={actionLoading} className="btn btn-primary">
+            {actionLoading ? t('loading') : t('lessons.mark_as_read')}
+          </button>
+        </div>
+      )}
+
+      {lesson?.validationMode === 'qcm' && (
+        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: 'var(--text-muted)' }}>{t('lessons.quiz_coming_soon')}</span>
+          <button disabled className="btn btn-outline">{t('lessons.start_quiz')}</button>
+        </div>
+      )}
+    </Modal>
+  );
+}

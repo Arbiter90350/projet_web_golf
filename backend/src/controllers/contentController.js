@@ -6,6 +6,11 @@ const Lesson = require('../models/Lesson');
 // @access  Private
 exports.getContents = async (req, res, next) => {
   try {
+    // Si le contrôleur est appelé sans lessonId (ex: via /api/v1/contents),
+    // retourner une erreur claire au lieu d'une exception Mongo (CastError).
+    if (!req.params.lessonId) {
+      return res.status(400).json({ status: 'error', message: 'Missing lessonId in route params' });
+    }
     const lesson = await Lesson.findById(req.params.lessonId);
     if (!lesson) {
       return res.status(404).json({ status: 'error', message: 'Lesson not found' });
@@ -28,6 +33,10 @@ exports.getContents = async (req, res, next) => {
 // @access  Private (Instructor, Admin)
 exports.addContent = async (req, res, next) => {
   try {
+    // Sécurité/robustesse: s'assurer que lessonId est présent (route imbriquée attendue)
+    if (!req.params.lessonId) {
+      return res.status(400).json({ status: 'error', message: 'Missing lessonId in route params' });
+    }
     req.body.lesson = req.params.lessonId;
 
     const lesson = await Lesson.findById(req.params.lessonId).populate({ path: 'course' });

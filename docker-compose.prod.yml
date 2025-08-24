@@ -1,0 +1,31 @@
+services:
+  # Backend API (override for production)
+  backend:
+    # Do not expose backend to the public internet in production
+    ports: []
+    environment:
+      TRUST_PROXY: 1
+      FRONTEND_URL: https://golf-rougemont.com
+      CORS_ORIGINS: https://golf-rougemont.com,https://NEW_IP,http://localhost,http://127.0.0.1
+
+  # Database (override for production)
+  # Ensure MongoDB is not exposed publicly
+  # This overrides the base compose which maps 27017:27017 in dev
+  database:
+    ports: []
+
+  # Frontend (Nginx serving React build)
+  frontend:
+    # Keep frontend exposed; ideally terminate TLS (443) with a cert manager or external proxy
+    ports:
+      - "80:80"
+      # - "443:443"  # Enable only if you manage certificates inside this container
+    # Use a production Nginx config that proxies /api/ to the backend container
+    volumes:
+      - ./frontend/nginx/default.prod.conf:/etc/nginx/conf.d/default.conf
+    build:
+      args:
+        # Same-origin: frontend calls /api/v1 which Nginx proxies to backend
+        VITE_API_URL: /api/v1
+    environment:
+      - NODE_ENV=production

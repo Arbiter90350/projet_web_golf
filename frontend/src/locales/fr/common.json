@@ -9,7 +9,8 @@
     "unexpected_error": "Une erreur inattendue est survenue.",
     "required": "Ce champ est obligatoire",
     "invalid_email": "Adresse e-mail invalide",
-    "password_min": "Le mot de passe doit contenir au moins {{count}} caractères"
+    "password_min": "Le mot de passe doit contenir au moins {{count}} caractères",
+    "modules_load": "Erreur lors du chargement des modules"
   },
   "fields": {
     "email": "Email",
@@ -31,8 +32,101 @@
   "links": {
     "to_home": "Aller à l’accueil"
   },
+  "titles": {
+    "dashboard": "Tableau de bord"
+  },
+  "actions": {
+    "logout": "Se déconnecter"
+  },
+  "labels": {
+    "welcome": "Bienvenue"
+  },
   "forbidden": {
     "title": "Accès interdit",
     "message": "Vous n'avez pas les permissions requises pour accéder à cette page."
+  },
+  "common": {
+    "hide": "Masquer",
+    "open": "Ouvrir",
+    "open_in_new_tab": "Ouvrir dans un nouvel onglet"
+  },
+  "metrics": {
+    "title": "Vos métriques",
+    "courses_available": "Cours disponibles",
+    "lessons_completed": "Leçons terminées",
+    "access_modules": "Accédez à vos modules",
+    "continue_progress": "Continuez votre progression"
+  },
+  "modules": {
+    "loading": "Chargement des modules...",
+    "my_modules": "Mes modules",
+    "none": "Aucun module pour le moment.",
+    "show_lessons": "Voir les leçons"
+  },
+  "lessons": {
+    "validation": {
+      "read": "Lecture",
+      "pro": "Pro",
+      "qcm": "QCM"
+    },
+    "content": "Contenu de la leçon",
+    "loading_content": "Chargement du contenu…",
+    "explanation": "Explication",
+    "count": "{{completed}}/{{total}} leçons",
+    "no_content": "Aucun contenu pour cette leçon.",
+    "document": "Document",
+    "content_type": {
+      "video": "Vidéo",
+      "pdf": "PDF",
+      "doc": "Document"
+    },
+    "mark_as_read": "Marquer comme lu",
+    "quiz_coming_soon": "QCM bientôt disponible",
+    "start_quiz": "Commencer le QCM"
+  },
+  "status": {
+    "not_started": "À commencer",
+    "in_progress": "En cours",
+    "completed": "Terminé"
+  },
+  "cta": {
+    "continue_learning": "Poursuivre l’apprentissage",
+    "access_modules_and_lessons": "Accédez à vos modules et leçons",
+    "view_my_courses": "Voir mes cours"
+  },
+  "instructor": {
+    "courses": {
+      "title": "Modules (instructeur)",
+      "create_button": "+ Créer un module",
+      "list_empty": "Aucun module pour le moment.",
+      "manage_lessons": "Gérer les leçons",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "deleting": "Suppression...",
+      "modal_create_title": "Créer un module",
+      "modal_edit_title": "Modifier le module",
+      "confirm_delete_title": "Supprimer ce module ?",
+      "confirm_delete_text": "Cette action est irréversible.",
+      "field_title": "Titre",
+      "field_description": "Description",
+      "field_publish": "Publier (visible joueurs)",
+      "create": "Créer",
+      "creating": "Création...",
+      "save": "Sauvegarder",
+      "cancel": "Annuler",
+      "status_label": "Statut",
+      "status_published": "Publié",
+      "status_draft": "Brouillon",
+      "loading": "Chargement des cours instructeur...",
+      "error_loading": "Erreur lors du chargement des cours instructeur",
+      "create_failed": "Impossible de créer le module",
+      "update_failed": "Mise à jour impossible",
+      "delete_failed": "Suppression impossible",
+      "reorder_handle": "Saisir pour réordonner",
+      "reorder_saving": "Enregistrement de l'ordre...",
+      "reorder_hint": "Astuce: glissez-déposez pour réordonner",
+      "reorder_success": "Ordre enregistré",
+      "reorder_failed": "Le réagencement a échoué"
+    }
   }
 }
