@@ -121,7 +121,6 @@ exports.getMyProgress = async (req, res, next) => {
 // @access  Private (Instructor, Admin)
 exports.listMyPlayers = async (req, res, next) => {
   try {
-    // Tous les joueurs
     const filter = { role: 'player' };
     const players = await User.find(filter)
       .select('_id firstName lastName email isActive lastLogin assignedInstructor')
