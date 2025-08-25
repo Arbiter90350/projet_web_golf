@@ -59,7 +59,9 @@ const register = async (req, res, next) => {
     return res.status(400).json({ status: 'error', message: 'Validation failed', errors: errors.array() });
   }
 
-  const { email, password, firstName, lastName, role = 'player' } = req.body;
+  // Sécurité: on n'accepte pas le rôle depuis le client pour l'inscription publique
+  // Tous les nouveaux comptes sont catégorisés comme 'player' par défaut
+  const { email, password, firstName, lastName } = req.body;
 
   try {
     const existingUser = await User.findOne({ email });
@@ -67,7 +69,7 @@ const register = async (req, res, next) => {
       return res.status(400).json({ status: 'error', message: 'User already exists with this email' });
     }
 
-    const user = new User({ email, password, firstName, lastName, role });
+    const user = new User({ email, password, firstName, lastName, role: 'player' });
     await user.save();
 
     // Generate verification token

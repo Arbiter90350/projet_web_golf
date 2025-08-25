@@ -223,6 +223,9 @@ const InstructorCourseDetailPage = () => {
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <Link to={`/instructor/lessons/${l.id}/contents`}>Contenus</Link>
+                      {l.validationMode === 'qcm' && (
+                        <Link to={`/instructor/lessons/${l.id}/quiz`}>QCM</Link>
+                      )}
                       <button type="button" onClick={() => startEdit(l)}>Modifier</button>
                       <button type="button" onClick={() => onDelete(l.id)} disabled={deletingId === l.id}>{deletingId === l.id ? 'Suppression…' : 'Supprimer'}</button>
                     </div>

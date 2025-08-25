@@ -17,6 +17,8 @@ const PlayerCoursesPage = () => {
   const [progressByLesson, setProgressByLesson] = useState<Record<string, 'not_started' | 'in_progress' | 'completed'>>({});
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<{ _id: string; title: string; validationMode: 'read' | 'pro' | 'qcm' } | null>(null);
+  // Indicateur pour le préchargement (post-liste modules)
+  const [prefetching, setPrefetching] = useState(false);
   // Le contenu et les actions sont gérés par le composant LessonModal
 
   type BackendCourse = {
@@ -55,6 +57,50 @@ const PlayerCoursesPage = () => {
     };
     run();
   }, [t]);
+
+  // Préchargement des leçons et de la progression globale dès que la liste des modules est connue
+  useEffect(() => {
+    let cancelled = false;
+    const prefetch = async () => {
+      if (modules.length === 0) return;
+      try {
+        setPrefetching(true);
+        // 1) Charger toutes les leçons de chaque module en parallèle
+        const lessonsPerModule = await Promise.all(
+          modules.map(async (m) => {
+            const { data } = await api.get(`/modules/${m.id}/lessons`);
+            const ls: Array<{ _id: string; title: string; order: number; validationMode: 'read' | 'pro' | 'qcm' }>
+              = Array.isArray(data?.data) ? data.data : [];
+            return { id: m.id, lessons: ls };
+          })
+        );
+        if (cancelled) return;
+        setLessonsByModule(
+          lessonsPerModule.reduce<Record<string, Array<{ _id: string; title: string; order: number; validationMode: 'read' | 'pro' | 'qcm' }>>>((acc, cur) => {
+            acc[cur.id] = cur.lessons;
+            return acc;
+          }, {})
+        );
+
+        // 2) Charger en une fois toute la progression de l'utilisateur
+        const progRes = await api.get('/progress/me');
+        if (cancelled) return;
+        const progArr: Array<{ lesson: string; status: 'not_started' | 'in_progress' | 'completed' }>
+          = Array.isArray(progRes.data?.data) ? progRes.data.data : [];
+        setProgressByLesson(() => {
+          const map: Record<string, 'not_started' | 'in_progress' | 'completed'> = {};
+          for (const p of progArr) map[p.lesson] = p.status;
+          return map;
+        });
+      } catch {
+        // Non bloquant: on laisse l'UI s'afficher même si une partie ne charge pas
+      } finally {
+        if (!cancelled) setPrefetching(false);
+      }
+    };
+    void prefetch();
+    return () => { cancelled = true; };
+  }, [modules]);
 
   // Helpers UI
 
@@ -132,6 +178,11 @@ const PlayerCoursesPage = () => {
   return (
     <div>
       <h2>{t('modules.my_modules')}</h2>
+      {prefetching && (
+        <div style={{ marginBottom: 8, padding: '6px 10px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 6 }}>
+          {t('loading')}
+        </div>
+      )}
       {modules.length === 0 ? (
         <div>{t('modules.none')}</div>
       ) : (

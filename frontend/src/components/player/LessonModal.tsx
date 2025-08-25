@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Modal from '../../components/Modal';
 import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
@@ -118,9 +119,8 @@ export default function LessonModal({
       )}
 
       {lesson?.validationMode === 'qcm' && (
-        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: 'var(--text-muted)' }}>{t('lessons.quiz_coming_soon')}</span>
-          <button disabled className="btn btn-outline">{t('lessons.start_quiz')}</button>
+        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+          <Link to={`/lessons/${lesson._id}/quiz`} className="btn btn-primary">{t('lessons.start_quiz')}</Link>
         </div>
       )}
     </Modal>

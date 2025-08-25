@@ -41,6 +41,8 @@ exports.addAnswer = async (req, res, next) => {
     }
 
     const answer = await Answer.create(req.body);
+    // Keep question.answers in sync for player populate in GET /lessons/:lessonId/quiz
+    await Question.findByIdAndUpdate(question._id, { $addToSet: { answers: answer._id } });
 
     res.status(201).json({
       status: 'success',
@@ -120,6 +122,9 @@ exports.deleteAnswer = async (req, res, next) => {
         if (question.quiz.lesson.course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
             return res.status(403).json({ status: 'error', message: 'User not authorized to delete this answer' });
         }
+
+        // Remove reference from question.answers
+        await Question.findByIdAndUpdate(question._id, { $pull: { answers: answer._id } });
 
         await answer.remove();
 

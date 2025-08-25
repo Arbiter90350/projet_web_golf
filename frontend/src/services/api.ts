@@ -44,7 +44,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Intercepteur réponse: gère les 401/403 en forçant la déconnexion
+// Intercepteur réponse: gère les 401 en forçant la déconnexion
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -53,7 +53,8 @@ api.interceptors.response.use(
     const cfg = (error?.config as ApiRequestConfig | undefined);
     const suppressUnauthorized = cfg?.suppressUnauthorizedHandler === true;
 
-    if ((status === 401 || status === 403) && !suppressUnauthorized) {
+    // Important: ne pas déconnecter sur 403 (refus d'accès), seulement sur 401 (non authentifié)
+    if ((status === 401) && !suppressUnauthorized) {
       try {
         localStorage.removeItem('token');
       } catch (err) {
@@ -69,6 +70,7 @@ api.interceptors.response.use(
         window.location.assign('/login');
       }
     }
+
     // Déclenchement du gestionnaire d'erreurs globales sauf si opt-out explicite sur la requête
     const skipGlobal = cfg?.skipGlobalErrorHandler === true;
     if (!skipGlobal && onGlobalApiError) {

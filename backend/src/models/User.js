@@ -37,6 +37,13 @@ const userSchema = new mongoose.Schema({
     },
     default: 'player'
   },
+  // Référence optionnelle vers l'instructeur assigné (suivi des joueurs)
+  assignedInstructor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+    index: true
+  },
   isActive: {
     type: Boolean,
     default: true
