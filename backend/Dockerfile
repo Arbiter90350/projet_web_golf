@@ -10,6 +10,9 @@ COPY package*.json ./
 # Installer les dépendances de production uniquement
 RUN npm install --only=production
 
+# Utilitaires nécessaires (ex: curl pour healthcheck)
+RUN apk add --no-cache curl
+
 # Copier le code source
 COPY . .
 
@@ -19,8 +22,8 @@ EXPOSE 5000
 # Définir les variables d'environnement
 ENV NODE_ENV=production
 
-# Script d'entrée: peut exécuter un seed conditionnellement puis démarrer l'app
-RUN chmod +x ./docker-entrypoint.sh || true
+# Normalize line endings and ensure entrypoint is executable (fix CRLF issues on Alpine)
+RUN sed -i 's/\r$//' ./docker-entrypoint.sh && chmod +x ./docker-entrypoint.sh
 
-# Commande de démarrage
-CMD ["./docker-entrypoint.sh"]
+# Commande de démarrage (via sh pour robustesse)
+CMD ["sh", "./docker-entrypoint.sh"]
