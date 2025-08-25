@@ -35,7 +35,7 @@ function randomPassword() {
 // Mise en forme Title Case rudimentaire (FR): capitalise chaque mot hors mots courts
 function titleCaseFR(str) {
   if (!str) return str;
-  const small = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'sur', 'au', 'aux', 'à', 'en', 'pour', 'par', 'd\'']);
+  const small = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'sur', 'au', 'aux', 'à', 'en', 'pour', 'par', "d'"]);
   return str
     .split(/\s+/)
     .map((w, i) => {
