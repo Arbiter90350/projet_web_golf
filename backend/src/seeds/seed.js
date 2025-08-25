@@ -16,6 +16,9 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const Course = require('../models/Course');
 const Lesson = require('../models/Lesson');
+const Quiz = require('../models/Quiz');
+const Question = require('../models/Question');
+const Answer = require('../models/Answer');
 
 async function connect() {
   const uri = process.env.MONGO_URI;
@@ -140,16 +143,31 @@ async function seedUsers() {
   const instructorPassword = process.env.SEED_INSTRUCTOR_PASSWORD || randomPassword();
   const playerEmail = process.env.SEED_PLAYER_EMAIL || 'player@example.local';
   const playerPassword = process.env.SEED_PLAYER_PASSWORD || randomPassword();
+  // Second joueur pour tests d'indépendance de progression
+  const player2Email = process.env.SEED_PLAYER2_EMAIL || 'player2@example.local';
+  const player2Password = process.env.SEED_PLAYER2_PASSWORD || randomPassword();
 
   if (!process.env.SEED_ADMIN_PASSWORD) console.log(`Generated admin password for ${adminEmail}: ${adminPassword}`);
   if (!process.env.SEED_INSTRUCTOR_PASSWORD) console.log(`Generated instructor password for ${instructorEmail}: ${instructorPassword}`);
   if (!process.env.SEED_PLAYER_PASSWORD) console.log(`Generated player password for ${playerEmail}: ${playerPassword}`);
+  if (!process.env.SEED_PLAYER2_PASSWORD) console.log(`Generated player2 password for ${player2Email}: ${player2Password}`);
 
   const admin = await ensureUser({ email: adminEmail, password: adminPassword, role: 'admin', firstName: 'Admin', lastName: 'User' });
   const instructor = await ensureUser({ email: instructorEmail, password: instructorPassword, role: 'instructor', firstName: 'Pro', lastName: 'Instructor' });
   const player = await ensureUser({ email: playerEmail, password: playerPassword, role: 'player', firstName: 'Demo', lastName: 'Player' });
+  const player2 = await ensureUser({ email: player2Email, password: player2Password, role: 'player', firstName: 'Demo2', lastName: 'Player' });
 
-  return { admin, instructor, player };
+  // Assigner l'instructeur aux joueurs si non défini
+  const players = [player, player2].filter(Boolean);
+  for (const p of players) {
+    if (!p.assignedInstructor || String(p.assignedInstructor) !== String(instructor._id)) {
+      p.assignedInstructor = instructor._id;
+      await p.save();
+      console.log(`↺ Updated assignedInstructor for ${p.email} -> ${instructor.email}`);
+    }
+  }
+
+  return { admin, instructor, player, player2 };
 }
 
 async function upsertCourseWithLessons({ title, description, instructor, lessons = [] }) {
@@ -261,11 +279,93 @@ async function seedCourses(instructor) {
   return courses;
 }
 
+// --- Seed des QCM pour les leçons en mode 'qcm' ---
+// Idempotent: s'appuie sur (quiz, question, answer) identifiés par (lesson, text)
+async function ensureRefInArray(doc, field, id) {
+  const arr = (doc[field] || []).map(String);
+  if (!arr.includes(String(id))) {
+    doc[field].push(id);
+    await doc.save();
+    return true;
+  }
+  return false;
+}
+
+async function seedQuizzesForQcmLessons() {
+  const qcmLessons = await Lesson.find({ validationMode: 'qcm' });
+
+  const defaultQuestions = [
+    {
+      text: "Sécurité: quelles affirmations sont vraies ?",
+      answers: [
+        { text: "Annoncer 'Fore!' en cas de balle dangereuse", isCorrect: true },
+        { text: "Swinguer sans vérifier la zone devant soi", isCorrect: false },
+        { text: "Vérifier l'environnement avant chaque coup", isCorrect: true },
+        { text: "Ignorer le vent et les pentes pour gagner du temps", isCorrect: false },
+      ],
+    },
+    {
+      text: "Rythme de jeu: bonnes pratiques",
+      answers: [
+        { text: "Pratiquer le 'ready golf' lorsque c'est sûr", isCorrect: true },
+        { text: "Attendre d'être au départ pour choisir son club", isCorrect: false },
+        { text: "Préparer son coup en avançant", isCorrect: true },
+        { text: "Multiplier les coups d'essai même quand on est prêt", isCorrect: false },
+      ],
+    },
+  ];
+
+  for (const lesson of qcmLessons) {
+    // 1) Quiz par leçon (unique)
+    let quiz = await Quiz.findOne({ lesson: lesson._id });
+    if (!quiz) {
+      quiz = await Quiz.create({
+        title: `QCM — ${lesson.title}`,
+        passingScore: 70,
+        lesson: lesson._id,
+        questions: [],
+      });
+      console.log(`✔ Created quiz for lesson: ${lesson.title}`);
+    } else {
+      // Optionnel: synchroniser titre/passingScore si nécessaire
+      let updated = false;
+      const desiredTitle = `QCM — ${lesson.title}`;
+      if (quiz.title !== desiredTitle) { quiz.title = desiredTitle; updated = true; }
+      if (typeof quiz.passingScore !== 'number') { quiz.passingScore = 70; updated = true; }
+      if (updated) { await quiz.save(); console.log(`↺ Updated quiz meta for lesson: ${lesson.title}`); }
+    }
+
+    // 2) Questions + Réponses (multi-réponses possibles)
+    for (const qSpec of defaultQuestions) {
+      let question = await Question.findOne({ quiz: quiz._id, text: qSpec.text });
+      if (!question) {
+        question = await Question.create({ quiz: quiz._id, text: qSpec.text, answers: [] });
+        console.log(`  ↳ Created question: ${qSpec.text}`);
+      }
+
+      // Assure le lien parent -> question
+      await ensureRefInArray(quiz, 'questions', question._id);
+
+      for (const aSpec of qSpec.answers) {
+        // Upsert par (question, text)
+        let answer = await Answer.findOneAndUpdate(
+          { question: question._id, text: aSpec.text },
+          { $set: { isCorrect: aSpec.isCorrect, question: question._id } },
+          { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+        // Assure le lien parent -> réponse
+        await ensureRefInArray(question, 'answers', answer._id);
+      }
+    }
+  }
+}
+
 async function main() {
   console.log('Starting seed...');
   await connect();
   const { instructor } = await seedUsers();
   await seedCourses(instructor);
+  await seedQuizzesForQcmLessons();
   console.log('Seed completed successfully.');
   await mongoose.disconnect();
 }

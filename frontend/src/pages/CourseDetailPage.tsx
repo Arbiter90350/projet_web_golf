@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import { isAxiosError } from 'axios';
+import ProgressService from '../services/progress';
+import { useTranslation } from 'react-i18next';
 
 type Lesson = {
   id: string;
@@ -29,6 +31,7 @@ type BackendProgress = {
 };
 
 const CourseDetailPage = () => {
+  const { t } = useTranslation();
   const { courseId } = useParams<{ courseId: string }>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,9 +50,9 @@ const CourseDetailPage = () => {
         setLoading(true);
         setError(null);
 
-        const [lessonsRes, progressRes] = await Promise.all([
+        const [lessonsRes, progressData] = await Promise.all([
           api.get(`/courses/${courseId}/lessons`),
-          api.get(`/progress/me`, { params: { courseId } }),
+          ProgressService.getMyProgress(courseId),
         ]);
 
         const lessonArr = (Array.isArray(lessonsRes?.data?.data) ? lessonsRes.data.data : []) as BackendLesson[];
@@ -61,7 +64,7 @@ const CourseDetailPage = () => {
         }
         setLessons(mappedLessons);
 
-        const progArr = (Array.isArray(progressRes?.data?.data) ? progressRes.data.data : []) as BackendProgress[];
+        const progArr = (Array.isArray(progressData) ? progressData : []) as BackendProgress[];
         const progMap: Record<string, ProgressItem> = {};
         for (const p of progArr) {
           if (!p.lesson) continue;
@@ -88,13 +91,13 @@ const CourseDetailPage = () => {
 
   const markAsRead = async (lessonId: string) => {
     try {
-      await api.patch(`/progress/lessons/${lessonId}/read`);
+      await ProgressService.markLessonAsRead(lessonId);
       setProgress((prev) => ({ ...prev, [lessonId]: { lesson: lessonId, status: 'completed' } }));
     } catch (err: unknown) {
       const msg = isAxiosError(err)
         ? (err.response?.data as { message?: string } | undefined)?.message
         : undefined;
-      alert(msg ?? "Impossible de marquer cette leçon comme lue");
+      alert(msg ?? 'Impossible de marquer cette leçon comme lue');
     }
   };
 
@@ -124,7 +127,12 @@ const CourseDetailPage = () => {
                     Statut: {status === 'completed' ? 'Acquis' : status === 'in_progress' ? 'En cours' : 'Non commencé'}
                   </span>
                   {isReadValidated && status !== 'completed' && (
-                    <button onClick={() => markAsRead(l.id)}>Marquer comme lu</button>
+                    <button onClick={() => markAsRead(l.id)}>{t('lessons.mark_as_read')}</button>
+                  )}
+                  {l.validationMode === 'qcm' && (
+                    <Link to={`/lessons/${l.id}/quiz`} className="btn btn-primary">
+                      {t('lessons.start_quiz')}
+                    </Link>
                   )}
                 </div>
               </li>

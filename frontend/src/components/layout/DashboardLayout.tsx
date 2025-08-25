@@ -30,6 +30,7 @@ const DashboardLayout = () => {
 
   const instructorNav = [
     { to: '/instructor/courses', label: 'Cours (instructeur)' },
+    { to: '/instructor/players', label: 'Élèves (instructeur)' },
   ];
 
   const adminNav = [
@@ -55,7 +56,7 @@ const DashboardLayout = () => {
         </div>
 
         <nav style={{ display: 'grid', gap: 6 }}>
-          {commonNav.map((n) => (
+          {role === 'player' && commonNav.map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end}
               style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
               {n.label}

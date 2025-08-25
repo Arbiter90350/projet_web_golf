@@ -1,5 +1,6 @@
 const Question = require('../models/Question');
 const Quiz = require('../models/Quiz');
+const Answer = require('../models/Answer');
 
 // @desc    Get all questions for a specific quiz
 // @route   GET /api/v1/quizzes/:quizId/questions
@@ -41,6 +42,9 @@ exports.addQuestion = async (req, res, next) => {
     }
 
     const question = await Question.create(req.body);
+
+    // Keep quiz.questions in sync so player GET /lessons/:lessonId/quiz works with populate
+    await Quiz.findByIdAndUpdate(req.params.quizId, { $addToSet: { questions: question._id } });
 
     res.status(201).json({
       status: 'success',
@@ -120,6 +124,12 @@ exports.deleteQuestion = async (req, res, next) => {
         if (quiz.lesson.course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
             return res.status(403).json({ status: 'error', message: 'User not authorized to delete this question' });
         }
+
+        // Remove this question reference from quiz.questions
+        await Quiz.findByIdAndUpdate(question.quiz, { $pull: { questions: question._id } });
+
+        // Clean up related answers to avoid orphans
+        await Answer.deleteMany({ question: question._id });
 
         await question.remove();
 

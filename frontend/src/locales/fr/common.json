@@ -84,6 +84,22 @@
     "quiz_coming_soon": "QCM bientôt disponible",
     "start_quiz": "Commencer le QCM"
   },
+  "quiz": {
+    "title": "QCM",
+    "loading": "Chargement du QCM...",
+    "back": "Retour",
+    "back_to_courses": "Retour aux cours",
+    "no_quiz": "Aucun QCM disponible pour cette leçon.",
+    "passing_score": "Score requis: {{score}}%",
+    "your_score": "Votre score: {{score}}%",
+    "passed": "Réussi",
+    "failed": "Échoué",
+    "submit": "Soumettre",
+    "submitting": "Soumission...",
+    "question_label": "Question {{index}}/{{total}}",
+    "error_loading": "Erreur lors du chargement du QCM",
+    "error_submit": "Erreur lors de la soumission du QCM"
+  },
   "status": {
     "not_started": "À commencer",
     "in_progress": "En cours",
@@ -127,6 +143,27 @@
       "reorder_hint": "Astuce: glissez-déposez pour réordonner",
       "reorder_success": "Ordre enregistré",
       "reorder_failed": "Le réagencement a échoué"
+    }
+    ,
+    "players": {
+      "title": "Élèves (instructeur)",
+      "none": "Aucun élève assigné.",
+      "error_loading": "Erreur lors du chargement des élèves"
+    },
+    "player_progress": {
+      "title": "Progression de l'élève",
+      "student_label": "Élève",
+      "student_placeholder": "Sélectionner un élève",
+      "filter_placeholder": "Filtrer par nom, prénom ou email",
+      "course_label": "Module:",
+      "error_loading": "Erreur lors du chargement des leçons/progression",
+      "lessons": "Leçons",
+      "validation_label": "Validation",
+      "current_status": "Statut actuel",
+      "reset": "Réinitialiser",
+      "set_in_progress": "En cours",
+      "validate": "Valider",
+      "not_modifiable": "Validation non modifiable (mode {{mode}})"
     }
   }
 }

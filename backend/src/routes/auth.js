@@ -33,10 +33,6 @@ const validateRegister = [
     .notEmpty()
     .withMessage('Last name is required')
     .trim(),
-  body('role')
-    .optional()
-    .isIn(['player', 'instructor', 'admin'])
-    .withMessage('Invalid role'),
 ];
 
 // Data validation for login

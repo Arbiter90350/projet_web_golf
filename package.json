@@ -10,6 +10,7 @@
     "lint": "npm -w frontend run lint",
     "build": "npm -w frontend run build",
     "dev:frontend": "npm -w frontend run dev",
-    "dev:backend": "npm -w backend run dev"
+    "dev:backend": "npm -w backend run dev",
+    "smoke": "powershell -ExecutionPolicy Bypass -File ./scripts/smoke.ps1"
   }
 }
