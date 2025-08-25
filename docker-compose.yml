@@ -50,6 +50,12 @@ services:
       SEED_PLAYER_PASSWORD: ${SEED_PLAYER_PASSWORD}
       SEED_PLAYER2_EMAIL: ${SEED_PLAYER2_EMAIL}
       SEED_PLAYER2_PASSWORD: ${SEED_PLAYER2_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-fSs", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     depends_on:
       - database
     networks:
@@ -72,7 +78,8 @@ services:
     environment:
       - NODE_ENV=production
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - fairway-network
 
