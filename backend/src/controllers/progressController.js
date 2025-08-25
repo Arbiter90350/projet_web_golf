@@ -121,9 +121,10 @@ exports.getMyProgress = async (req, res, next) => {
 // @access  Private (Instructor, Admin)
 exports.listMyPlayers = async (req, res, next) => {
   try {
-    const filter = { role: 'player' };
+    // Filtre: ne retourner que les comptes 'player' dont l'email est vérifié
+    const filter = { role: 'player', isEmailVerified: true };
     const players = await User.find(filter)
-      .select('_id firstName lastName email isActive lastLogin assignedInstructor')
+      .select('_id firstName lastName email isActive isEmailVerified lastLogin assignedInstructor')
       .lean();
     return res.status(200).json({ status: 'success', count: players.length, data: players });
   } catch (error) {
