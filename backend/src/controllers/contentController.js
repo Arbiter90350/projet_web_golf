@@ -1,5 +1,6 @@
 const Content = require('../models/Content');
 const Lesson = require('../models/Lesson');
+const MAX_TIME_MS = Number(process.env.DB_QUERY_MAX_TIME_MS || 15000);
 
 // @desc    Get all content for a specific lesson
 // @route   GET /api/v1/lessons/:lessonId/contents
@@ -11,12 +12,12 @@ exports.getContents = async (req, res, next) => {
     if (!req.params.lessonId) {
       return res.status(400).json({ status: 'error', message: 'Missing lessonId in route params' });
     }
-    const lesson = await Lesson.findById(req.params.lessonId);
+    const lesson = await Lesson.findById(req.params.lessonId).maxTimeMS(MAX_TIME_MS);
     if (!lesson) {
       return res.status(404).json({ status: 'error', message: 'Lesson not found' });
     }
 
-    const contents = await Content.find({ lesson: req.params.lessonId });
+    const contents = await Content.find({ lesson: req.params.lessonId }).maxTimeMS(MAX_TIME_MS);
 
     res.status(200).json({
       status: 'success',
@@ -39,7 +40,7 @@ exports.addContent = async (req, res, next) => {
     }
     req.body.lesson = req.params.lessonId;
 
-    const lesson = await Lesson.findById(req.params.lessonId).populate({ path: 'course' });
+    const lesson = await Lesson.findById(req.params.lessonId).populate({ path: 'course' }).maxTimeMS(MAX_TIME_MS);
     if (!lesson) {
       return res.status(404).json({ status: 'error', message: 'Lesson not found' });
     }
@@ -65,7 +66,7 @@ exports.addContent = async (req, res, next) => {
 // @access  Private
 exports.getContent = async (req, res, next) => {
     try {
-        const content = await Content.findById(req.params.id).populate({ path: 'lesson', select: 'title' });
+        const content = await Content.findById(req.params.id).populate({ path: 'lesson', select: 'title' }).maxTimeMS(MAX_TIME_MS);
 
         if (!content) {
             return res.status(404).json({ status: 'error', message: 'Content not found' });
@@ -85,13 +86,13 @@ exports.getContent = async (req, res, next) => {
 // @access  Private (Instructor, Admin)
 exports.updateContent = async (req, res, next) => {
     try {
-        let content = await Content.findById(req.params.id);
+        let content = await Content.findById(req.params.id).maxTimeMS(MAX_TIME_MS);
 
         if (!content) {
             return res.status(404).json({ status: 'error', message: 'Content not found' });
         }
 
-        const lesson = await Lesson.findById(content.lesson).populate({ path: 'course' });
+        const lesson = await Lesson.findById(content.lesson).populate({ path: 'course' }).maxTimeMS(MAX_TIME_MS);
 
         // Check if the user is the course owner or an admin
         if (lesson.course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
@@ -101,7 +102,7 @@ exports.updateContent = async (req, res, next) => {
         content = await Content.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
             runValidators: true
-        });
+        }).maxTimeMS(MAX_TIME_MS);
 
         res.status(200).json({
             status: 'success',
@@ -117,20 +118,20 @@ exports.updateContent = async (req, res, next) => {
 // @access  Private (Instructor, Admin)
 exports.deleteContent = async (req, res, next) => {
     try {
-        const content = await Content.findById(req.params.id);
+        const content = await Content.findById(req.params.id).maxTimeMS(MAX_TIME_MS);
 
         if (!content) {
             return res.status(404).json({ status: 'error', message: 'Content not found' });
         }
 
-        const lesson = await Lesson.findById(content.lesson).populate({ path: 'course' });
+        const lesson = await Lesson.findById(content.lesson).populate({ path: 'course' }).maxTimeMS(MAX_TIME_MS);
 
         // Check if the user is the course owner or an admin
         if (lesson.course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
             return res.status(403).json({ status: 'error', message: 'User not authorized to delete this content' });
         }
 
-        await Content.deleteOne({ _id: content._id });
+        await Content.deleteOne({ _id: content._id }).maxTimeMS(MAX_TIME_MS);
 
         res.status(200).json({
             status: 'success',

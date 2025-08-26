@@ -144,6 +144,29 @@ if (require.main === module) {
     logger.info(`MongoDB connected: ${mongoose.connection.readyState === 1 ? 'yes' : 'no'}`);
   });
 
+  // Configuration des timeouts HTTP pour éviter les requêtes pendantes (DoS, clients lents)
+  // Valeurs par défaut raisonnables; ajustables via variables d'environnement
+  const REQUEST_TIMEOUT_MS = Number(process.env.SERVER_REQUEST_TIMEOUT_MS || 60000); // temps total d'une requête
+  const HEADERS_TIMEOUT_MS = Number(process.env.SERVER_HEADERS_TIMEOUT_MS || 65000); // doit être >= keepAlive + marge
+  const KEEPALIVE_TIMEOUT_MS = Number(process.env.SERVER_KEEPALIVE_TIMEOUT_MS || 60000);
+  const SOCKET_TIMEOUT_MS = Number(process.env.SERVER_SOCKET_TIMEOUT_MS || 0); // 0 = désactivé
+
+  try {
+    // Node >= 18: propriétés supportées
+    server.requestTimeout = REQUEST_TIMEOUT_MS;
+    server.headersTimeout = HEADERS_TIMEOUT_MS;
+    server.keepAliveTimeout = KEEPALIVE_TIMEOUT_MS;
+    if (SOCKET_TIMEOUT_MS > 0) server.setTimeout(SOCKET_TIMEOUT_MS);
+    logger.info('HTTP timeouts configured', {
+      requestTimeoutMs: server.requestTimeout,
+      headersTimeoutMs: server.headersTimeout,
+      keepAliveTimeoutMs: server.keepAliveTimeout,
+      socketTimeoutMs: SOCKET_TIMEOUT_MS,
+    });
+  } catch (e) {
+    logger.warn('Failed to configure HTTP timeouts; using Node defaults', { error: e?.message });
+  }
+
   // Gestion des erreurs non capturées
   process.on('unhandledRejection', (err) => {
     logger.error('Unhandled Rejection', { error: err?.message, stack: err?.stack });

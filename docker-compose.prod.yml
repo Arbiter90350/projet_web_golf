@@ -27,5 +27,7 @@ services:
       args:
         # Same-origin: frontend calls /api/v1 which Nginx proxies to backend
         VITE_API_URL: /api/v1
+        # Timeout global Axios en prod (override possible via env: VITE_API_TIMEOUT_MS)
+        VITE_API_TIMEOUT_MS: ${VITE_API_TIMEOUT_MS:-20000}
     environment:
       - NODE_ENV=production

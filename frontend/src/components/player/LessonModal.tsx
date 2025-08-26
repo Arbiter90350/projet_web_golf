@@ -28,31 +28,34 @@ export default function LessonModal({
   const [lessonInfo, setLessonInfo] = useState<{ description?: string } | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!open || !lesson) return;
-      setLoading(true);
+    if (!open || !lesson) return;
+    const ctrl = new AbortController();
+    setLoading(true);
+    (async () => {
       try {
         // Récupère d'abord les infos de la leçon
-        const lessonRes = await api.get(`/lessons/${lesson._id}`);
+        const lessonRes = await api.get(`/lessons/${lesson._id}`, { signal: ctrl.signal });
         const info = (lessonRes?.data?.data ?? null) as { description?: string } | null;
-        setLessonInfo(info);
-      } catch {
-        // Si on ne parvient pas à charger la leçon, on ne peut pas continuer
+        if (!ctrl.signal.aborted) setLessonInfo(info);
+      } catch (err) {
+        // Ignorer si la requête est annulée
+        if ((err as any)?.code === 'ERR_CANCELED' || (err as any)?.name === 'CanceledError') return;
         setLessonInfo(null);
       }
 
       try {
         // Récupère ensuite les contenus, sans impacter la description en cas d'échec
-        const contentsRes = await api.get(`/lessons/${lesson._id}/contents`);
+        const contentsRes = await api.get(`/lessons/${lesson._id}/contents`, { signal: ctrl.signal });
         const arr = Array.isArray(contentsRes?.data?.data) ? contentsRes.data.data : [];
-        setContents(arr);
-      } catch {
+        if (!ctrl.signal.aborted) setContents(arr);
+      } catch (err) {
+        if ((err as any)?.code === 'ERR_CANCELED' || (err as any)?.name === 'CanceledError') return;
         setContents([]);
       } finally {
-        setLoading(false);
+        if (!ctrl.signal.aborted) setLoading(false);
       }
-    };
-    fetchData();
+    })();
+    return () => ctrl.abort();
   }, [open, lesson]);
 
   const handleMarkAsRead = async () => {

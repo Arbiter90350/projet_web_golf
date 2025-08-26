@@ -6,6 +6,7 @@ const Lesson = require('../models/Lesson');
 const Course = require('../models/Course');
 const User = require('../models/User');
 const UserProgress = require('../models/UserProgress');
+const MAX_TIME_MS = Number(process.env.DB_QUERY_MAX_TIME_MS || 15000);
 
 // @desc    Marquer une leçon comme lue (=> acquis) pour l'utilisateur courant
 // @route   PATCH /api/v1/progress/lessons/:lessonId/read
@@ -13,7 +14,7 @@ const UserProgress = require('../models/UserProgress');
 exports.markAsRead = async (req, res, next) => {
   try {
     const { lessonId } = req.params;
-    const lesson = await Lesson.findById(lessonId);
+    const lesson = await Lesson.findById(lessonId).maxTimeMS(MAX_TIME_MS);
     if (!lesson) {
       return res.status(404).json({ status: 'error', message: 'Lesson not found' });
     }
@@ -26,7 +27,7 @@ exports.markAsRead = async (req, res, next) => {
       { user: req.user.id, lesson: lessonId },
       { status: 'completed' },
       { new: true, upsert: true, runValidators: true }
-    );
+    ).maxTimeMS(MAX_TIME_MS);
 
     return res.status(200).json({ status: 'success', data: userProgress });
   } catch (error) {
@@ -46,7 +47,7 @@ exports.proValidate = async (req, res, next) => {
       return res.status(400).json({ status: 'error', message: 'userId is required' });
     }
 
-    const lesson = await Lesson.findById(lessonId);
+    const lesson = await Lesson.findById(lessonId).maxTimeMS(MAX_TIME_MS);
     if (!lesson) {
       return res.status(404).json({ status: 'error', message: 'Lesson not found' });
     }
@@ -55,7 +56,7 @@ exports.proValidate = async (req, res, next) => {
     // de n'importe quelle leçon (read, quiz, pro) pour un élève ciblé.
 
     // Sécurité RBAC: instructeur ou admin peuvent valider pour n'importe quel joueur (règle produit)
-    const player = await User.findById(userId).select('_id role assignedInstructor');
+    const player = await User.findById(userId).select('_id role assignedInstructor').maxTimeMS(MAX_TIME_MS);
     if (!player || player.role !== 'player') {
       return res.status(404).json({ status: 'error', message: 'Target player not found' });
     }
@@ -83,7 +84,7 @@ exports.proValidate = async (req, res, next) => {
       { user: userId, lesson: lessonId },
       updateDoc,
       { new: true, upsert: true, runValidators: true }
-    );
+    ).maxTimeMS(MAX_TIME_MS);
 
     return res.status(200).json({ status: 'success', data: userProgress });
   } catch (error) {
@@ -102,12 +103,12 @@ exports.getMyProgress = async (req, res, next) => {
 
     if (courseId) {
       // Récupérer les lessons de ce cours pour filtrer
-      const lessons = await Lesson.find({ course: courseId }).select('_id');
+      const lessons = await Lesson.find({ course: courseId }).select('_id').maxTimeMS(MAX_TIME_MS);
       const lessonIds = lessons.map((l) => l._id);
       filter.lesson = { $in: lessonIds };
     }
 
-    const progress = await UserProgress.find(filter);
+    const progress = await UserProgress.find(filter).maxTimeMS(MAX_TIME_MS);
 
     return res.status(200).json({ status: 'success', count: progress.length, data: progress });
   } catch (error) {
@@ -125,7 +126,8 @@ exports.listMyPlayers = async (req, res, next) => {
     const filter = { role: 'player', isEmailVerified: true };
     const players = await User.find(filter)
       .select('_id firstName lastName email isActive isEmailVerified lastLogin assignedInstructor')
-      .lean();
+      .lean()
+      .maxTimeMS(MAX_TIME_MS);
     return res.status(200).json({ status: 'success', count: players.length, data: players });
   } catch (error) {
     next(error);
@@ -140,7 +142,7 @@ exports.getPlayerProgress = async (req, res, next) => {
     const { userId } = req.params;
     const { courseId } = req.query || {};
 
-    const player = await User.findById(userId).select('_id role assignedInstructor');
+    const player = await User.findById(userId).select('_id role assignedInstructor').maxTimeMS(MAX_TIME_MS);
     if (!player || player.role !== 'player') {
       return res.status(404).json({ status: 'error', message: 'Player not found' });
     }
@@ -148,11 +150,11 @@ exports.getPlayerProgress = async (req, res, next) => {
 
     let filter = { user: userId };
     if (courseId) {
-      const lessons = await Lesson.find({ course: courseId }).select('_id');
+      const lessons = await Lesson.find({ course: courseId }).select('_id').maxTimeMS(MAX_TIME_MS);
       filter.lesson = { $in: lessons.map(l => l._id) };
     }
 
-    const progress = await UserProgress.find(filter);
+    const progress = await UserProgress.find(filter).maxTimeMS(MAX_TIME_MS);
     return res.status(200).json({ status: 'success', count: progress.length, data: progress });
   } catch (error) {
     next(error);
