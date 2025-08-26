@@ -7,7 +7,8 @@ const baseURL = normalizedBase.endsWith('/api/v1')
   ? normalizedBase
   : `${normalizedBase}/api/v1`;
 
-const api = axios.create({ baseURL });
+const apiTimeout = Number(import.meta.env.VITE_API_TIMEOUT_MS || 20000);
+const api = axios.create({ baseURL, timeout: apiTimeout });
 
 // Type de configuration étendu pour supporter des options internes
 export type ApiRequestConfig = AxiosRequestConfig & {

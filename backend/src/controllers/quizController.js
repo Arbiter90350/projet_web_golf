@@ -4,29 +4,30 @@ const Course = require('../models/Course');
 const UserProgress = require('../models/UserProgress');
 const Question = require('../models/Question');
 const Answer = require('../models/Answer');
+const MAX_TIME_MS = Number(process.env.DB_QUERY_MAX_TIME_MS || 15000);
 
 // @desc    Get quiz for a specific lesson
 // @route   GET /api/v1/lessons/:lessonId/quiz
 // @access  Private
 exports.getQuizForLesson = async (req, res, next) => {
   try {
-    const lesson = await Lesson.findById(req.params.lessonId);
+    const lesson = await Lesson.findById(req.params.lessonId).maxTimeMS(MAX_TIME_MS);
     if (!lesson) {
       return res.status(404).json({ status: 'error', message: 'Lesson not found' });
     }
 
-    const baseQuiz = await Quiz.findOne({ lesson: req.params.lessonId });
+    const baseQuiz = await Quiz.findOne({ lesson: req.params.lessonId }).maxTimeMS(MAX_TIME_MS);
     if (!baseQuiz) {
       return res.status(404).json({ status: 'error', message: 'Quiz not found for this lesson' });
     }
 
     // Robust assembly that does not rely on possibly missing refs in Question.answers
     // 1) Fetch all questions by quiz
-    const questions = await Question.find({ quiz: baseQuiz._id }).lean();
+    const questions = await Question.find({ quiz: baseQuiz._id }).maxTimeMS(MAX_TIME_MS).lean();
     // 2) Fetch all answers for these questions using Answer.question
     const questionIds = questions.map((q) => q._id);
     const allAnswers = questionIds.length > 0
-      ? await Answer.find({ question: { $in: questionIds } }).select('text question').lean()
+      ? await Answer.find({ question: { $in: questionIds } }).select('text question').maxTimeMS(MAX_TIME_MS).lean()
       : [];
     const answersByQuestion = new Map();
     for (const ans of allAnswers) {
@@ -65,7 +66,7 @@ exports.addQuiz = async (req, res, next) => {
   try {
     req.body.lesson = req.params.lessonId;
 
-    const lesson = await Lesson.findById(req.params.lessonId).populate('course');
+    const lesson = await Lesson.findById(req.params.lessonId).populate('course').maxTimeMS(MAX_TIME_MS);
     if (!lesson) {
       return res.status(404).json({ status: 'error', message: 'Lesson not found' });
     }
@@ -91,13 +92,13 @@ exports.addQuiz = async (req, res, next) => {
 // @access  Private (Instructor, Admin)
 exports.updateQuiz = async (req, res, next) => {
   try {
-    let quiz = await Quiz.findById(req.params.id);
+    let quiz = await Quiz.findById(req.params.id).maxTimeMS(MAX_TIME_MS);
 
     if (!quiz) {
       return res.status(404).json({ status: 'error', message: 'Quiz not found' });
     }
 
-    const lesson = await Lesson.findById(quiz.lesson).populate('course');
+    const lesson = await Lesson.findById(quiz.lesson).populate('course').maxTimeMS(MAX_TIME_MS);
 
     // Check if the user is the course owner or an admin
     if (lesson.course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
@@ -107,7 +108,7 @@ exports.updateQuiz = async (req, res, next) => {
     quiz = await Quiz.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
-    });
+    }).maxTimeMS(MAX_TIME_MS);
 
     res.status(200).json({
       status: 'success',
@@ -123,20 +124,20 @@ exports.updateQuiz = async (req, res, next) => {
 // @access  Private (Instructor, Admin)
 exports.deleteQuiz = async (req, res, next) => {
   try {
-    const quiz = await Quiz.findById(req.params.id);
+    const quiz = await Quiz.findById(req.params.id).maxTimeMS(MAX_TIME_MS);
 
     if (!quiz) {
       return res.status(404).json({ status: 'error', message: 'Quiz not found' });
     }
 
-    const lesson = await Lesson.findById(quiz.lesson).populate('course');
+    const lesson = await Lesson.findById(quiz.lesson).populate('course').maxTimeMS(MAX_TIME_MS);
 
     // Check if the user is an instructor or an admin
     if (req.user.role !== 'admin' && req.user.role !== 'instructor') {
       return res.status(403).json({ status: 'error', message: 'User not authorized to delete this quiz' });
     }
 
-    await Quiz.deleteOne({ _id: quiz._id });
+    await Quiz.deleteOne({ _id: quiz._id }).maxTimeMS(MAX_TIME_MS);
 
     res.status(200).json({
       status: 'success',
@@ -152,7 +153,7 @@ exports.deleteQuiz = async (req, res, next) => {
 // @access  Private (Player)
 exports.submitQuiz = async (req, res, next) => {
   try {
-    const quiz = await Quiz.findById(req.params.id);
+    const quiz = await Quiz.findById(req.params.id).maxTimeMS(MAX_TIME_MS);
 
     if (!quiz) {
       return res.status(404).json({ status: 'error', message: 'Quiz not found' });
@@ -161,10 +162,10 @@ exports.submitQuiz = async (req, res, next) => {
     // Expected format: [{ questionId: '...', answerIds: ['...', ...] }]
     const userAnswers = Array.isArray(req.body.answers) ? req.body.answers : [];
     // Robust: always fetch questions by quiz id, then answers by Answer.question
-    const questions = await Question.find({ quiz: quiz._id }).lean();
+    const questions = await Question.find({ quiz: quiz._id }).maxTimeMS(MAX_TIME_MS).lean();
     const questionIds = questions.map((q) => q._id);
     const allAnswers = questionIds.length > 0
-      ? await Answer.find({ question: { $in: questionIds } }).select('isCorrect question').lean()
+      ? await Answer.find({ question: { $in: questionIds } }).select('isCorrect question').maxTimeMS(MAX_TIME_MS).lean()
       : [];
     const correctIdsByQuestion = new Map();
     for (const ans of allAnswers) {
@@ -211,7 +212,7 @@ exports.submitQuiz = async (req, res, next) => {
       { user: req.user.id, lesson: quiz.lesson },
       progressData,
       { new: true, upsert: true, runValidators: true }
-    );
+    ).maxTimeMS(MAX_TIME_MS);
 
     res.status(200).json({
       status: 'success',
