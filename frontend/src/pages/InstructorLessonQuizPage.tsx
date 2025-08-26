@@ -317,7 +317,7 @@ const InstructorLessonQuizPage = () => {
                         ) : (
                           <>
                             <button type="button" onClick={() => startEditQuestion(q)}>Modifier</button>
-                            <button type="button" onClick={() => removeQuestion(q._id)}>Supprimer</button>
+                            <button type="button" className="btn btn-danger" onClick={() => removeQuestion(q._id)}>Supprimer</button>
                           </>
                         )}
                       </div>
@@ -355,7 +355,7 @@ const InstructorLessonQuizPage = () => {
                                   </span>
                                   {a.isCorrect && <span style={{ color: 'green', marginLeft: 6 }}>(correct)</span>}
                                   <button type="button" onClick={() => startEditAnswer(a)}>Modifier</button>
-                                  <button type="button" onClick={() => removeAnswer(a._id, q._id)}>Supprimer</button>
+                                  <button type="button" className="btn btn-danger" onClick={() => removeAnswer(a._id, q._id)}>Supprimer</button>
                                 </>
                               )}
                             </li>
