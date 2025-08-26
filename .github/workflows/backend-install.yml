@@ -35,10 +35,10 @@ jobs:
           registry-url: https://registry.npmjs.org/
 
       - name: Force public npm registry
-        run: npm config set registry https://registry.npmjs.org/
+        run: echo "registry=https://registry.npmjs.org/" > ~/.npmrc
 
       - name: Clean npm cache
-        run: npm cache clean --force
+        run: rm -rf ~/.npm/_cacache || true
 
       - name: Install dependencies
         run: |

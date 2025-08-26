@@ -21,11 +21,11 @@ jobs:
           cache-dependency-path: backend/package-lock.json
           registry-url: https://registry.npmjs.org/
       - name: Force public npm registry
-        run: npm config set registry https://registry.npmjs.org/
+        run: echo "registry=https://registry.npmjs.org/" > ~/.npmrc
       - name: Install dependencies (clean, avoid npm ci lock mismatch)
         run: |
           rm -rf node_modules package-lock.json
-          npm cache clean --force
+          rm -rf ~/.npm/_cacache || true
           npm install
 
   frontend-build:
@@ -42,11 +42,11 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
           registry-url: https://registry.npmjs.org/
       - name: Force public npm registry
-        run: npm config set registry https://registry.npmjs.org/
+        run: echo "registry=https://registry.npmjs.org/" > ~/.npmrc
       - name: Install dependencies (clean workaround for npm optional deps bug)
         run: |
           rm -rf node_modules package-lock.json
-          npm cache clean --force
+          rm -rf ~/.npm/_cacache || true
           npm install
       - name: Ensure Rollup native binary on Linux
         if: runner.os == 'Linux'
