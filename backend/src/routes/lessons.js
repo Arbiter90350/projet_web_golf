@@ -4,7 +4,8 @@ const {
   addLesson,
   getLesson,
   updateLesson,
-  deleteLesson
+  deleteLesson,
+  reorderLessons,
 } = require('../controllers/lessonController');
 
 const { protect, authorize } = require('../middleware/authMiddleware');
@@ -22,6 +23,9 @@ router.use('/:lessonId/contents', contentRouter);
 router.route('/')
     .get(protect, getLessons)
     .post(protect, authorize('instructor', 'admin'), addLesson);
+    
+// Réordonner les leçons d'un cours: liste d'IDs -> positions 1..n
+router.patch('/reorder', protect, authorize('instructor', 'admin'), reorderLessons);
 
 // Routes for a single lesson
 router.route('/:id')

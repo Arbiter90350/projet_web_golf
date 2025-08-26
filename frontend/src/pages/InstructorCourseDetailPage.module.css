@@ -1,0 +1,63 @@
+.page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.formCard {
+  margin: 1rem 0;
+}
+.formGrid {
+  display: grid;
+  gap: 12px;
+  max-width: 720px;
+}
+.list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.item {
+  display: block;
+}
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.left {
+  min-width: 240px;
+}
+.name {
+  font-weight: 600;
+}
+.desc {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.handle {
+  cursor: grab;
+  user-select: none;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 6px;
+}
+.hint {
+  font-size: 13px;
+  color: #475569;
+  margin: 0 0 8px 0;
+}

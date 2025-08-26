@@ -27,13 +27,17 @@ export type Lesson = {
 // --- Schémas
 export const LessonCreateSchema = z.object({
   title: z.string().min(3, 'Titre trop court'),
-  order: z.coerce.number().int().positive('Doit être > 0'),
   validationMode: z.enum(['read', 'pro', 'qcm']).default('read'),
   description: z.string().optional(),
 });
 export type LessonCreate = z.infer<typeof LessonCreateSchema>;
 
-export const LessonUpdateSchema = LessonCreateSchema.partial();
+// Pour update, l'ordre n'est pas modifiable côté client (endpoint dédié)
+export const LessonUpdateSchema = z.object({
+  title: z.string().min(3, 'Titre trop court').optional(),
+  validationMode: z.enum(['read', 'pro', 'qcm']).optional(),
+  description: z.string().optional(),
+});
 export type LessonUpdate = z.infer<typeof LessonUpdateSchema>;
 
 // --- Helpers
@@ -70,4 +74,11 @@ export async function updateLesson(lessonId: string, payload: LessonUpdate): Pro
 
 export async function deleteLesson(lessonId: string): Promise<void> {
   await api.delete(`/lessons/${lessonId}`);
+}
+
+// Réordonnancement des leçons pour un cours
+export async function reorderLessons(courseId: string, orderedIds: string[]): Promise<Lesson[]> {
+  const { data } = await api.patch(`/courses/${courseId}/lessons/reorder`, { orderedIds });
+  const arr = Array.isArray(data?.data) ? (data.data as BackendLesson[]) : [];
+  return arr.map(mapLesson).filter((l): l is Lesson => !!l && !!l.id);
 }

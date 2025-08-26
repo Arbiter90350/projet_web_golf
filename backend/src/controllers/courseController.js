@@ -1,5 +1,11 @@
 const Course = require('../models/Course');
 const User = require('../models/User');
+const Lesson = require('../models/Lesson');
+const Content = require('../models/Content');
+const Quiz = require('../models/Quiz');
+const Question = require('../models/Question');
+const Answer = require('../models/Answer');
+const UserProgress = require('../models/UserProgress');
 const mongoose = require('mongoose');
 
 // @desc    Create a new course
@@ -131,14 +137,18 @@ exports.getCourseById = async (req, res, next) => {
 // @access  Private (Instructor, Admin)
 exports.updateCourse = async (req, res, next) => {
   try {
+    // Valider l'identifiant fourni pour éviter les CastError 500
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ status: 'error', message: 'Invalid course id' });
+    }
     let course = await Course.findById(req.params.id);
 
     if (!course) {
       return res.status(404).json({ status: 'error', message: 'Course not found' });
     }
 
-    // Check if the user is the course owner or an admin
-    if (course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
+    // Check if the user is the course owner or an admin (robuste si instructor manquant)
+    if ((!course.instructor || course.instructor.toString() !== req.user.id) && req.user.role !== 'admin') {
         return res.status(403).json({ status: 'error', message: 'User not authorized to update this course' });
     }
 
@@ -161,18 +171,49 @@ exports.updateCourse = async (req, res, next) => {
 // @access  Private (Instructor, Admin)
 exports.deleteCourse = async (req, res, next) => {
   try {
+    // Valider l'identifiant fourni pour éviter les CastError 500
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ status: 'error', message: 'Invalid course id' });
+    }
     const course = await Course.findById(req.params.id);
 
     if (!course) {
       return res.status(404).json({ status: 'error', message: 'Course not found' });
     }
 
-    // Check if the user is the course owner or an admin
-    if (course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
+    // Check if the user is the course owner or an admin (robuste si instructor manquant)
+    if ((!course.instructor || course.instructor.toString() !== req.user.id) && req.user.role !== 'admin') {
         return res.status(403).json({ status: 'error', message: 'User not authorized to delete this course' });
     }
 
-    await course.remove();
+    // Récupérer les leçons rattachées au module
+    const lessonDocs = await Lesson.find({ course: course._id }).select('_id');
+    const lessonIds = lessonDocs.map(l => l._id);
+
+    // Suppression des contenus et des progressions d'utilisateurs liés aux leçons
+    await Promise.all([
+      Content.deleteMany({ lesson: { $in: lessonIds } }),
+      UserProgress.deleteMany({ lesson: { $in: lessonIds } }),
+    ]);
+
+    // Supprimer les quiz et leurs questions/réponses associés aux leçons
+    const quizDocs = await Quiz.find({ lesson: { $in: lessonIds } }).select('_id');
+    const quizIds = quizDocs.map(q => q._id);
+    if (quizIds.length) {
+      const questionDocs = await Question.find({ quiz: { $in: quizIds } }).select('_id');
+      const questionIds = questionDocs.map(q => q._id);
+      if (questionIds.length) {
+        await Answer.deleteMany({ question: { $in: questionIds } });
+        await Question.deleteMany({ _id: { $in: questionIds } });
+      }
+      await Quiz.deleteMany({ _id: { $in: quizIds } });
+    }
+
+    // Enfin, supprimer les leçons elles-mêmes
+    await Lesson.deleteMany({ course: course._id });
+
+    // Puis supprimer le module (Mongoose v7+)
+    await Course.deleteOne({ _id: course._id });
 
     res.status(200).json({
       status: 'success',

@@ -32,6 +32,13 @@ jobs:
           node-version: 20.x
           cache: npm
           cache-dependency-path: backend/package-lock.json
+          registry-url: https://registry.npmjs.org/
+
+      - name: Force public npm registry
+        run: echo "registry=https://registry.npmjs.org/" > ~/.npmrc
+
+      - name: Clean npm cache
+        run: rm -rf ~/.npm/_cacache || true
 
       - name: Install dependencies
         run: |
