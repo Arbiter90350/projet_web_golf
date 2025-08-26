@@ -32,6 +32,13 @@ jobs:
           node-version: 20.x
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+          registry-url: https://registry.npmjs.org/
+
+      - name: Force public npm registry
+        run: npm config set registry https://registry.npmjs.org/
+
+      - name: Clean npm cache
+        run: npm cache clean --force
 
       - name: Install dependencies (clean workaround for npm optional deps bug)
         # Contexte: npm peut ne pas installer les optionalDependencies spécifiques à la plateforme
