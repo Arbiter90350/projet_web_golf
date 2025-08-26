@@ -121,7 +121,7 @@ exports.deleteContent = async (req, res, next) => {
             return res.status(403).json({ status: 'error', message: 'User not authorized to delete this content' });
         }
 
-        await content.remove();
+        await Content.deleteOne({ _id: content._id });
 
         res.status(200).json({
             status: 'success',

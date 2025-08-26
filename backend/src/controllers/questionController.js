@@ -121,7 +121,13 @@ exports.deleteQuestion = async (req, res, next) => {
             return res.status(403).json({ status: 'error', message: 'User not authorized to delete this question' });
         }
 
-        await question.remove();
+        // Remove this question reference from quiz.questions
+        await Quiz.findByIdAndUpdate(question.quiz, { $pull: { questions: question._id } });
+
+        // Clean up related answers to avoid orphans
+        await Answer.deleteMany({ question: question._id });
+
+        await Question.deleteOne({ _id: question._id });
 
         res.status(200).json({
             status: 'success',

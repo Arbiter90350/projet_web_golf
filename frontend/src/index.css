@@ -50,3 +50,120 @@ a:focus-visible {
   outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
+
+/* Utilitaires UI (cartes, boutons, badges, tuiles) */
+.card {
+  background: var(--card-bg);
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 1rem;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card:hover {
+  box-shadow: 0 12px 28px rgba(0,0,0,0.14);
+  transform: translateY(-1px);
+}
+
+.tile {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.75rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.tile:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  background: #fbfbfb;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.btn-primary {
+  background: var(--brand-primary);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--brand-primary-hover);
+}
+.btn-outline {
+  background: #f9fafb;
+  color: var(--text-strong);
+  border-color: #d1d5db;
+}
+.btn-outline:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* Bouton d'action destructive */
+.btn-danger {
+  background: #dc2626;
+  color: #fff;
+}
+.btn-danger:hover {
+  background: #b91c1c;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.badge-mode {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+/* Boutons: focus accessible et animation de press subtile */
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Respecte les préférences utilisateurs pour les animations */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Ajustements mobiles */
+@media (max-width: 480px) {
+  .card {
+    padding: 0.75rem;
+  }
+  .tile {
+    padding: 0.6rem;
+  }
+  .btn {
+    padding: 0.45rem 0.8rem;
+  }
+  .badge {
+    font-size: 11px;
+    padding: 0.08rem 0.4rem;
+  }
+}

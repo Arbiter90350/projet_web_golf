@@ -121,7 +121,10 @@ exports.deleteAnswer = async (req, res, next) => {
             return res.status(403).json({ status: 'error', message: 'User not authorized to delete this answer' });
         }
 
-        await answer.remove();
+        // Remove reference from question.answers
+        await Question.findByIdAndUpdate(question._id, { $pull: { answers: answer._id } });
+
+        await Answer.deleteOne({ _id: answer._id });
 
         res.status(200).json({
             status: 'success',
