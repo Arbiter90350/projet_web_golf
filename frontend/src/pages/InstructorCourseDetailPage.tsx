@@ -1,17 +1,23 @@
 // Page instructeur: gestion des leçons d'un module (cours)
 // Sécurité: endpoints protégés par JWT; RBAC côté backend (instructor/admin).
 // Règles: titres en Title Case; ordre modifiable; modes read/pro/qcm; description optionnelle.
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import api from '../services/api';
 import { isAxiosError } from 'axios';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { reorderLessons as reorderLessonsApi } from '../services/lessons';
+import ConfirmDialog from '../components/ConfirmDialog';
+import styles from './InstructorCourseDetailPage.module.css';
 
+// Schéma de création: l'ordre est géré automatiquement côté backend (append en fin)
 const lessonSchema = z.object({
   title: z.string().min(3, 'Titre trop court'),
-  order: z.coerce.number().int().positive('Doit être > 0'),
   validationMode: z.enum(['read', 'pro', 'qcm']).default('read'),
   description: z.string().optional(),
 });
@@ -47,11 +53,18 @@ const InstructorCourseDetailPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [editVals, setEditVals] = useState<LessonForm>({ title: '', order: 1, validationMode: 'read', description: '' });
+  const [editVals, setEditVals] = useState<LessonForm>({ title: '', validationMode: 'read', description: '' });
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  // dnd-kit sensors: n'activer le drag qu'après un léger déplacement pour laisser passer les clics
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<LessonForm>({
     resolver: zodResolver(lessonSchema),
-    defaultValues: { title: '', order: 1, validationMode: 'read', description: '' },
+    defaultValues: { title: '', validationMode: 'read', description: '' },
   });
 
   const loadLessons = async () => {
@@ -67,7 +80,8 @@ const InstructorCourseDetailPage = () => {
         validationMode: l.validationMode,
         description: l.description,
       })).filter((l) => !!l.id);
-      setLessons(mapped);
+      // Assurer l'ordre initial par valeur d'ordre
+      setLessons(mapped.sort((a, b) => a.order - b.order));
     } catch (err: unknown) {
       const fallback = 'Erreur lors du chargement des leçons';
       if (isAxiosError(err)) {
@@ -77,6 +91,11 @@ const InstructorCourseDetailPage = () => {
         setError(fallback);
       }
     }
+  };
+
+  // Bloque DnD sur les actions (sans empêcher le clic)
+  const stopForDnD = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
   };
 
   useEffect(() => {
@@ -92,7 +111,7 @@ const InstructorCourseDetailPage = () => {
       const payload = { ...values, title: toTitleCase(values.title) };
       await api.post(`/courses/${courseId}/lessons`, payload);
       await loadLessons();
-      reset({ title: '', order: 1, validationMode: 'read', description: '' });
+      reset({ title: '', validationMode: 'read', description: '' });
     } catch (err: unknown) {
       const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
       alert(msg ?? 'Impossible de créer la leçon');
@@ -103,7 +122,7 @@ const InstructorCourseDetailPage = () => {
 
   const startEdit = (l: Lesson) => {
     setEditingId(l.id);
-    setEditVals({ title: l.title, order: l.order, validationMode: l.validationMode, description: l.description ?? '' });
+    setEditVals({ title: l.title, validationMode: l.validationMode, description: l.description ?? '' });
   };
 
   const cancelEdit = () => setEditingId(null);
@@ -121,45 +140,142 @@ const InstructorCourseDetailPage = () => {
     }
   };
 
-  const onDelete = async (id: string) => {
-    if (!confirm('Supprimer cette leçon ?')) return;
+  // DnD handlers: réordonnancement optimiste puis persistance API
+  const onDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = lessons.findIndex((l) => l.id === String(active.id));
+    const newIndex = lessons.findIndex((l) => l.id === String(over.id));
+    if (oldIndex === -1 || newIndex === -1) return;
+    const newArr = arrayMove(lessons, oldIndex, newIndex);
+    setLessons(newArr);
+    if (!courseId) return;
     try {
-      setDeletingId(id);
-      await api.delete(`/lessons/${id}`);
+      await reorderLessonsApi(courseId, newArr.map((l) => l.id));
+      // Rechargement pour récupérer les ordres numériques mis à jour
+      await loadLessons();
+    } catch (err: unknown) {
+      // rollback: recharger depuis le serveur
+      await loadLessons();
+      const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
+      alert(msg ?? 'Réordonnancement impossible');
+    }
+  };
+
+  // Élément triable
+  function SortableItem({ l }: { l: Lesson }) {
+    const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition } = useSortable({ id: l.id, disabled: editingId === l.id });
+    const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition };
+    return (
+      <li ref={setNodeRef} className={`tile ${styles.item}`} style={style}>
+        {editingId === l.id ? (
+          <div className={styles.formGrid}>
+            <label>
+              <div>Titre</div>
+              <input type="text" value={editVals.title} onChange={(e) => setEditVals((v) => ({ ...v, title: e.target.value }))} />
+            </label>
+            <label>
+              <div>Mode de validation</div>
+              <select value={editVals.validationMode} onChange={(e) => setEditVals((v) => ({ ...v, validationMode: e.target.value as LessonForm['validationMode'] }))}>
+                <option value="read">Lecture</option>
+                <option value="pro">Pro</option>
+                <option value="qcm">QCM</option>
+              </select>
+            </label>
+            <label>
+              <div>Description</div>
+              <textarea rows={3} value={editVals.description ?? ''} onChange={(e) => setEditVals((v) => ({ ...v, description: e.target.value }))} />
+            </label>
+            <div className={styles.actions}>
+              <button type="button" className="btn btn-primary" onClick={saveEdit}>Sauvegarder</button>
+              <button type="button" className="btn btn-outline" onClick={cancelEdit}>Annuler</button>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.itemRow}>
+            <div className={styles.left}>
+              <div className={styles.name}>#{l.order} — {l.title}</div>
+              <div><span className="badge badge-mode">{l.validationMode.toUpperCase()}</span></div>
+              {l.description && <div className={styles.desc}>{l.description}</div>}
+            </div>
+            <div className={styles.actions}>
+              <span
+                ref={setActivatorNodeRef}
+                {...attributes}
+                {...listeners}
+                aria-label="Glisser pour réordonner"
+                title="Glisser pour réordonner"
+                className={styles.handle}
+              >
+                ⋮⋮
+              </span>
+              <div
+                onPointerDownCapture={stopForDnD}
+                onMouseDownCapture={stopForDnD}
+                onDragStart={(e) => e.preventDefault()}
+                className={styles.actions}
+                draggable={false}
+              >
+                <Link to={`/instructor/lessons/${l.id}/contents`}>Contenus</Link>
+                {l.validationMode === 'qcm' && (
+                  <Link to={`/instructor/lessons/${l.id}/quiz`}>QCM</Link>
+                )}
+                <button type="button" className="btn btn-outline" onClick={() => startEdit(l)}>Modifier</button>
+                <button
+                  type="button"
+                  onPointerDownCapture={stopForDnD}
+                  onMouseDownCapture={stopForDnD}
+                  onPointerDown={stopForDnD}
+                  onMouseDown={stopForDnD}
+                  onClick={(e) => { e.stopPropagation(); setPendingDeleteId(l.id); setConfirmOpen(true); }}
+                  className="btn btn-danger"
+                  disabled={deletingId === l.id}
+                  draggable={false}
+                >
+                  {deletingId === l.id ? 'Suppression…' : 'Supprimer'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </li>
+    );
+  }
+
+  const performDelete = async () => {
+    if (!pendingDeleteId) return;
+    try {
+      setDeletingId(pendingDeleteId);
+      await api.delete(`/lessons/${pendingDeleteId}`);
       await loadLessons();
     } catch (err: unknown) {
       const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
       alert(msg ?? 'Suppression impossible');
     } finally {
       setDeletingId(null);
+      setConfirmOpen(false);
+      setPendingDeleteId(null);
     }
   };
-
-  const sorted = useMemo(() => [...lessons].sort((a, b) => a.order - b.order), [lessons]);
 
   if (loading) return <div>Chargement des leçons…</div>;
   if (error) return <div style={{ color: 'crimson' }}>{error}</div>;
 
   return (
-    <div>
-      <div style={{ marginBottom: '1rem' }}>
+    <div className={styles.page}>
+      <div className={styles.header}>
         <Link to="/instructor/courses">← Retour aux modules</Link>
+        <h2>Leçons du module</h2>
       </div>
-      <h2>Leçons du module</h2>
 
-      <section style={{ margin: '1rem 0', padding: '1rem', border: '1px solid #e5e7eb', borderRadius: 8 }}>
+      <section className={`card ${styles.formCard}`}>
         <h3 style={{ marginTop: 0 }}>Créer une leçon</h3>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div style={{ display: 'grid', gap: 8, maxWidth: 720 }}>
+          <div className={styles.formGrid}>
             <label>
               <div>Titre</div>
               <input type="text" placeholder="Ex: Posture de base" {...register('title')} />
               {errors.title && <div style={{ color: 'crimson' }}>{errors.title.message}</div>}
-            </label>
-            <label>
-              <div>Ordre</div>
-              <input type="number" min={1} step={1} {...register('order', { valueAsNumber: true })} />
-              {errors.order && <div style={{ color: 'crimson' }}>{errors.order.message}</div>}
             </label>
             <label>
               <div>Mode de validation</div>
@@ -174,68 +290,66 @@ const InstructorCourseDetailPage = () => {
               <textarea rows={3} placeholder="Texte/HTML d'explication (affiché dans la modale joueur)" {...register('description')} />
             </label>
             <div>
-              <button type="submit" disabled={submitting}>{submitting ? 'Création…' : '+ Créer la leçon'}</button>
+              <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Création…' : '+ Créer la leçon'}</button>
             </div>
           </div>
         </form>
       </section>
 
       <section>
-        {sorted.length === 0 ? (
+        {lessons.length === 0 ? (
           <div>Aucune leçon pour le moment.</div>
         ) : (
-          <ul style={{ padding: 0, listStyle: 'none', display: 'grid', gap: 12 }}>
-            {sorted.map((l) => (
-              <li key={l.id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '0.75rem' }}>
-                {editingId === l.id ? (
-                  <div style={{ display: 'grid', gap: 8 }}>
-                    <label>
-                      <div>Titre</div>
-                      <input type="text" value={editVals.title} onChange={(e) => setEditVals((v) => ({ ...v, title: e.target.value }))} />
-                    </label>
-                    <label>
-                      <div>Ordre</div>
-                      <input type="number" min={1} step={1} value={editVals.order} onChange={(e) => setEditVals((v) => ({ ...v, order: Number(e.target.value) }))} />
-                    </label>
-                    <label>
-                      <div>Mode de validation</div>
-                      <select value={editVals.validationMode} onChange={(e) => setEditVals((v) => ({ ...v, validationMode: e.target.value as LessonForm['validationMode'] }))}>
-                        <option value="read">Lecture</option>
-                        <option value="pro">Pro</option>
-                        <option value="qcm">QCM</option>
-                      </select>
-                    </label>
-                    <label>
-                      <div>Description</div>
-                      <textarea rows={3} value={editVals.description ?? ''} onChange={(e) => setEditVals((v) => ({ ...v, description: e.target.value }))} />
-                    </label>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button type="button" onClick={saveEdit}>Sauvegarder</button>
-                      <button type="button" onClick={cancelEdit}>Annuler</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>#{l.order} — {l.title}</div>
-                      <div style={{ fontSize: 14, color: '#475569' }}>Mode: {l.validationMode}</div>
-                      {l.description && <div style={{ fontSize: 13, opacity: 0.9, marginTop: 4 }}>{l.description}</div>}
-                    </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <Link to={`/instructor/lessons/${l.id}/contents`}>Contenus</Link>
-                      {l.validationMode === 'qcm' && (
-                        <Link to={`/instructor/lessons/${l.id}/quiz`}>QCM</Link>
-                      )}
-                      <button type="button" onClick={() => startEdit(l)}>Modifier</button>
-                      <button type="button" onClick={() => onDelete(l.id)} disabled={deletingId === l.id}>{deletingId === l.id ? 'Suppression…' : 'Supprimer'}</button>
-                    </div>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+          <>
+          <div className={styles.hint}>Astuce: utilisez l'icône « ⋮⋮ » pour glisser-déposer et réordonner les leçons.</div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={lessons.filter((l) => l.id !== editingId).map((l) => l.id)} strategy={verticalListSortingStrategy}>
+              <ul className={styles.list}>
+                {lessons.map((l) => (
+                  l.id === editingId ? (
+                    <li key={l.id} className={`tile ${styles.item}`}>
+                      <div className={styles.formGrid}>
+                        <label>
+                          <div>Titre</div>
+                          <input type="text" value={editVals.title} onChange={(e) => setEditVals((v) => ({ ...v, title: e.target.value }))} />
+                        </label>
+                        <label>
+                          <div>Mode de validation</div>
+                          <select value={editVals.validationMode} onChange={(e) => setEditVals((v) => ({ ...v, validationMode: e.target.value as LessonForm['validationMode'] }))}>
+                            <option value="read">Lecture</option>
+                            <option value="pro">Pro</option>
+                            <option value="qcm">QCM</option>
+                          </select>
+                        </label>
+                        <label>
+                          <div>Description</div>
+                          <textarea rows={3} value={editVals.description ?? ''} onChange={(e) => setEditVals((v) => ({ ...v, description: e.target.value }))} />
+                        </label>
+                        <div className={styles.actions}>
+                          <button type="button" className="btn btn-primary" onClick={saveEdit}>Sauvegarder</button>
+                          <button type="button" className="btn btn-outline" onClick={cancelEdit}>Annuler</button>
+                        </div>
+                      </div>
+                    </li>
+                  ) : (
+                    <SortableItem key={l.id} l={l} />
+                  )
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
+          </>
         )}
       </section>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Supprimer la leçon"
+        message={<span>Cette action est irréversible. Confirmer la suppression ?</span>}
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        onConfirm={performDelete}
+        onCancel={() => { setConfirmOpen(false); setPendingDeleteId(null); }}
+      />
     </div>
   );
 };

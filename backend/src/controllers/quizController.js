@@ -131,12 +131,12 @@ exports.deleteQuiz = async (req, res, next) => {
 
     const lesson = await Lesson.findById(quiz.lesson).populate('course');
 
-    // Check if the user is the course owner or an admin
-    if (lesson.course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
+    // Check if the user is an instructor or an admin
+    if (req.user.role !== 'admin' && req.user.role !== 'instructor') {
       return res.status(403).json({ status: 'error', message: 'User not authorized to delete this quiz' });
     }
 
-    await quiz.remove();
+    await Quiz.deleteOne({ _id: quiz._id });
 
     res.status(200).json({
       status: 'success',

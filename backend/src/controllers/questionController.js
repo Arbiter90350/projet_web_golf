@@ -131,6 +131,14 @@ exports.deleteQuestion = async (req, res, next) => {
         // Clean up related answers to avoid orphans
         await Answer.deleteMany({ question: question._id });
 
+        await Question.deleteOne({ _id: question._id });
+
+        // Remove this question reference from quiz.questions
+        await Quiz.findByIdAndUpdate(question.quiz, { $pull: { questions: question._id } });
+
+        // Clean up related answers to avoid orphans
+        await Answer.deleteMany({ question: question._id });
+
         await question.remove();
 
         res.status(200).json({

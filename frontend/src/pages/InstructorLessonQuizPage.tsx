@@ -12,7 +12,7 @@ import { isAxiosError } from 'axios';
 
 // Schéma création du quiz
 const quizSchema = z.object({
-  title: z.string().min(3, 'Titre trop court').max(120, 'Titre trop long').optional(),
+  title: z.string().min(3, 'Titre trop court').max(120, 'Titre trop long'),
   passingScore: z.coerce.number().int().min(0).max(100),
 });
 
@@ -155,7 +155,7 @@ const InstructorLessonQuizPage = () => {
     if (!lessonId) return;
     try {
       await QuizzesService.createQuizForLesson(lessonId, {
-        title: vals.title?.trim() || undefined,
+        title: vals.title.trim(),
         passingScore: vals.passingScore,
       });
       resetQuizForm({ title: '', passingScore: 70 });
@@ -380,7 +380,7 @@ const InstructorLessonQuizPage = () => {
           <form onSubmit={handleQuizSubmit(onCreateQuiz)}>
             <div style={{ display: 'grid', gap: 8, maxWidth: 560 }}>
               <label>
-                <div>Titre (optionnel)</div>
+                <div>Titre</div>
                 <input type="text" placeholder="Ex: Règles de base" {...regQuiz('title')} />
                 {quizErrors.title && <div style={{ color: 'crimson' }}>{quizErrors.title.message}</div>}
               </label>
