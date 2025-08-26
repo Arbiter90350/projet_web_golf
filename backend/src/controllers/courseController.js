@@ -49,17 +49,8 @@ exports.reorderCourses = async (req, res, next) => {
       return res.status(400).json({ status: 'error', message: 'Invalid course IDs in payload' });
     }
 
-    const isAdmin = req.user && req.user.role === 'admin';
-    const scopeFilter = isAdmin ? {} : { instructor: req.user.id };
-
-    // Verify authorization for each id
-    const authorized = await Course.find({ _id: { $in: validIds }, ...scopeFilter }).select('_id');
-    const allowedSet = new Set(authorized.map((c) => c._id.toString()));
-
     const ops = validIds
-      .map((id, index) => ({ id, index }))
-      .filter(({ id }) => allowedSet.has(id))
-      .map(({ id, index }) => ({
+      .map((id, index) => ({
         updateOne: {
           filter: { _id: id },
           update: { $set: { order: index } },
@@ -67,7 +58,7 @@ exports.reorderCourses = async (req, res, next) => {
       }));
 
     if (ops.length === 0) {
-      return res.status(400).json({ status: 'error', message: 'No authorized courses to reorder' });
+      return res.status(400).json({ status: 'error', message: 'No courses to reorder' });
     }
 
     await Course.bulkWrite(ops);
@@ -88,10 +79,8 @@ exports.getCourses = async (req, res, next) => {
     // Filtrage selon le rôle et tri par ordre puis date de création
     if (req.user && req.user.role === 'player') {
       query = Course.find({ isPublished: true });
-    } else if (req.user && req.user.role === 'instructor') {
-      query = Course.find({ instructor: req.user.id });
     } else {
-      // Admins can see all courses
+      // Pour les instructeurs et admins, afficher tous les cours
       query = Course.find();
     }
 
@@ -147,11 +136,6 @@ exports.updateCourse = async (req, res, next) => {
       return res.status(404).json({ status: 'error', message: 'Course not found' });
     }
 
-    // Check if the user is the course owner or an admin (robuste si instructor manquant)
-    if ((!course.instructor || course.instructor.toString() !== req.user.id) && req.user.role !== 'admin') {
-        return res.status(403).json({ status: 'error', message: 'User not authorized to update this course' });
-    }
-
     course = await Course.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
@@ -181,11 +165,7 @@ exports.deleteCourse = async (req, res, next) => {
       return res.status(404).json({ status: 'error', message: 'Course not found' });
     }
 
-    // Check if the user is the course owner or an admin (robuste si instructor manquant)
-    if ((!course.instructor || course.instructor.toString() !== req.user.id) && req.user.role !== 'admin') {
-        return res.status(403).json({ status: 'error', message: 'User not authorized to delete this course' });
-    }
-
+    // Tous les instructeurs peuvent supprimer n'importe quel cours
     // Récupérer les leçons rattachées au module
     const lessonDocs = await Lesson.find({ course: course._id }).select('_id');
     const lessonIds = lessonDocs.map(l => l._id);
