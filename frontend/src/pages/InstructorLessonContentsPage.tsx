@@ -193,7 +193,7 @@ const InstructorLessonContentsPage = () => {
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button type="button" onClick={() => startEdit(c)}>Modifier</button>
-                      <button type="button" onClick={() => onDelete(c.id)} disabled={deletingId === c.id}>{deletingId === c.id ? 'Suppression…' : 'Supprimer'}</button>
+                      <button type="button" className="btn btn-danger" onClick={() => onDelete(c.id)} disabled={deletingId === c.id}>{deletingId === c.id ? 'Suppression…' : 'Supprimer'}</button>
                     </div>
                   </div>
                 )}

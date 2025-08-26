@@ -110,7 +110,8 @@ services:
 # Configuration des volumes et réseaux
 volumes:
   mongodb_data:
-    driver: local
+    external: true
+    name: projet_web_golf_mongodb_data
 
 networks:
   fairway-network:

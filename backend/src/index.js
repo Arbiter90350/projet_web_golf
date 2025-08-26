@@ -18,6 +18,7 @@ const questionRoutes = require('./routes/questions');
 const answerRoutes = require('./routes/answers');
 const contentRoutes = require('./routes/contents');
 const progressRoutes = require('./routes/progress');
+const userRoutes = require('./routes/users');
 
 // Initialisation de l'application Express
 const app = express();
@@ -77,6 +78,7 @@ app.use('/api/v1/questions', questionRoutes);
 app.use('/api/v1/answers', answerRoutes);
 app.use('/api/v1/contents', contentRoutes);
 app.use('/api/v1/progress', progressRoutes);
+app.use('/api/v1/users', userRoutes);
 
 // Routes de base
 app.get('/', (req, res) => {

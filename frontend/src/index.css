@@ -111,6 +111,17 @@ a:focus-visible {
   border-color: #9ca3af;
 }
 
+/* Bouton d'action destructrice (rouge) */
+.btn-danger {
+  background: #b91c1c; /* red-700 */
+  color: #fff;
+  border-color: #991b1b; /* red-800 */
+}
+.btn-danger:hover {
+  background: #991b1b; /* red-800 */
+  border-color: #7f1d1d; /* red-900 */
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -125,6 +136,13 @@ a:focus-visible {
   color: #3730a3;
 }
 
+/* Badge pour utilisateur non vérifié */
+.badge-unverified {
+  background: #f3f4f6; /* gray-100 */
+  color: #374151; /* gray-700 */
+  border-color: #e5e7eb; /* gray-200 */
+}
+
 /* Boutons: focus accessible et animation de press subtile */
 .btn:focus-visible {
   outline: none;
@@ -132,6 +150,44 @@ a:focus-visible {
 }
 .btn:active {
   transform: translateY(1px);
+}
+
+/* Variante petite pour l'action dans les tableaux */
+.btn-sm {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.875rem;
+  border-radius: 6px;
+}
+
+/* Tableaux administrateur propres et lisibles */
+.table-clean {
+  border-collapse: collapse;
+  width: 100%;
+}
+.table-clean thead th {
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 8px 10px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.table-clean tbody td {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 8px 10px;
+  vertical-align: middle;
+}
+/* Survol de ligne pour indiquer l'alignement visuel */
+.table-row-hover:hover td {
+  background: #f9fafb;
+}
+/* Focus visuel quand on interagit avec le sélecteur de rôle */
+.table-row-focused td {
+  background: #eef2ff;
+}
+/* Mise en avant des comptes non vérifiés */
+.table-row-unverified td {
+  background: #f3f4f6; /* gris clair */
+  color: #374151;
 }
 
 /* Respecte les préférences utilisateurs pour les animations */

@@ -27,6 +27,15 @@ export default function LessonModal({
   const [actionLoading, setActionLoading] = useState(false);
   const [lessonInfo, setLessonInfo] = useState<{ description?: string } | null>(null);
 
+  // Type guard pour détecter une erreur d'annulation Axios/Abort sans utiliser `any`
+  const isCanceled = (err: unknown): boolean => {
+    if (typeof err === 'object' && err !== null) {
+      if ('code' in err && (err as { code?: string }).code === 'ERR_CANCELED') return true;
+      if ('name' in err && (err as { name?: string }).name === 'CanceledError') return true;
+    }
+    return false;
+  };
+
   useEffect(() => {
     if (!open || !lesson) return;
     const ctrl = new AbortController();
@@ -37,9 +46,9 @@ export default function LessonModal({
         const lessonRes = await api.get(`/lessons/${lesson._id}`, { signal: ctrl.signal });
         const info = (lessonRes?.data?.data ?? null) as { description?: string } | null;
         if (!ctrl.signal.aborted) setLessonInfo(info);
-      } catch (err) {
+      } catch (err: unknown) {
         // Ignorer si la requête est annulée
-        if ((err as any)?.code === 'ERR_CANCELED' || (err as any)?.name === 'CanceledError') return;
+        if (isCanceled(err)) return;
         setLessonInfo(null);
       }
 
@@ -48,8 +57,8 @@ export default function LessonModal({
         const contentsRes = await api.get(`/lessons/${lesson._id}/contents`, { signal: ctrl.signal });
         const arr = Array.isArray(contentsRes?.data?.data) ? contentsRes.data.data : [];
         if (!ctrl.signal.aborted) setContents(arr);
-      } catch (err) {
-        if ((err as any)?.code === 'ERR_CANCELED' || (err as any)?.name === 'CanceledError') return;
+      } catch (err: unknown) {
+        if (isCanceled(err)) return;
         setContents([]);
       } finally {
         if (!ctrl.signal.aborted) setLoading(false);
