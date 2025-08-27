@@ -8,7 +8,9 @@ const {
   verifyEmail,
   resendVerification,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  updateMe,
+  deleteMe,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 // Limiteurs de débit spécifiques aux routes d'authentification
@@ -80,6 +82,34 @@ router.put('/reset-password/:token', authLimiter, resetPassword);
 // @route   GET /api/auth/me
 // @access  Private
 router.get('/me', protect, getMe);
+
+// @desc    Update current logged in user
+// @route   PUT /api/auth/me
+// @access  Private
+router.put(
+  '/me',
+  protect,
+  [
+    // Champs optionnels mais validés si présents
+    body('firstName').optional().isString().trim().notEmpty().withMessage('First name must be a non-empty string'),
+    body('lastName').optional().isString().trim().notEmpty().withMessage('Last name must be a non-empty string'),
+    body('newPassword').optional().isString().isLength({ min: 8 }).withMessage('New password must be at least 8 chars'),
+    body('currentPassword').custom((value, { req }) => {
+      if (req.body && req.body.newPassword) {
+        if (!value || typeof value !== 'string' || value.length === 0) {
+          throw new Error('Current password is required to change password');
+        }
+      }
+      return true;
+    }),
+  ],
+  updateMe
+);
+
+// @desc    Delete current logged in user
+// @route   DELETE /api/auth/me
+// @access  Private
+router.delete('/me', protect, deleteMe);
 
 // @desc    Log user out
 // @route   POST /api/auth/logout

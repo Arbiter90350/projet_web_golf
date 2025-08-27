@@ -25,6 +25,7 @@ import QuizPage from './pages/QuizPage';
 import InstructorLessonQuizPage from './pages/InstructorLessonQuizPage';
 import InstructorPlayersPage from './pages/InstructorPlayersPage';
 import InstructorPlayerProgressPage from './pages/InstructorPlayerProgressPage';
+import ProfilePage from './pages/ProfilePage';
 
 // Redirection d'accueil selon le rôle
 function HomeRedirect() {
@@ -60,15 +61,14 @@ function App() {
             }
           />
 
-          {/* Protected routes for authenticated users */}
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
+          {/* Protected routes */}
+          <Route element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }>
+            {/* Profile */}
+            <Route path="/mon-compte" element={<ProfilePage />} />
             {/* Index route -> role-based landing */}
             <Route index element={<HomeRedirect />} />
             {/* Dashboard et espace cours réservés aux joueurs */}
