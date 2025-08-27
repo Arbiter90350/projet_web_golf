@@ -5,6 +5,10 @@ pnpm-lock.yaml
 yarn.lock
 .pnpm-store
 
+# Ignorer l'artéfact de workspace imbriqué (évite l'erreur de contexte Docker)
+backend/
+# Symlink résiduel potentiel créé par une dépendance locale file:..
+node_modules/fairway-progress-hub-backend
 # Logs et couvertures
 logs
 *.log

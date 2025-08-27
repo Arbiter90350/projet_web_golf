@@ -19,6 +19,7 @@ const answerRoutes = require('./routes/answers');
 const contentRoutes = require('./routes/contents');
 const progressRoutes = require('./routes/progress');
 const userRoutes = require('./routes/users');
+const fileRoutes = require('./routes/files');
 
 // Initialisation de l'application Express
 const app = express();
@@ -69,16 +70,16 @@ app.use(
 );
 
 // Routes d'API
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/courses', courseRoutes);
-app.use('/api/v1/modules', courseRoutes); // alias des cours en tant que modules
-app.use('/api/v1/lessons', lessonRoutes);
-app.use('/api/v1/quizzes', quizRoutes);
-app.use('/api/v1/questions', questionRoutes);
-app.use('/api/v1/answers', answerRoutes);
-app.use('/api/v1/contents', contentRoutes);
-app.use('/api/v1/progress', progressRoutes);
-app.use('/api/v1/users', userRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/lessons', lessonRoutes);
+app.use('/api/quizzes', quizRoutes);
+app.use('/api/questions', questionRoutes);
+app.use('/api/answers', answerRoutes);
+app.use('/api/contents', contentRoutes);
+app.use('/api/progress', progressRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/files', fileRoutes);
 
 // Routes de base
 app.get('/', (req, res) => {

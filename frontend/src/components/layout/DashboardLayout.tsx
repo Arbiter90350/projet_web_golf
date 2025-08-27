@@ -31,6 +31,7 @@ const DashboardLayout = () => {
   const instructorNav = [
     { to: '/instructor/courses', label: 'Cours (instructeur)' },
     { to: '/instructor/players', label: 'Élèves (instructeur)' },
+    { to: '/instructor/files', label: 'Stockage (fichiers)' },
   ];
 
   const adminNav = [

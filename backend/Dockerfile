@@ -7,8 +7,8 @@ WORKDIR /app
 # Copier les fichiers de dépendances
 COPY package*.json ./
 
-# Installer les dépendances de production uniquement
-RUN npm install --only=production
+# Installer les dépendances de production uniquement de manière reproductible
+RUN npm ci --omit=dev
 
 # Utilitaires nécessaires (ex: curl pour healthcheck)
 RUN apk add --no-cache curl

@@ -119,7 +119,7 @@ const InstructorCoursesPage = () => {
   const loadCourses = useCallback(async () => {
     try {
       setError(null);
-      const { data } = await api.get('/modules');
+      const { data } = await api.get('/courses');
       const arr = Array.isArray(data?.data) ? (data.data as BackendCourse[]) : [];
       const mapped: Course[] = arr
         .map((c) => ({
@@ -156,7 +156,7 @@ const InstructorCoursesPage = () => {
     setCourses(nextArr);
     setReorderSaving(true);
     try {
-      await api.put('/modules/reorder', { ids: nextArr.map((c: Course) => c.id) });
+      await api.put('/courses/reorder', { ids: nextArr.map((c: Course) => c.id) });
       // Afficher une confirmation non bloquante (toast) lorsque l'ordre est enregistré côté serveur
       toast.success(t('instructor.courses.reorder_success'));
     } catch (err) {
@@ -186,7 +186,7 @@ const InstructorCoursesPage = () => {
     if (!editingId) return;
     try {
       const payload = { ...editVals, title: toTitleCase(editVals.title) };
-      await api.put(`/modules/${editingId}`, payload);
+      await api.put(`/courses/${editingId}`, payload);
       await loadCourses();
       setEditingId(null);
       setShowEditModal(false);
@@ -207,7 +207,7 @@ const InstructorCoursesPage = () => {
     try {
       setSubmitting(true);
       const payload = { ...values, title: toTitleCase(values.title) };
-      await api.post('/modules', payload);
+      await api.post('/courses', payload);
       await loadCourses();
       reset({ title: '', description: '', isPublished: false });
       setShowCreateModal(false);
@@ -224,7 +224,7 @@ const InstructorCoursesPage = () => {
   const onDelete = async (id: string) => {
     try {
       setDeletingId(id);
-      await api.delete(`/modules/${id}`);
+      await api.delete(`/courses/${id}`);
       await loadCourses();
     } catch (err: unknown) {
       const msg = isAxiosError(err)

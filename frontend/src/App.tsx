@@ -26,6 +26,7 @@ import InstructorLessonQuizPage from './pages/InstructorLessonQuizPage';
 import InstructorPlayersPage from './pages/InstructorPlayersPage';
 import InstructorPlayerProgressPage from './pages/InstructorPlayerProgressPage';
 import ProfilePage from './pages/ProfilePage';
+import FileManagerPage from './pages/FileManagerPage';
 
 // Redirection d'accueil selon le rôle
 function HomeRedirect() {
@@ -122,6 +123,11 @@ function App() {
             <Route path="instructor/players/:userId" element={
               <RequireRole roles={["instructor", "admin"]}>
                 <InstructorPlayerProgressPage />
+              </RequireRole>
+            } />
+            <Route path="instructor/files" element={
+              <RequireRole roles={["instructor", "admin"]}>
+                <FileManagerPage />
               </RequireRole>
             } />
             {/* Admin area */}

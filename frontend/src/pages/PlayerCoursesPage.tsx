@@ -33,7 +33,7 @@ const PlayerCoursesPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const { data } = await api.get('/modules');
+        const { data } = await api.get('/courses');
         // Backend renvoie { status, count, data: Course[] }
         const arr = (Array.isArray(data?.data) ? data.data : []) as BackendCourse[];
         const mapped: Array<{ id: string; title: string; description?: string }> = [];
@@ -68,7 +68,7 @@ const PlayerCoursesPage = () => {
         // 1) Charger toutes les leçons de chaque module en parallèle
         const lessonsPerModule = await Promise.all(
           modules.map(async (m) => {
-            const { data } = await api.get(`/modules/${m.id}/lessons`);
+            const { data } = await api.get(`/courses/${m.id}/lessons`);
             const ls: Array<{ _id: string; title: string; order: number; validationMode: 'read' | 'pro' | 'qcm' }>
               = Array.isArray(data?.data) ? data.data : [];
             return { id: m.id, lessons: ls };
@@ -125,7 +125,7 @@ const PlayerCoursesPage = () => {
       try {
         setLoading(true);
         const [lessonsRes, progRes] = await Promise.all([
-          api.get(`/modules/${moduleId}/lessons`),
+          api.get(`/courses/${moduleId}/lessons`),
           api.get(`/progress/me`, { params: { courseId: moduleId } }),
         ]);
         const lessons = Array.isArray(lessonsRes.data?.data) ? lessonsRes.data.data : [];

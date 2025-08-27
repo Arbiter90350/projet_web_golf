@@ -1,9 +1,9 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 
-// L'URL de base de l'API. En production (Docker), il s'agit d'un chemin relatif (/api/v1)
+// L'URL de base de l'API. En production (Docker), il s'agit d'un chemin relatif (/api)
 // qui est intercepté par le reverse proxy Nginx. En développement local (Vite dev server),
-// ce serait une URL absolue (ex: http://localhost:5000/api/v1).
-const baseURL = import.meta.env.VITE_API_URL || '/api/v1';
+// ce serait une URL absolue (ex: http://localhost:5000/api).
+const baseURL = import.meta.env.VITE_API_URL || '/api';
 
 const apiTimeout = Number(import.meta.env.VITE_API_TIMEOUT_MS || 20000);
 const api = axios.create({ baseURL, timeout: apiTimeout });

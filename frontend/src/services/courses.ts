@@ -44,13 +44,13 @@ const mapCourse = (c: BackendCourse): Course | null => ({
 
 // --- Services
 export async function listCourses(): Promise<Course[]> {
-  const { data } = await api.get('/modules');
+  const { data } = await api.get('/courses');
   const arr = Array.isArray(data?.data) ? (data.data as BackendCourse[]) : [];
   return arr.map(mapCourse).filter((c): c is Course => !!c && !!c.id);
 }
 
 export async function getCourse(id: string): Promise<Course> {
-  const { data } = await api.get(`/modules/${id}`);
+  const { data } = await api.get(`/courses/${id}`);
   const mapped = mapCourse(data?.data as BackendCourse);
   if (!mapped || !mapped.id) throw new Error('Course not found');
   return mapped;
@@ -58,7 +58,7 @@ export async function getCourse(id: string): Promise<Course> {
 
 export async function createCourse(payload: CourseCreate): Promise<Course> {
   const body = CourseCreateSchema.parse(payload);
-  const { data } = await api.post('/modules', body);
+  const { data } = await api.post('/courses', body);
   const mapped = mapCourse(data?.data as BackendCourse);
   if (!mapped || !mapped.id) throw new Error('Création du module: réponse invalide');
   return mapped;
@@ -66,12 +66,12 @@ export async function createCourse(payload: CourseCreate): Promise<Course> {
 
 export async function updateCourse(id: string, payload: CourseUpdate): Promise<Course> {
   const body = CourseUpdateSchema.parse(payload);
-  const { data } = await api.put(`/modules/${id}`, body);
+  const { data } = await api.put(`/courses/${id}`, body);
   const mapped = mapCourse(data?.data as BackendCourse);
   if (!mapped || !mapped.id) throw new Error('Mise à jour du module: réponse invalide');
   return mapped;
 }
 
 export async function deleteCourse(id: string): Promise<void> {
-  await api.delete(`/modules/${id}`);
+  await api.delete(`/courses/${id}`);
 }
