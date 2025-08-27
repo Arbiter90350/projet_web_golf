@@ -272,4 +272,73 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, getMe, logout, verifyEmail, resendVerification, forgotPassword, resetPassword };
+// @desc    Update current logged in user (names and/or password)
+// @route   PUT /api/auth/me
+// @access  Private
+const updateMe = async (req, res, next) => {
+  try {
+    // Charger l'utilisateur avec le mot de passe pour vérification si nécessaire
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+      return res.status(404).json({ status: 'error', message: 'User not found' });
+    }
+
+    const { firstName, lastName, currentPassword, newPassword } = req.body || {};
+
+    // Mise à jour des champs autorisés uniquement (sécurité: pas d'email/role ici)
+    if (typeof firstName === 'string' && firstName.trim().length > 0) {
+      user.firstName = firstName.trim();
+    }
+    if (typeof lastName === 'string' && lastName.trim().length > 0) {
+      user.lastName = lastName.trim();
+    }
+
+    // Changement de mot de passe (optionnel)
+    if (typeof newPassword === 'string' && newPassword.length > 0) {
+      if (!currentPassword) {
+        return res.status(400).json({ status: 'error', message: 'Current password is required to change password' });
+      }
+      const isMatch = await user.matchPassword(currentPassword);
+      if (!isMatch) {
+        return res.status(400).json({ status: 'error', message: 'Current password is incorrect' });
+      }
+      user.password = newPassword; // sera hashé par le hook pre('save')
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        user: {
+          id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete current logged in user
+// @route   DELETE /api/auth/me
+// @access  Private
+const deleteMe = async (req, res, next) => {
+  try {
+    // Par sécurité, empêcher la suppression des comptes sensibles via cet endpoint
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'instructor')) {
+      return res.status(403).json({ status: 'error', message: 'This account cannot be deleted via this endpoint' });
+    }
+
+    await User.findByIdAndDelete(req.user.id);
+    return res.status(200).json({ status: 'success', message: 'Account deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { register, login, getMe, logout, verifyEmail, resendVerification, forgotPassword, resetPassword, updateMe, deleteMe };

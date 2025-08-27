@@ -68,7 +68,9 @@ services:
       dockerfile: Dockerfile
       args:
         # Passe la variable au build Vite pour être injectée dans le bundle
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:5001/api/v1}
+        # L'URL de l'API est maintenant gérée par le reverse proxy Nginx.
+        # On passe une URL relative pour que les appels se fassent sur le même domaine.
+        VITE_API_URL: /api/v1
     container_name: fairway-frontend
     restart: always
     ports:

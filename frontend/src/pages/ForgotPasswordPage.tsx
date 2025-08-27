@@ -55,6 +55,7 @@ const ForgotPasswordPage = () => {
               required
               className={styles.input}
               placeholder={t('common:email_placeholder')}
+              autoComplete="email"
             />
             {errors.email && (
               <small className={styles.error} role="alert">{errors.email.message}</small>
