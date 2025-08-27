@@ -34,3 +34,5 @@ yarn-error.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
+user-policy.json
+cors.json

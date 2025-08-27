@@ -20,6 +20,8 @@
   "author": "Fairway Progress Hub Team",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.876.0",
+    "@aws-sdk/s3-request-presigner": "^3.876.0",
     "@sendgrid/mail": "^8.1.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
@@ -27,12 +29,13 @@
     "express": "^5.1.0",
     "express-rate-limit": "^7.1.5",
     "express-validator": "^7.2.1",
-    "fairway-progress-hub": "file:..",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.5",
     "morgan": "^1.10.0",
+    "multer": "^2.0.2",
     "nodemailer": "^6.9.13",
+    "uuid": "^9.0.1",
     "winston": "^3.13.0"
   },
   "engines": {

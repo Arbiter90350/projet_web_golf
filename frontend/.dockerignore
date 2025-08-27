@@ -1,0 +1,27 @@
+# Exclude local development artifacts from Docker build context
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+/dist
+/.vite
+
+# VCS
+.git
+.gitignore
+
+# IDE/editor
+.vscode
+.idea
+
+# Tests/coverage
+coverage
+.eslintcache
+
+# Misc
+Dockerfile
+**/*.local
+*.log

@@ -30,8 +30,23 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       PORT: 5000
       FRONTEND_URL: ${FRONTEND_URL}
+      # Disable AWS SDK request checksums to avoid x-amz-sdk-checksum-* on presigned PUT (OVH incompatibility)
+      AWS_SDK_REQUEST_CHECKSUM_CALCULATION: ${AWS_SDK_REQUEST_CHECKSUM_CALCULATION:-never}
+      # OVH Object Storage (S3-compatible)
+      # These must be provided via the root .env file
+      OVH_ENDPOINT: ${OVH_ENDPOINT}
+      OVH_REGION: ${OVH_REGION}
+      OVH_ACCESS_KEY: ${OVH_ACCESS_KEY}
+      OVH_SECRET_KEY: ${OVH_SECRET_KEY}
+      OVH_CONTAINER: ${OVH_CONTAINER}
+      OVH_BASE_URL: ${OVH_BASE_URL}
       # Autorise les origines CORS en développement (Vite 5173) et localhost (port 80)
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173,http://localhost}
+      # Limites d'upload (Doivent rester cohérentes avec Nginx et le frontend)
+      # 500 Mo par défaut si non fourni via .env
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-524288000}
+      # Types MIME autorisés pour l'upload (séparés par des virgules)
+      ALLOWED_FILE_TYPES: ${ALLOWED_FILE_TYPES:-video/mp4,application/pdf,image/png,image/jpeg}
       # Configuration Email
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
       EMAIL_FROM: ${EMAIL_FROM}
@@ -70,7 +85,7 @@ services:
         # Passe la variable au build Vite pour être injectée dans le bundle
         # L'URL de l'API est maintenant gérée par le reverse proxy Nginx.
         # On passe une URL relative pour que les appels se fassent sur le même domaine.
-        VITE_API_URL: /api/v1
+        VITE_API_URL: /api
     container_name: fairway-frontend
     restart: always
     ports:

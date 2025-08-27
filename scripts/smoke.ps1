@@ -17,7 +17,15 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $dotenv = Join-Path $repoRoot '.env'
 if (-not $BaseUrl -or $BaseUrl.Trim() -eq '') {
   $envUrl = Get-EnvFromFile $dotenv 'VITE_API_URL'
-  $BaseUrl = if ($envUrl) { $envUrl } else { 'http://localhost:5001/api/v1' }
+  if ($envUrl) {
+    # Si VITE_API_URL est relatif (ex: "/api"), on cible le frontend (Nginx) en local
+    if ($envUrl.StartsWith('/')) { $BaseUrl = ('http://localhost{0}' -f $envUrl) }
+    else { $BaseUrl = $envUrl }
+  }
+  else {
+    # Par défaut, cibler directement le backend exposé par docker-compose
+    $BaseUrl = 'http://localhost:5001/api'
+  }
 }
 
 # Read seeded credentials from .env (no printing)

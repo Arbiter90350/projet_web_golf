@@ -12,5 +12,9 @@
     "dev:frontend": "npm -w frontend run dev",
     "dev:backend": "npm -w backend run dev",
     "smoke": "powershell -ExecutionPolicy Bypass -File ./scripts/smoke.ps1"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.0.0",
+    "antd": "^5.27.1"
   }
 }
