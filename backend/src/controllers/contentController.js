@@ -1,5 +1,6 @@
 const Content = require('../models/Content');
 const Lesson = require('../models/Lesson');
+const storageService = require('../services/storageService');
 const MAX_TIME_MS = Number(process.env.DB_QUERY_MAX_TIME_MS || 15000);
 
 // @desc    Get all content for a specific lesson
@@ -19,10 +20,25 @@ exports.getContents = async (req, res, next) => {
 
     const contents = await Content.find({ lesson: req.params.lessonId }).maxTimeMS(MAX_TIME_MS);
 
+    // Génère des URLs signées pour chaque élément (lecture privée)
+    const withSigned = await Promise.all(contents.map(async (c) => {
+      const signedUrl = await storageService.getSignedUrl(c.fileName);
+      return {
+        _id: c._id,
+        contentType: c.contentType,
+        fileName: c.fileName,
+        // compat FE: expose aussi `url` pour lien direct temporaire
+        url: signedUrl,
+        lesson: c.lesson,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      };
+    }));
+
     res.status(200).json({
       status: 'success',
-      count: contents.length,
-      data: contents
+      count: withSigned.length,
+      data: withSigned,
     });
   } catch (error) {
     next(error);
@@ -50,11 +66,30 @@ exports.addContent = async (req, res, next) => {
       return res.status(403).json({ status: 'error', message: 'User not authorized to add content to this lesson' });
     }
 
-    const content = await Content.create(req.body);
+    // Validation d'entrée: on attend fileName (clé interne), pas d'URL publique
+    const { contentType, fileName } = req.body || {};
+    if (!contentType || !fileName) {
+      return res.status(400).json({ status: 'error', message: 'contentType et fileName sont requis' });
+    }
 
+    const content = await Content.create({
+      contentType,
+      fileName,
+      lesson: req.params.lessonId,
+    });
+
+    const signedUrl = await storageService.getSignedUrl(content.fileName);
     res.status(201).json({
       status: 'success',
-      data: content
+      data: {
+        _id: content._id,
+        contentType: content.contentType,
+        fileName: content.fileName,
+        url: signedUrl,
+        lesson: content.lesson,
+        createdAt: content.createdAt,
+        updatedAt: content.updatedAt,
+      }
     });
   } catch (error) {
     next(error);
@@ -72,9 +107,18 @@ exports.getContent = async (req, res, next) => {
             return res.status(404).json({ status: 'error', message: 'Content not found' });
         }
 
+        const signedUrl = await storageService.getSignedUrl(content.fileName);
         res.status(200).json({
             status: 'success',
-            data: content
+            data: {
+              _id: content._id,
+              contentType: content.contentType,
+              fileName: content.fileName,
+              url: signedUrl,
+              lesson: content.lesson,
+              createdAt: content.createdAt,
+              updatedAt: content.updatedAt,
+            }
         });
     } catch (error) {
         next(error);
@@ -99,14 +143,28 @@ exports.updateContent = async (req, res, next) => {
             return res.status(403).json({ status: 'error', message: 'User not authorized to update this content' });
         }
 
-        content = await Content.findByIdAndUpdate(req.params.id, req.body, {
+        // N'autoriser que contentType et fileName à être modifiés (pas de lesson)
+        const payload = {};
+        if (typeof req.body.contentType === 'string') payload.contentType = req.body.contentType;
+        if (typeof req.body.fileName === 'string') payload.fileName = req.body.fileName;
+
+        content = await Content.findByIdAndUpdate(req.params.id, payload, {
             new: true,
             runValidators: true
         }).maxTimeMS(MAX_TIME_MS);
 
+        const signedUrl = await storageService.getSignedUrl(content.fileName);
         res.status(200).json({
             status: 'success',
-            data: content
+            data: {
+              _id: content._id,
+              contentType: content.contentType,
+              fileName: content.fileName,
+              url: signedUrl,
+              lesson: content.lesson,
+              createdAt: content.createdAt,
+              updatedAt: content.updatedAt,
+            }
         });
     } catch (error) {
         next(error);
