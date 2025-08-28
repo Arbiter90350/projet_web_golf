@@ -23,7 +23,7 @@ export default function LessonModal({
 }) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [contents, setContents] = useState<Array<{ _id: string; contentType: 'video' | 'pdf' | 'doc'; url: string }>>([]);
+  const [contents, setContents] = useState<Array<{ _id: string; contentType: 'image' | 'pdf' | 'mp4' | 'video' | 'doc'; fileName?: string; url?: string }>>([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [lessonInfo, setLessonInfo] = useState<{ description?: string } | null>(null);
 
@@ -100,20 +100,20 @@ export default function LessonModal({
           ) : (
             contents.map((c) => (
               <div key={c._id} className="tile">
-                <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ marginBottom: 8 }}>
                   <strong style={{ fontSize: 14 }}>{t(`lessons.content_type.${c.contentType}`)}</strong>
-                  <a href={c.url} target="_blank" rel="noreferrer">{t('common.open_in_new_tab')}</a>
                 </div>
-                {c.contentType === 'video' ? (
-                  c.url.includes('youtube') || c.url.includes('youtu.be') ? (
-                    <iframe title="video" src={c.url} style={{ width: '100%', height: 360, border: 'none', borderRadius: 8 }} allowFullScreen />
-                  ) : (
-                    <video controls src={c.url} style={{ width: '100%', borderRadius: 8 }} />
-                  )
-                ) : c.contentType === 'pdf' ? (
-                  <iframe title="pdf" src={c.url} style={{ width: '100%', height: 480, border: 'none', borderRadius: 8 }} />
+                {/* Prévisualisation inline selon le type */}
+                {!c.url ? (
+                  <div style={{ color: '#64748b', fontStyle: 'italic' }}>{t('lessons.no_content')}</div>
+                ) : c.contentType === 'image' ? (
+                  <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                ) : c.contentType === 'mp4' || c.contentType === 'video' ? (
+                  <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                ) : c.contentType === 'pdf' || c.contentType === 'doc' ? (
+                  <iframe title={c.fileName || 'pdf'} src={c.url} style={{ width: '100%', height: 520, border: 'none', borderRadius: 8 }} />
                 ) : (
-                  <div>{t('lessons.document')}: <a href={c.url} target="_blank" rel="noreferrer">{t('common.open_in_new_tab')}</a></div>
+                  <div style={{ color: '#64748b', fontStyle: 'italic' }}>Unsupported content type</div>
                 )}
               </div>
             ))

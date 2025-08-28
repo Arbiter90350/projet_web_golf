@@ -78,7 +78,9 @@
     "content_type": {
       "video": "Vidéo",
       "pdf": "PDF",
-      "doc": "Document"
+      "doc": "Document",
+      "image": "Image",
+      "mp4": "Vidéo"
     },
     "mark_as_read": "Marquer comme lu",
     "quiz_coming_soon": "QCM bientôt disponible",

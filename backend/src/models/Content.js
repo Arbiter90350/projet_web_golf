@@ -1,18 +1,21 @@
 const mongoose = require('mongoose');
 
+// Schéma de contenu de leçon
+// Sécurité: on ne stocke plus d'URL signée (temporaire) mais la clé interne du fichier (fileName)
 const contentSchema = new mongoose.Schema({
   contentType: {
     type: String,
     required: true,
-    enum: ['video', 'pdf', 'doc'],
-    message: 'Content type must be either video, pdf or doc'
+    enum: ['image', 'pdf', 'mp4'],
+    message: 'Content type must be either image, pdf or mp4'
   },
-  url: {
+  // Clé interne du fichier dans le stockage objet (ex: "uploads/2025/08/uuid.mp4")
+  fileName: {
     type: String,
-    required: [true, 'Content URL is required'],
+    required: [true, 'Content fileName is required'],
     trim: true
   },
-  // Storing a reference to the lesson this content belongs to.
+  // Référence à la leçon
   lesson: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -22,8 +25,8 @@ const contentSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// To ensure a lesson doesn't have duplicate content for the same URL.
-contentSchema.index({ lesson: 1, url: 1 }, { unique: true });
+// Unicité: un même fileName ne doit pas être dupliqué pour une leçon donnée
+contentSchema.index({ lesson: 1, fileName: 1 }, { unique: true });
 
 const Content = mongoose.model('Content', contentSchema);
 

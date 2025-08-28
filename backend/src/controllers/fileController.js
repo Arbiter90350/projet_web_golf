@@ -235,21 +235,59 @@ class FileController {
   }
 
   /**
-   * Liste paginée des fichiers (listing complet par défaut, pagination configurable)
-   * Query: page, limit
+   * Liste paginée des fichiers avec recherche et filtres
+   * Query:
+   *  - page, limit
+   *  - q: recherche texte (originalName, fileName)
+   *  - type: 'image' | 'video' | 'pdf' | '<mime-type>' (ex: 'application/pdf', 'image/png')
    */
   async listFiles(req, res, next) {
     try {
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
       const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
 
+      // Construction du filtre
+      const filter = {};
+      const qRaw = (req.query.q || '').toString();
+      const typeRaw = (req.query.type || '').toString();
+      const q = qRaw.trim();
+      const type = typeRaw.trim().toLowerCase();
+
+      // Recherche simple (regex insensible à la casse) sur originalName et fileName
+      if (q) {
+        const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        filter.$or = [
+          { originalName: { $regex: escaped, $options: 'i' } },
+          { fileName: { $regex: escaped, $options: 'i' } },
+        ];
+      }
+
+      // Filtrage par type
+      if (type) {
+        if (type === 'image') {
+          filter.mimeType = { $regex: '^image\/' };
+        } else if (type === 'video') {
+          filter.mimeType = { $regex: '^video\/' };
+        } else if (type === 'pdf') {
+          filter.mimeType = 'application/pdf';
+        } else if (type.includes('/')) {
+          // Type MIME exact ou préfixe (ex: image/)
+          const escapedType = type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          if (escapedType.endsWith('\/')) {
+            filter.mimeType = { $regex: `^${escapedType}` };
+          } else {
+            filter.mimeType = escapedType;
+          }
+        }
+      }
+
       const [items, total] = await Promise.all([
-        File.find({})
+        File.find(filter)
           .sort({ createdAt: -1 })
           .skip((page - 1) * limit)
           .limit(limit)
           .lean(),
-        File.countDocuments({}),
+        File.countDocuments(filter),
       ]);
 
       return res.status(200).json({
