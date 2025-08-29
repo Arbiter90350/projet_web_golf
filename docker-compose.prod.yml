@@ -47,7 +47,7 @@ services:
     depends_on:
       - frontend
     networks:
-      - default
+      - fairway-network
 
 volumes:
   caddy_data:
