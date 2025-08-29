@@ -4,6 +4,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
+const { v4: uuidv4 } = require('uuid');
 const mongoose = require('mongoose');
 const connectDB = require('./db');
 const logger = require('./utils/logger');
@@ -57,12 +58,22 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Middleware pour corréler les requêtes (X-Request-Id)
+app.use((req, res, next) => {
+  req.id = req.headers['x-request-id'] || uuidv4();
+  res.setHeader('X-Request-Id', req.id);
+  next();
+});
+
 // Rate limiting global: protège l'ensemble de l'API
 app.use(generalLimiter);
 
 // Middleware de logging HTTP (morgan) relié à Winston
+// Ajoute un token morgan pour l'identifiant de requête
+morgan.token('id', (req) => req.id);
+const httpLogFormat = ':remote-addr - :method :url :status :res[content-length] - :response-time ms reqId=:id';
 app.use(
-  morgan('combined', {
+  morgan(httpLogFormat, {
     stream: {
       write: (message) => logger.info(message.trim()),
     },
@@ -113,7 +124,8 @@ app.use((req, res) => {
   res.status(404).json({
     status: 'error',
     message: 'Route not found',
-    path: req.originalUrl
+    path: req.originalUrl,
+    requestId: req.id
   });
 });
 
@@ -121,17 +133,19 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
-  logger.error(message, {
+  // Log l'objet Error pour capturer la stack via Winston, avec méta non sensible
+  logger.error(err, {
     statusCode,
     url: req.originalUrl,
     method: req.method,
     ip: req.ip,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    reqId: req.id,
   });
   res.status(statusCode).json({
     status: 'error',
     message,
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    requestId: req.id,
   });
 });
 
@@ -173,6 +187,12 @@ if (require.main === module) {
   // Gestion des erreurs non capturées
   process.on('unhandledRejection', (err) => {
     logger.error('Unhandled Rejection', { error: err?.message, stack: err?.stack });
+    server.close(() => process.exit(1));
+  });
+
+  // Gestion des exceptions non interceptées
+  process.on('uncaughtException', (err) => {
+    logger.error('Uncaught Exception', { error: err?.message, stack: err?.stack });
     server.close(() => process.exit(1));
   });
 

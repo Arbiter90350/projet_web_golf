@@ -8,10 +8,14 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-password}
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-fairway}
-    ports:
-      - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand({ ping: 1 }).ok\" -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin | grep 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     networks:
       - fairway-network
 
@@ -22,6 +26,8 @@ services:
       dockerfile: Dockerfile
     container_name: fairway-backend
     restart: always
+    env_file:
+      - .env
     ports:
       - "5001:5000"
     environment:
@@ -72,7 +78,8 @@ services:
       retries: 10
       start_period: 10s
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     networks:
       - fairway-network
 
@@ -120,7 +127,8 @@ services:
       - SEED_PLAYER2_EMAIL=${SEED_PLAYER2_EMAIL}
       - SEED_PLAYER2_PASSWORD=${SEED_PLAYER2_PASSWORD}
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     networks:
       - fairway-network
 

@@ -19,6 +19,8 @@ const logger = createLogger({
     : format.combine(
         format.colorize(),
         format.timestamp(),
+        // Inclure la stack trace si un objet Error est passé au logger
+        format.errors({ stack: true }),
         format.printf(({ level, message, timestamp, stack, ...meta }) => {
           const base = `${timestamp} [${level}] ${message}`;
           const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
@@ -26,6 +28,8 @@ const logger = createLogger({
         })
       ),
   transports: [new transports.Console()],
+  // Ne pas quitter l'application si un transport rencontre une erreur
+  exitOnError: false,
 });
 
 module.exports = logger;
