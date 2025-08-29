@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import type { CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
 
 const linkStyle: CSSProperties = {
   display: 'block',
@@ -19,6 +20,17 @@ const activeStyle: CSSProperties = {
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
   const role = user?.role;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Détecte le mode mobile (<= 768px)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener?.('change', update);
+    return () => mq.removeEventListener?.('change', update);
+  }, []);
 
   const commonNav = [
     { to: '/dashboard', label: 'Aperçu', end: true },
@@ -38,9 +50,29 @@ const DashboardLayout = () => {
     { to: '/admin/users', label: 'Utilisateurs (admin)' },
   ];
 
+  const gridColumns = isMobile ? (menuOpen ? '260px 1fr' : '0 1fr') : '260px 1fr';
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', minHeight: '100vh' }}>
-      <aside style={{ borderRight: '1px solid #e5e7eb', padding: '1rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: gridColumns, minHeight: '100vh' }}>
+      <aside
+        style={{
+          borderRight: '1px solid #e5e7eb',
+          padding: '1rem',
+          display: isMobile && !menuOpen ? 'none' : 'block',
+          background: '#f8fafc',
+        }}
+        aria-hidden={isMobile && !menuOpen}
+      >
+        {isMobile && (
+          <button
+            onClick={() => setMenuOpen(false)}
+            className="btn btn-outline"
+            style={{ marginBottom: '0.8rem' }}
+            aria-label="Fermer le menu"
+          >
+            ✕ Fermer
+          </button>
+        )}
         <div style={{ marginBottom: '1rem' }}>
           <strong>Fairway Hub</strong>
         </div>
@@ -104,6 +136,19 @@ const DashboardLayout = () => {
       </aside>
 
       <main style={{ padding: '1.5rem' }}>
+        {/* Barre supérieure avec bouton hamburger en mobile */}
+        {isMobile && (
+          <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="btn btn-outline"
+              aria-pressed={menuOpen}
+              aria-label="Basculer le menu"
+            >
+              ☰ Menu
+            </button>
+          </div>
+        )}
         <Outlet />
       </main>
     </div>
