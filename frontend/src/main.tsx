@@ -15,3 +15,15 @@ createRoot(document.getElementById('root')!).render(
     </ToastProvider>
   </StrictMode>,
 )
+
+// Enregistrer le Service Worker (PWA) en production
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .catch((err) => {
+        // Logging non sensible
+        console.warn('SW registration failed:', err)
+      })
+  })
+}
