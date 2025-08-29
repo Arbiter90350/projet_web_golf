@@ -32,6 +32,17 @@ const DashboardLayout = () => {
     return () => mq.removeEventListener?.('change', update);
   }, []);
 
+  // Bloque le scroll de la page quand le menu mobile est ouvert
+  useEffect(() => {
+    if (isMobile && menuOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [isMobile, menuOpen]);
+
   const commonNav = [
     { to: '/dashboard', label: 'Aperçu', end: true },
   ];
@@ -50,16 +61,40 @@ const DashboardLayout = () => {
     { to: '/admin/users', label: 'Utilisateurs (admin)' },
   ];
 
-  const gridColumns = isMobile ? (menuOpen ? '260px 1fr' : '0 1fr') : '260px 1fr';
+  const gridColumns = isMobile ? '1fr' : '260px 1fr';
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: gridColumns, minHeight: '100vh' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: gridColumns, minHeight: '100vh', position: 'relative' }}>
+      {/* Backdrop cliquable en mobile */}
+      {isMobile && menuOpen && (
+        <div
+          onClick={() => setMenuOpen(false)}
+          aria-hidden
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.35)',
+            zIndex: 30,
+          }}
+        />
+      )}
+
       <aside
         style={{
           borderRight: '1px solid #e5e7eb',
           padding: '1rem',
-          display: isMobile && !menuOpen ? 'none' : 'block',
           background: '#f8fafc',
+          // Drawer en mobile
+          position: isMobile ? 'fixed' : 'static',
+          top: isMobile ? 0 : undefined,
+          left: isMobile ? 0 : undefined,
+          height: isMobile ? '100vh' : undefined,
+          width: isMobile ? '82vw' : undefined,
+          maxWidth: isMobile ? 320 : undefined,
+          transform: isMobile ? (menuOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
+          transition: isMobile ? 'transform 200ms ease' : undefined,
+          zIndex: isMobile ? 40 : undefined,
+          boxShadow: isMobile ? '0 10px 25px rgba(0,0,0,0.25)' : undefined,
         }}
         aria-hidden={isMobile && !menuOpen}
       >

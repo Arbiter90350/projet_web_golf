@@ -21,18 +21,38 @@ type BeforeInstallPromptEvent = Event & {
 const PWAInstallPrompt: React.FC<Props> = ({ label, className }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installable, setInstallable] = useState(false);
+  const [installed, setInstalled] = useState(false);
+
+  type NavigatorWithStandalone = Navigator & { standalone?: boolean };
+  const isStandalone = typeof window !== 'undefined' && (
+    window.matchMedia?.('(display-mode: standalone)')?.matches ||
+    Boolean((navigator as NavigatorWithStandalone).standalone)
+  );
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const isAndroidChrome = /Android/i.test(ua) && /Chrome/i.test(ua);
 
   useEffect(() => {
+    if (!isAndroidChrome || isStandalone) return;
+
     const handler = (e: Event) => {
-      // Empêche le navigateur d'afficher la bannière automatique
       e.preventDefault?.();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setInstallable(true);
     };
 
+    const onInstalled = () => {
+      setInstalled(true);
+      setInstallable(false);
+      setDeferredPrompt(null);
+    };
+
     window.addEventListener('beforeinstallprompt', handler as EventListener);
-    return () => window.removeEventListener('beforeinstallprompt', handler as EventListener);
-  }, []);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler as EventListener);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, [isAndroidChrome, isStandalone]);
 
   const onClick = async () => {
     if (!deferredPrompt) return;
@@ -46,7 +66,7 @@ const PWAInstallPrompt: React.FC<Props> = ({ label, className }) => {
     }
   };
 
-  if (!installable) return null;
+  if (!isAndroidChrome || isStandalone || installed || !installable) return null;
 
   return (
     <button type="button" onClick={onClick} className={className} aria-label={label}>
