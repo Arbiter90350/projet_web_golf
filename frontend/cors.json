@@ -3,7 +3,7 @@
     {
       "AllowedHeaders": ["*"],
       "AllowedMethods": ["PUT", "GET", "HEAD"],
-      "AllowedOrigins": ["https://golf-rougemont.com"],
+      "AllowedOrigins": ["https://app.golf-rougemont.com"],
       "ExposeHeaders": ["ETag"],
       "MaxAgeSeconds": 3600
     },
