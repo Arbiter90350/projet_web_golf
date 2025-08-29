@@ -9,8 +9,8 @@ app.golf-rougemont.com {
     X-Frame-Options "DENY"
     X-Content-Type-Options "nosniff"
     Referrer-Policy "strict-origin-when-cross-origin"
-    # CSP minimaliste; adaptez si vous avez des intégrations externes
-    Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; manifest-src 'self';"
+    # CSP: autoriser images et médias hébergés en externe via HTTPS (Unsplash, domaine racine, OVH S3, etc.)
+    Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; font-src 'self' data:; connect-src 'self' https:; media-src 'self' https:; worker-src 'self'; manifest-src 'self'; frame-ancestors 'self';"
     Permissions-Policy "geolocation=(), microphone=(), camera=()"
   }
 
