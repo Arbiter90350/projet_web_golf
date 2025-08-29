@@ -6,7 +6,8 @@ services:
     environment:
       TRUST_PROXY: 1
       FRONTEND_URL: https://app.golf-rougemont.com
-      CORS_ORIGINS: https://app.golf-rougemont.com
+      # TEMP: allow IP during DNS propagation/testing; remove the IP once the subdomain is active
+      CORS_ORIGINS: https://app.golf-rougemont.com,http://51.68.84.211
 
   # Database (override for production)
   # Ensure MongoDB is not exposed publicly
