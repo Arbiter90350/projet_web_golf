@@ -2,14 +2,14 @@
   "CORSRules": [
     {
       "AllowedHeaders": ["*"],
-      "AllowedMethods": ["PUT", "GET", "HEAD"],
+      "AllowedMethods": ["PUT", "GET", "HEAD", "OPTIONS"],
       "AllowedOrigins": ["https://app.golf-rougemont.com", "http://51.68.84.211"],
       "ExposeHeaders": ["ETag"],
       "MaxAgeSeconds": 3600
     },
     {
       "AllowedHeaders": ["*"],
-      "AllowedMethods": ["PUT", "GET", "HEAD"],
+      "AllowedMethods": ["PUT", "GET", "HEAD", "OPTIONS"],
       "AllowedOrigins": ["http://localhost"],
       "ExposeHeaders": ["ETag"],
       "MaxAgeSeconds": 3600

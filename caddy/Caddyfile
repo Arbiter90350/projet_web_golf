@@ -1,0 +1,24 @@
+# Remplacez app.golf-rougemont.com par le FQDN voulu si besoin
+app.golf-rougemont.com {
+  encode zstd gzip
+
+  # Headers de sécurité (alignés avec global_rules)
+  header {
+    # HSTS (uniquement si HTTPS et domaine stable)
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Frame-Options "DENY"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    # CSP minimaliste; adaptez si vous avez des intégrations externes
+    Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; manifest-src 'self';"
+    Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  }
+
+  # Proxy vers le conteneur frontend (Nginx) sur le réseau Docker
+  reverse_proxy frontend:80
+}
+
+# Optionnel: redirection naked domain -> app subdomain
+www.golf-rougemont.com, golf-rougemont.com {
+  redir https://app.golf-rougemont.com{uri}
+}
