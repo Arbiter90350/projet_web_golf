@@ -5,8 +5,8 @@ services:
     ports: []
     environment:
       TRUST_PROXY: 1
-      FRONTEND_URL: https://golf-rougemont.com
-      CORS_ORIGINS: https://golf-rougemont.com,https://NEW_IP,http://localhost,http://127.0.0.1
+      FRONTEND_URL: https://app.golf-rougemont.com
+      CORS_ORIGINS: https://app.golf-rougemont.com
 
   # Database (override for production)
   # Ensure MongoDB is not exposed publicly
@@ -25,8 +25,8 @@ services:
       - ./frontend/nginx/default.prod.conf:/etc/nginx/conf.d/default.conf
     build:
       args:
-        # Same-origin: frontend calls /api/v1 which Nginx proxies to backend
-        VITE_API_URL: /api/v1
+        # Same-origin: frontend calls /api which Nginx proxies to backend
+        VITE_API_URL: /api
         # Timeout global Axios en prod (override possible via env: VITE_API_TIMEOUT_MS)
         VITE_API_TIMEOUT_MS: ${VITE_API_TIMEOUT_MS:-20000}
     environment:

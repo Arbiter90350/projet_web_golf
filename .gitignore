@@ -35,4 +35,4 @@ yarn-error.log*
 ehthumbs.db
 Thumbs.db
 user-policy.json
-cors.json
+cors-config.json
