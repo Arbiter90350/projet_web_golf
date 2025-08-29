@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import styles from './LoginPage.module.css';
@@ -9,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { makeLoginSchema } from '../validation/auth';
+import PWAInstallPrompt from '../components/PWAInstallPrompt';
 
 // Typage léger de la réponse d'erreur axios que nous consommons ici
 type ErrorData = { message?: string } | undefined;
@@ -97,6 +99,14 @@ const LoginPage = () => {
           />
         </div>
         <h1 className={styles.title}>{t('auth:title.login')}</h1>
+        {/* Bouton d'installation PWA (Android/Chrome/Edge) */}
+        <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center' }}>
+          <PWAInstallPrompt
+            label={t('common:actions.install_app', { defaultValue: "Installer l'application" })}
+            className={styles.button}
+          />
+        </div>
+
         <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
           <div className={styles.inputGroup}>
             <label htmlFor="email">{t('common:fields.email')}</label>
