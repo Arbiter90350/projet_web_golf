@@ -14,5 +14,12 @@
       "ExposeHeaders": ["ETag"],
       "MaxAgeSeconds": 3600
     }
+    {
+      "AllowedHeaders": ["*"],
+      "AllowedMethods": ["PUT", "GET", "HEAD"],
+      "AllowedOrigins": ["http://51.68.84.211/"],
+      "ExposeHeaders": ["ETag"],
+      "MaxAgeSeconds": 3600
+    }
   ]
 }
