@@ -18,7 +18,7 @@ app.golf-rougemont.com {
   reverse_proxy frontend:80
 }
 
-# Optionnel: redirection naked domain -> app subdomain
-www.golf-rougemont.com, golf-rougemont.com {
+# Optionnel: redirection naked domain -> app subdomain (HTTP only to avoid ACME on these hosts)
+http://www.golf-rougemont.com, http://golf-rougemont.com {
   redir https://app.golf-rougemont.com{uri}
 }
