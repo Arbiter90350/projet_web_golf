@@ -1,7 +1,7 @@
 # Étape de build
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package*.json ./
+COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 # Construire l'application
