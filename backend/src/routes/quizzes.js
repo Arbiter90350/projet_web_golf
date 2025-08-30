@@ -4,7 +4,8 @@ const {
   addQuiz,
   updateQuiz,
   deleteQuiz,
-  submitQuiz
+  submitQuiz,
+  reorderQuizQuestions,
 } = require('../controllers/quizController');
 
 const { protect, authorize } = require('../middleware/authMiddleware');
@@ -30,5 +31,10 @@ router.route('/:id')
 
 // Route for a player to submit a quiz
 router.route('/:id/submit').post(protect, authorize('player'), submitQuiz);
+
+// Reorder questions within a quiz (instructor/admin)
+router
+  .route('/:id/questions/reorder')
+  .patch(protect, authorize('instructor', 'admin'), reorderQuizQuestions);
 
 module.exports = router;

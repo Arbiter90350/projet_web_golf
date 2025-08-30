@@ -36,11 +36,19 @@ exports.getQuizForLesson = async (req, res, next) => {
       // Expose only safe fields to the player (no isCorrect)
       answersByQuestion.get(key).push({ _id: ans._id, text: ans.text });
     }
-    const questionsWithAnswers = questions.map((q) => ({
-      _id: q._id,
-      text: q.text,
-      answers: answersByQuestion.get(q._id.toString()) || []
-    }));
+    // Ordonner selon l'ordre des ObjectIds dans quiz.questions si présent
+    const byId = new Map(questions.map((q) => [q._id.toString(), q]));
+    const orderedQuestionIds = Array.isArray(baseQuiz.questions) && baseQuiz.questions.length > 0
+      ? baseQuiz.questions.map((id) => id.toString()).filter((id) => byId.has(id))
+      : questions.map((q) => q._id.toString());
+    const questionsWithAnswers = orderedQuestionIds.map((id) => {
+      const q = byId.get(id);
+      return {
+        _id: q._id,
+        text: q.text,
+        answers: answersByQuestion.get(q._id.toString()) || []
+      };
+    });
 
     const quizPayload = {
       _id: baseQuiz._id,
@@ -54,6 +62,46 @@ exports.getQuizForLesson = async (req, res, next) => {
       status: 'success',
       data: quizPayload
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Reorder questions within a quiz by orderedIds
+// @route   PATCH /api/v1/quizzes/:id/questions/reorder
+// @access  Private (Instructor, Admin)
+exports.reorderQuizQuestions = async (req, res, next) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id).populate({ path: 'lesson', populate: { path: 'course' } }).maxTimeMS(MAX_TIME_MS);
+    if (!quiz) {
+      return res.status(404).json({ status: 'error', message: 'Quiz not found' });
+    }
+
+    // Autorisation: propriétaire du cours ou admin
+    if (quiz.lesson.course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ status: 'error', message: 'User not authorized to reorder questions for this quiz' });
+    }
+
+    const orderedIds = Array.isArray(req.body?.orderedIds) ? req.body.orderedIds.map(String) : [];
+    if (orderedIds.length === 0) {
+      return res.status(400).json({ status: 'error', message: 'orderedIds is required' });
+    }
+
+    // Vérifier que toutes les IDs appartiennent au quiz
+    const existingQuestions = await Question.find({ quiz: quiz._id }).select('_id').lean();
+    const existingSet = new Set(existingQuestions.map((q) => q._id.toString()));
+
+    // Filtrer aux IDs valides, puis vérifier qu'on a bien couvert toutes les questions existantes (même nombre)
+    const filtered = orderedIds.filter((id) => existingSet.has(id));
+    if (filtered.length !== existingSet.size) {
+      return res.status(400).json({ status: 'error', message: 'orderedIds must include exactly all question ids for this quiz' });
+    }
+
+    // Persister l'ordre dans quiz.questions
+    quiz.questions = filtered;
+    await quiz.save();
+
+    return res.status(200).json({ status: 'success', data: quiz.questions });
   } catch (error) {
     next(error);
   }

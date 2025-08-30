@@ -12,7 +12,13 @@ exports.getQuestions = async (req, res, next) => {
       return res.status(404).json({ status: 'error', message: 'Quiz not found' });
     }
 
-    const questions = await Question.find({ quiz: req.params.quizId });
+    const found = await Question.find({ quiz: req.params.quizId });
+    // Ordonner selon l'ordre stocké dans quiz.questions si disponible
+    const map = new Map(found.map((q) => [q._id.toString(), q]));
+    const orderedIds = Array.isArray(quiz.questions) && quiz.questions.length > 0
+      ? quiz.questions.map((id) => id.toString()).filter((id) => map.has(id))
+      : found.map((q) => q._id.toString());
+    const questions = orderedIds.map((id) => map.get(id));
 
     res.status(200).json({
       status: 'success',
