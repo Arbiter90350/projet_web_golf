@@ -65,7 +65,7 @@ jobs:
           target: ${{ secrets.VPS_APP_DIR }}
           overwrite: true
           strip_components: 0
-          rm: true
+          rm: false
 
       - name: Deploy on VPS with Docker Compose (prod)
         uses: appleboy/ssh-action@v1.2.0
