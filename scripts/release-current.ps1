@@ -60,7 +60,15 @@ if (-not $prExists) {
 # Wait for checks (CI) if requested
 if (-not $NoWaitChecks) {
   Write-Host "Attente de la fin des vérifications CI..." -ForegroundColor Cyan
-  Run gh @("pr","checks","--watch")
+  try {
+    # Cible explicitement la PR de la branche courante pour éviter toute ambiguïté
+    & gh pr checks $currentBranch --watch
+    if ($LASTEXITCODE -ne 0) {
+      Write-Warning "gh pr checks a retourné un code non nul ($LASTEXITCODE). On continue: l'auto-merge n'effectuera la fusion qu'après CI verte."
+    }
+  } catch {
+    Write-Warning "Impossible de suivre les checks via gh: $_. On continue: l'auto-merge garantira la fusion uniquement après succès des checks."
+  }
 }
 
 # Squash merge via auto-merge (ne PAS supprimer la branche); merge effectif après CI verte
