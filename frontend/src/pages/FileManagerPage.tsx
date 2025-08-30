@@ -15,15 +15,15 @@ const FileManagerPage: React.FC = () => {
   }
 
   return (
-    <div className="file-manager-page">
-      <Card className="file-manager-card">
-        <Title level={2} className="page-title">Gestion des fichiers</Title>
-        <p className="page-description">
+    <div className="container" style={{ marginTop: 12, marginBottom: 12 }}>
+      <Card style={{ padding: '1rem' }}>
+        <Title level={2} style={{ marginTop: 0 }}>Gestion des fichiers</Title>
+        <p style={{ color: '#475569', marginTop: 6, marginBottom: 12 }}>
           Gérez vos fichiers multimédias (images, PDF, vidéos) dans OVH Object Storage.
           Téléversez, prévisualisez et supprimez des fichiers facilement.
         </p>
-        
-        <div className="file-manager-container">
+
+        <div style={{ width: '100%' }}>
           <FileManager />
         </div>
       </Card>
