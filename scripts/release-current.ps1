@@ -73,7 +73,14 @@ if (-not $NoWaitChecks) {
 
 # Squash merge via auto-merge (ne PAS supprimer la branche); merge effectif après CI verte
 Write-Host "Activation de l'auto-merge en squash (branche conservée)..." -ForegroundColor Cyan
-Run gh @("pr","merge","--squash","--auto","--yes")
+try {
+  & gh pr merge $currentBranch --squash --auto
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warning "gh pr merge a retourné un code non nul ($LASTEXITCODE). Vérifiez les exigences de la PR (reviews, checks). L'auto-merge s'activera dès que les conditions seront remplies."
+  }
+} catch {
+  Write-Warning "Impossible d'activer l'auto-merge via gh: $_. Vous pouvez l'activer manuellement depuis l'UI GitHub."
+}
 
 # Sync local main
 Write-Host "Mise à jour de la branche locale '$BaseBranch'..." -ForegroundColor Cyan
