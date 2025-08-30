@@ -76,6 +76,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          envs: VPS_APP_DIR
           script: |
             set -euo pipefail
             cd "$VPS_APP_DIR"
