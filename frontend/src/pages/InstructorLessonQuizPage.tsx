@@ -3,6 +3,9 @@
 // Remarque: le GET public du quiz masque isCorrect; pour la gestion, on récupère les réponses via /questions/:id/answers.
 
 import { useEffect, useState } from 'react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Link, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -81,6 +84,136 @@ const AddAnswerForm = ({
 
 // Type d'affichage combiné pour gestion
 type ManagedQuestion = ManageQuestion & { answers: ManageAnswer[] };
+
+// Élément triable pour une question, avec poignée et contenu d'édition
+function SortableQuestionItem({
+  q,
+  editingQuestionId,
+  editingQuestionText,
+  onStartEditQuestion,
+  onSaveEditQuestion,
+  onCancelEditQuestion,
+  onRemoveQuestion,
+  editingAnswerId,
+  editingAnswerDraft,
+  onStartEditAnswer,
+  onSaveEditAnswer,
+  onCancelEditAnswer,
+  onRemoveAnswer,
+  onAnswerAdded,
+}: {
+  q: ManagedQuestion;
+  editingQuestionId: string | null;
+  editingQuestionText: string;
+  onStartEditQuestion: (q: ManagedQuestion) => void;
+  onSaveEditQuestion: () => void;
+  onCancelEditQuestion: () => void;
+  onRemoveQuestion: (id: string) => void;
+  editingAnswerId: string | null;
+  editingAnswerDraft: { text: string; isCorrect: boolean };
+  onStartEditAnswer: (a: ManageAnswer) => void;
+  onSaveEditAnswer: (answerId: string, parentQuestionId: string) => void;
+  onCancelEditAnswer: () => void;
+  onRemoveAnswer: (answerId: string, parentQuestionId: string) => void;
+  onAnswerAdded: (created: ManageAnswer) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: q._id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : 1,
+    border: '1px solid #e5e7eb',
+    borderRadius: 8,
+    padding: '0.75rem',
+    background: '#fff',
+  };
+  return (
+    <li ref={setNodeRef} style={style}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 12 }}>
+        <button
+          type="button"
+          title="Glisser pour réordonner"
+          style={{ cursor: 'grab', userSelect: 'none', fontSize: 18, color: '#64748b', background: 'transparent', border: 'none', padding: 0 }}
+          {...attributes}
+          {...listeners}
+        >
+          ⋮⋮
+        </button>
+        <div style={{ fontWeight: 600, marginBottom: 8 }}>
+          {editingQuestionId === q._id ? (
+            <input
+              type="text"
+              value={editingQuestionText}
+              onChange={(e) => (onStartEditQuestion({ ...q, text: e.target.value } as ManagedQuestion))}
+              style={{ width: '100%' }}
+            />
+          ) : (
+            q.text
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {editingQuestionId === q._id ? (
+            <>
+              <button type="button" onClick={onSaveEditQuestion}>Enregistrer</button>
+              <button type="button" onClick={onCancelEditQuestion}>Annuler</button>
+            </>
+          ) : (
+            <>
+              <button type="button" onClick={() => onStartEditQuestion(q)}>Modifier</button>
+              <button type="button" className="btn btn-danger" onClick={() => onRemoveQuestion(q._id)}>Supprimer</button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div style={{ margin: '0.5rem 0' }}>
+        <div style={{ fontWeight: 500, marginBottom: 4 }}>Réponses</div>
+        {q.answers.length === 0 ? (
+          <div>—</div>
+        ) : (
+          <ul style={{ paddingLeft: 16, margin: 0 }}>
+            {q.answers.map((a) => (
+              <li key={a._id} style={{ fontSize: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {editingAnswerId === a._id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editingAnswerDraft.text}
+                      onChange={(e) => onStartEditAnswer({ ...a, text: e.target.value })}
+                    />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <input
+                        type="checkbox"
+                        checked={editingAnswerDraft.isCorrect}
+                        onChange={(e) => onStartEditAnswer({ ...a, isCorrect: e.target.checked })}
+                      /> Bonne réponse
+                    </label>
+                    <button type="button" onClick={() => onSaveEditAnswer(a._id, q._id)}>Enregistrer</button>
+                    <button type="button" onClick={onCancelEditAnswer}>Annuler</button>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ fontWeight: a.isCorrect ? 700 : 400 }}>
+                      {a.text}
+                    </span>
+                    {a.isCorrect && <span style={{ color: 'green', marginLeft: 6 }}>(correct)</span>}
+                    <button type="button" onClick={() => onStartEditAnswer(a)}>Modifier</button>
+                    <button type="button" className="btn btn-danger" onClick={() => onRemoveAnswer(a._id, q._id)}>Supprimer</button>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <AddAnswerForm
+        questionId={q._id}
+        onAdded={onAnswerAdded}
+      />
+    </li>
+  );
+}
 
 const InstructorLessonQuizPage = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
@@ -184,10 +317,6 @@ const InstructorLessonQuizPage = () => {
   };
 
   // Edition question
-  const startEditQuestion = (q: ManagedQuestion) => {
-    setEditingQuestionId(q._id);
-    setEditingQuestionText(q.text);
-  };
   const cancelEditQuestion = () => {
     setEditingQuestionId(null);
     setEditingQuestionText('');
@@ -252,19 +381,46 @@ const InstructorLessonQuizPage = () => {
     }
   };
 
+  // dnd-kit sensors: activer le drag après un léger mouvement
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  // DnD: réordonnancement optimiste puis persistance côté serveur
+  const onDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = questions.findIndex((q) => q._id === String(active.id));
+    const newIndex = questions.findIndex((q) => q._id === String(over.id));
+    if (oldIndex === -1 || newIndex === -1) return;
+    const prev = questions;
+    const nextArr = arrayMove(prev, oldIndex, newIndex);
+    setQuestions(nextArr);
+    if (!quiz?._id) return;
+    try {
+      await QuizzesService.reorderQuestions(quiz._id, nextArr.map((q) => q._id));
+      // Option: toast succès (si provider)
+    } catch (err: unknown) {
+      // rollback si échec
+      setQuestions(prev);
+      const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
+      alert(msg ?? 'Réordonnancement impossible');
+    }
+  };
+
   if (loading) return <div>Chargement du QCM…</div>;
   if (error) return <div style={{ color: 'crimson' }}>{error}</div>;
 
   return (
-    <div>
+    <div className="container" style={{ maxWidth: 960 }}>
       <div style={{ marginBottom: '1rem' }}>
         <Link to={-1 as unknown as string}>← Retour</Link>
       </div>
-      <h2>Gestion du QCM de la leçon</h2>
+      <h2 style={{ marginTop: 0 }}>Gestion du QCM de la leçon</h2>
 
       {quiz ? (
         <>
-          <section style={{ margin: '1rem 0', padding: '1rem', border: '1px solid #e5e7eb', borderRadius: 8 }}>
+          <section className="tile" style={{ margin: '1rem 0' }}>
             <h3 style={{ marginTop: 0 }}>Quiz</h3>
             <div style={{ fontSize: 14, color: '#475569' }}>
               <div><strong>Titre:</strong> {quiz.title ?? '—'}</div>
@@ -272,7 +428,7 @@ const InstructorLessonQuizPage = () => {
             </div>
           </section>
 
-          <section style={{ margin: '1rem 0', padding: '1rem', border: '1px solid #e5e7eb', borderRadius: 8 }}>
+          <section className="tile" style={{ margin: '1rem 0' }}>
             <h3 style={{ marginTop: 0 }}>Ajouter une question</h3>
             <form onSubmit={handleQuestionSubmit(onAddQuestion)}>
               <div style={{ display: 'grid', gap: 8, maxWidth: 720 }}>
@@ -288,94 +444,56 @@ const InstructorLessonQuizPage = () => {
             </form>
           </section>
 
-          <section>
+          <section className="tile" style={{ margin: '1rem 0' }}>
             {questions.length === 0 ? (
               <div>Aucune question pour le moment.</div>
             ) : (
-              <ul style={{ padding: 0, listStyle: 'none', display: 'grid', gap: 12 }}>
-                {questions.map((q) => (
-                  <li key={q._id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '0.75rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                      <div style={{ fontWeight: 600, marginBottom: 8 }}>
-                        {editingQuestionId === q._id ? (
-                          <input
-                            type="text"
-                            value={editingQuestionText}
-                            onChange={(e) => setEditingQuestionText(e.target.value)}
-                            style={{ width: '100%' }}
-                          />
-                        ) : (
-                          q.text
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        {editingQuestionId === q._id ? (
-                          <>
-                            <button type="button" onClick={saveEditQuestion}>Enregistrer</button>
-                            <button type="button" onClick={cancelEditQuestion}>Annuler</button>
-                          </>
-                        ) : (
-                          <>
-                            <button type="button" onClick={() => startEditQuestion(q)}>Modifier</button>
-                            <button type="button" className="btn btn-danger" onClick={() => removeQuestion(q._id)}>Supprimer</button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div style={{ margin: '0.5rem 0' }}>
-                      <div style={{ fontWeight: 500, marginBottom: 4 }}>Réponses</div>
-                      {q.answers.length === 0 ? (
-                        <div>—</div>
-                      ) : (
-                        <ul style={{ paddingLeft: 16, margin: 0 }}>
-                          {q.answers.map((a) => (
-                            <li key={a._id} style={{ fontSize: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                              {editingAnswerId === a._id ? (
-                                <>
-                                  <input
-                                    type="text"
-                                    value={editingAnswerDraft.text}
-                                    onChange={(e) => setEditingAnswerDraft({ ...editingAnswerDraft, text: e.target.value })}
-                                  />
-                                  <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                    <input
-                                      type="checkbox"
-                                      checked={editingAnswerDraft.isCorrect}
-                                      onChange={(e) => setEditingAnswerDraft({ ...editingAnswerDraft, isCorrect: e.target.checked })}
-                                    /> Bonne réponse
-                                  </label>
-                                  <button type="button" onClick={() => saveEditAnswer(a._id, q._id)}>Enregistrer</button>
-                                  <button type="button" onClick={cancelEditAnswer}>Annuler</button>
-                                </>
-                              ) : (
-                                <>
-                                  <span style={{ fontWeight: a.isCorrect ? 700 : 400 }}>
-                                    {a.text}
-                                  </span>
-                                  {a.isCorrect && <span style={{ color: 'green', marginLeft: 6 }}>(correct)</span>}
-                                  <button type="button" onClick={() => startEditAnswer(a)}>Modifier</button>
-                                  <button type="button" className="btn btn-danger" onClick={() => removeAnswer(a._id, q._id)}>Supprimer</button>
-                                </>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-
-                    <AddAnswerForm
-                      questionId={q._id}
-                      onAdded={(created) => setQuestions((prev) => prev.map((qq) => qq._id === q._id ? { ...qq, answers: [...qq.answers, created] } : qq))}
-                    />
-                  </li>
-                ))}
-              </ul>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                <SortableContext items={questions.map((q) => q._id)} strategy={verticalListSortingStrategy}>
+                  <ul style={{ padding: 0, listStyle: 'none', display: 'grid', gap: 12 }}>
+                    {questions.map((q) => (
+                      <SortableQuestionItem
+                        key={q._id}
+                        q={q}
+                        editingQuestionId={editingQuestionId}
+                        editingQuestionText={editingQuestionText}
+                        onStartEditQuestion={(qq) => {
+                          // si on modifie le texte inline, mettre à jour l'état local d'édition
+                          if (editingQuestionId === qq._id) {
+                            // mise à jour du draft
+                            setEditingQuestionText(qq.text);
+                          } else {
+                            // démarrer l'édition
+                            setEditingQuestionId(qq._id);
+                            setEditingQuestionText(qq.text);
+                          }
+                        }}
+                        onSaveEditQuestion={saveEditQuestion}
+                        onCancelEditQuestion={cancelEditQuestion}
+                        onRemoveQuestion={removeQuestion}
+                        editingAnswerId={editingAnswerId}
+                        editingAnswerDraft={editingAnswerDraft}
+                        onStartEditAnswer={(a) => {
+                          if (editingAnswerId === a._id) {
+                            setEditingAnswerDraft({ text: a.text, isCorrect: a.isCorrect });
+                          } else {
+                            startEditAnswer(a);
+                          }
+                        }}
+                        onSaveEditAnswer={saveEditAnswer}
+                        onCancelEditAnswer={cancelEditAnswer}
+                        onRemoveAnswer={removeAnswer}
+                        onAnswerAdded={(created) => setQuestions((prev) => prev.map((qq) => qq._id === q._id ? { ...qq, answers: [...qq.answers, created] } : qq))}
+                      />
+                    ))}
+                  </ul>
+                </SortableContext>
+              </DndContext>
             )}
           </section>
         </>
       ) : (
-        <section style={{ margin: '1rem 0', padding: '1rem', border: '1px solid #e5e7eb', borderRadius: 8 }}>
+        <section className="tile" style={{ margin: '1rem 0' }}>
           <h3 style={{ marginTop: 0 }}>Créer le quiz</h3>
           <form onSubmit={handleQuizSubmit(onCreateQuiz)}>
             <div style={{ display: 'grid', gap: 8, maxWidth: 560 }}>

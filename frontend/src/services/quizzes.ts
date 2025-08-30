@@ -150,6 +150,15 @@ const QuizzesService = {
     );
     return data.status === 'success';
   },
+
+  // Réordonne les questions d'un quiz. Backend: PATCH /quizzes/:id/questions/reorder
+  async reorderQuestions(quizId: string, orderedIds: string[]) {
+    const { data } = await api.patch<{ status: string; data: string[] }>(
+      `/quizzes/${quizId}/questions/reorder`,
+      { orderedIds }
+    );
+    return data.data;
+  },
 };
 
 export default QuizzesService;
