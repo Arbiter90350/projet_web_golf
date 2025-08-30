@@ -40,6 +40,20 @@ jobs:
           npm install
           npm run build
 
+      - name: Validate required deployment secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -z "${{ secrets.VPS_HOST }}" ]] && missing+=(VPS_HOST)
+          [[ -z "${{ secrets.VPS_USER }}" ]] && missing+=(VPS_USER)
+          [[ -z "${{ secrets.VPS_SSH_KEY }}" ]] && missing+=(VPS_SSH_KEY)
+          [[ -z "${{ secrets.VPS_APP_DIR }}" ]] && missing+=(VPS_APP_DIR)
+          if (( ${#missing[@]} > 0 )); then
+            echo "Missing required secrets: ${missing[*]}" >&2
+            exit 1
+          fi
+
       - name: Upload repository to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -55,6 +69,8 @@ jobs:
 
       - name: Deploy on VPS with Docker Compose (prod)
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
