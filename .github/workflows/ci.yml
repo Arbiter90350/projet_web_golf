@@ -55,4 +55,5 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_API_URL: /api/v1
+          # Backend mounts routes under /api/* (see backend/src/index.js) and Nginx proxies /api -> backend
+          VITE_API_URL: /api

@@ -3,7 +3,7 @@
 // Remarque: le GET public du quiz masque isCorrect; pour la gestion, on récupère les réponses via /questions/:id/answers.
 
 import { useEffect, useState } from 'react';
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Link, useParams } from 'react-router-dom';
@@ -12,6 +12,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import QuizzesService, { type Quiz, type ManageQuestion, type ManageAnswer } from '../services/quizzes';
 import { isAxiosError } from 'axios';
+import { useToast } from '../contexts/toast-context';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 // Schéma création du quiz
 const quizSchema = z.object({
@@ -133,7 +135,7 @@ function SortableQuestionItem({
         <button
           type="button"
           title="Glisser pour réordonner"
-          style={{ cursor: 'grab', userSelect: 'none', fontSize: 18, color: '#64748b', background: 'transparent', border: 'none', padding: 0 }}
+          style={{ cursor: 'grab', userSelect: 'none', fontSize: 18, color: '#64748b', background: 'transparent', border: 'none', padding: 0, touchAction: 'none' }}
           {...attributes}
           {...listeners}
         >
@@ -217,6 +219,7 @@ function SortableQuestionItem({
 
 const InstructorLessonQuizPage = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
+  const toast = useToast();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -231,6 +234,19 @@ const InstructorLessonQuizPage = () => {
   // Etats d'édition (réponses)
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
   const [editingAnswerDraft, setEditingAnswerDraft] = useState<{ text: string; isCorrect: boolean }>({ text: '', isCorrect: false });
+
+  // Dialogues de confirmation
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{ message: React.ReactNode; onConfirm: () => void } | null>(null);
+
+  const openConfirm = (message: React.ReactNode, onConfirm: () => void) => {
+    setConfirmConfig({ message, onConfirm });
+    setConfirmOpen(true);
+  };
+  const closeConfirm = () => {
+    setConfirmOpen(false);
+    setConfirmConfig(null);
+  };
 
   // Formulaires
   const { register: regQuiz, handleSubmit: handleQuizSubmit, formState: { errors: quizErrors }, reset: resetQuizForm } = useForm<QuizForm>({
@@ -334,15 +350,19 @@ const InstructorLessonQuizPage = () => {
       alert(msg ?? 'Impossible de modifier la question');
     }
   };
-  const removeQuestion = async (id: string) => {
-    if (!confirm('Supprimer cette question et ses réponses ?')) return;
-    try {
-      await QuizzesService.deleteQuestion(id);
-      setQuestions((prev) => prev.filter((q) => q._id !== id));
-    } catch (err: unknown) {
-      const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
-      alert(msg ?? 'Impossible de supprimer la question');
-    }
+  const removeQuestion = (id: string) => {
+    openConfirm('Supprimer cette question et ses réponses ?', async () => {
+      try {
+        await QuizzesService.deleteQuestion(id);
+        setQuestions((prev) => prev.filter((q) => q._id !== id));
+        toast.success('Question supprimée');
+      } catch (err: unknown) {
+        const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
+        toast.error(msg ?? 'Impossible de supprimer la question');
+      } finally {
+        closeConfirm();
+      }
+    });
   };
 
   // Edition réponse
@@ -367,23 +387,28 @@ const InstructorLessonQuizPage = () => {
       alert(msg ?? 'Impossible de modifier la réponse');
     }
   };
-  const removeAnswer = async (answerId: string, parentQuestionId: string) => {
-    if (!confirm('Supprimer cette réponse ?')) return;
-    try {
-      await QuizzesService.deleteAnswer(answerId);
-      setQuestions((prev) => prev.map((q) => q._id === parentQuestionId
-        ? { ...q, answers: q.answers.filter((a) => a._id !== answerId) }
-        : q
-      ));
-    } catch (err: unknown) {
-      const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
-      alert(msg ?? 'Impossible de supprimer la réponse');
-    }
+  const removeAnswer = (answerId: string, parentQuestionId: string) => {
+    openConfirm('Supprimer cette réponse ?', async () => {
+      try {
+        await QuizzesService.deleteAnswer(answerId);
+        setQuestions((prev) => prev.map((q) => q._id === parentQuestionId
+          ? { ...q, answers: q.answers.filter((a) => a._id !== answerId) }
+          : q
+        ));
+        toast.success('Réponse supprimée');
+      } catch (err: unknown) {
+        const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
+        toast.error(msg ?? 'Impossible de supprimer la réponse');
+      } finally {
+        closeConfirm();
+      }
+    });
   };
 
   // dnd-kit sensors: activer le drag après un léger mouvement
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 4 } })
   );
 
   // DnD: réordonnancement optimiste puis persistance côté serveur
@@ -399,12 +424,12 @@ const InstructorLessonQuizPage = () => {
     if (!quiz?._id) return;
     try {
       await QuizzesService.reorderQuestions(quiz._id, nextArr.map((q) => q._id));
-      // Option: toast succès (si provider)
+      toast.success('Ordre des questions enregistré');
     } catch (err: unknown) {
       // rollback si échec
       setQuestions(prev);
       const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
-      alert(msg ?? 'Réordonnancement impossible');
+      toast.error(msg ?? 'Réordonnancement impossible');
     }
   };
 
@@ -514,6 +539,16 @@ const InstructorLessonQuizPage = () => {
           </form>
         </section>
       )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        message={confirmConfig?.message ?? ''}
+        onConfirm={() => confirmConfig?.onConfirm?.()}
+        onCancel={closeConfirm}
+        title="Confirmation"
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+      />
     </div>
   );
 };
