@@ -33,6 +33,7 @@ const AdminUsersPage = () => {
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<UserRow | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   const loadUsers = async (p = page) => {
     try {
@@ -98,6 +99,15 @@ const AdminUsersPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Détection mobile (CSS breakpoint équivalent)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener?.('change', update);
+    return () => mq.removeEventListener?.('change', update);
+  }, []);
+
   // Debounce pour la recherche texte
   useEffect(() => {
     const t = window.setTimeout(() => {
@@ -137,16 +147,16 @@ const AdminUsersPage = () => {
   if (error) return <div style={{ color: 'crimson' }}>{error}</div>;
 
   return (
-    <div>
-      <h2>Utilisateurs (admin)</h2>
-      {/* Barre de filtres */}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8, marginBottom: 8 }}>
+    <div className="container">
+      <h2 className="mt-3">Utilisateurs (admin)</h2>
+      {/* Barre de filtres responsive */}
+      <div className="flex wrap items-center gap-3 mt-2 mb-3 md:stack">
         <input
           type="text"
           placeholder="Rechercher par nom ou email"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          style={{ padding: '6px 8px', border: '1px solid #e5e7eb', borderRadius: 6, minWidth: 260 }}
+          style={{ padding: '6px 8px', border: '1px solid #e5e7eb', borderRadius: 6, minWidth: 220 }}
         />
         <select
           value={roleFilter}
@@ -159,74 +169,126 @@ const AdminUsersPage = () => {
           <option value="admin">admin</option>
         </select>
       </div>
-      <table className="table-clean" style={{ width: '100%', marginTop: 8, tableLayout: 'fixed' }}>
-        <colgroup>
-          <col style={{ width: '36%' }} />
-          <col style={{ width: '39%' }} />
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '10%' }} />
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Email</th>
-            <th>Rôle</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+      {/* Desktop: tableau scrollable si étroit */}
+      {!isMobile && (
+        <div style={{ overflowX: 'auto' }}>
+          <table className="table-clean" style={{ width: '100%', marginTop: 8, tableLayout: 'fixed', minWidth: 720 }}>
+            <colgroup>
+              <col style={{ width: '36%' }} />
+              <col style={{ width: '39%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '10%' }} />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => {
+                const isUnverified = u.isEmailVerified === false;
+                const isFocused = focusedRowId === u.id;
+                const trClass = `${isUnverified ? 'table-row-unverified ' : ''}${isFocused ? 'table-row-focused ' : ''}table-row-hover`;
+                return (
+                  <tr key={u.id} className={trClass}>
+                    <td>
+                      {u.firstName} {u.lastName}
+                      {isUnverified && (
+                        <span className="badge badge-unverified" style={{ marginLeft: 8 }}>Non vérifié</span>
+                      )}
+                    </td>
+                    <td>{u.email}</td>
+                    <td>
+                      <select
+                        value={u.role}
+                        onFocus={() => setFocusedRowId(u.id)}
+                        onBlur={() => setFocusedRowId((curr) => (curr === u.id ? null : curr))}
+                        onChange={(e) => handleChangeRole(u.id, e.target.value as UserRole)}
+                        disabled={!!updating[u.id]}
+                        style={{ width: '100%' }}
+                      >
+                        <option value="player">player</option>
+                        <option value="instructor">instructor</option>
+                        <option value="admin">admin</option>
+                      </select>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        disabled={!!updating[u.id] || (me ? me.id === u.id : false)}
+                        title={me && me.id === u.id ? 'Vous ne pouvez pas vous supprimer' : 'Supprimer cet utilisateur'}
+                        onPointerDownCapture={(e) => e.stopPropagation()}
+                        onMouseDownCapture={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); openDeleteConfirm(u); }}
+                      >
+                        Supprimer
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {users.length === 0 && (
+                <tr>
+                  <td colSpan={4} style={{ padding: '10px', color: '#64748b' }}>Aucun utilisateur</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Mobile: cartes compactes */}
+      {isMobile && (
+        <div className="grid sm:grid-1" style={{ gap: 10 }}>
           {users.map((u) => {
             const isUnverified = u.isEmailVerified === false;
-            const isFocused = focusedRowId === u.id;
-            const trClass = `${isUnverified ? 'table-row-unverified ' : ''}${isFocused ? 'table-row-focused ' : ''}table-row-hover`;
             return (
-              <tr key={u.id} className={trClass}>
-                <td>
-                  {u.firstName} {u.lastName}
-                  {isUnverified && (
-                    <span className="badge badge-unverified" style={{ marginLeft: 8 }}>Non vérifié</span>
-                  )}
-                </td>
-                <td>{u.email}</td>
-                <td>
-                  <select
-                    value={u.role}
-                    onFocus={() => setFocusedRowId(u.id)}
-                    onBlur={() => setFocusedRowId((curr) => (curr === u.id ? null : curr))}
-                    onChange={(e) => handleChangeRole(u.id, e.target.value as UserRole)}
-                    disabled={!!updating[u.id]}
-                    style={{ width: '100%' }}
-                  >
-                    <option value="player">player</option>
-                    <option value="instructor">instructor</option>
-                    <option value="admin">admin</option>
-                  </select>
-                </td>
-                <td>
+              <div key={u.id} className="tile" style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 700 }}>{u.firstName} {u.lastName}
+                    {isUnverified && (
+                      <span className="badge badge-unverified" style={{ marginLeft: 8 }}>Non vérifié</span>
+                    )}
+                  </div>
+                  <div style={{ color: '#475569', fontSize: 12 }}>{u.email}</div>
+                  <div className="mt-2">
+                    <label style={{ fontSize: 12, color: '#64748b', marginRight: 6 }}>Rôle</label>
+                    <select
+                      value={u.role}
+                      onChange={(e) => handleChangeRole(u.id, e.target.value as UserRole)}
+                      disabled={!!updating[u.id]}
+                    >
+                      <option value="player">player</option>
+                      <option value="instructor">instructor</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
                   <button
                     type="button"
                     className="btn btn-danger btn-sm"
                     disabled={!!updating[u.id] || (me ? me.id === u.id : false)}
                     title={me && me.id === u.id ? 'Vous ne pouvez pas vous supprimer' : 'Supprimer cet utilisateur'}
-                    onPointerDownCapture={(e) => e.stopPropagation()}
-                    onMouseDownCapture={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => { e.stopPropagation(); openDeleteConfirm(u); }}
+                    onClick={() => openDeleteConfirm(u)}
                   >
                     Supprimer
                   </button>
-                </td>
-              </tr>
+                </div>
+              </div>
             );
           })}
           {users.length === 0 && (
-            <tr>
-              <td colSpan={4} style={{ padding: '10px', color: '#64748b' }}>Aucun utilisateur</td>
-            </tr>
+            <div style={{ color: '#64748b' }}>Aucun utilisateur</div>
           )}
-        </tbody>
-      </table>
+        </div>
+      )}
 
       {/* Pagination simple */}
       <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
