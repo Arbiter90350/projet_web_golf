@@ -1,16 +1,8 @@
-name: frontend-build
+name: frontend-build (manual)
 
 on:
-  push:
-    branches: [ main, develop, "feature/**" ]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/frontend-build.yml"
-  pull_request:
-    branches: [ main ]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/frontend-build.yml"
+  # Désactivé par défaut; lancer manuellement si besoin
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -56,5 +48,6 @@ jobs:
 
       - name: Build (Vite)
         env:
-          VITE_API_URL: /api/v1
+          # Backend serves under /api/* and Nginx proxies /api -> backend
+          VITE_API_URL: /api
         run: npm run build

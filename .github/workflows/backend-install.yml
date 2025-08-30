@@ -1,16 +1,8 @@
-name: backend-install
+name: backend-install (manual)
 
 on:
-  push:
-    branches: [ main, develop, "feature/**" ]
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-install.yml"
-  pull_request:
-    branches: [ main ]
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-install.yml"
+  # Désactivé par défaut; lancer manuellement si besoin
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

@@ -1,9 +1,10 @@
 /* Service Worker basique pour PWA — cache des assets statiques, pas d'API */
-const CACHE_NAME = 'fph-static-v1';
+const CACHE_NAME = 'fph-static-v2';
 const ASSET_ALLOWLIST = [
   '/',
   '/index.html',
-  '/vite.svg'
+  '/manifest.webmanifest',
+  '/icons/icon-192.png'
 ];
 
 self.addEventListener('install', (event) => {

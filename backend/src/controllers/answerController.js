@@ -126,7 +126,8 @@ exports.deleteAnswer = async (req, res, next) => {
         // Remove reference from question.answers
         await Question.findByIdAndUpdate(question._id, { $pull: { answers: answer._id } });
 
-        await answer.remove();
+        // Supprime l'élément avec une méthode supportée par Mongoose v6/v7
+        await Answer.deleteOne({ _id: answer._id });
 
         res.status(200).json({
             status: 'success',

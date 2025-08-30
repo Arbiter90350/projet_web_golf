@@ -114,6 +114,9 @@ services:
       dockerfile: Dockerfile
     container_name: fairway-seed
     restart: "no"
+    # Make seeding opt-in (won't run on normal 'up' unless profile is enabled)
+    profiles:
+      - seed
     entrypoint: ["npm", "run", "seed"]
     environment:
       - NODE_ENV=${NODE_ENV:-development}
