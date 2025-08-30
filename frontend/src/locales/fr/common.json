@@ -33,13 +33,21 @@
     "to_home": "Aller à l’accueil"
   },
   "titles": {
-    "dashboard": "Tableau de bord"
+    "dashboard": "Accueil"
   },
   "actions": {
     "logout": "Se déconnecter"
   },
   "labels": {
     "welcome": "Bienvenue"
+  },
+  "dashboard": {
+    "catchphrase": "Votre swing, notre nature.",
+    "alt_header": "Photo d’accueil du golf",
+    "schedule_mgmt_title": "Gestion des leçons",
+    "schedule_mgmt_desc": "Planifiez vos leçons et visualisez votre agenda.",
+    "comms_title": "Communication & événements",
+    "comms_desc": "Actualités du club, événements et messages importants."
   },
   "forbidden": {
     "title": "Accès interdit",
@@ -48,14 +56,17 @@
   "common": {
     "hide": "Masquer",
     "open": "Ouvrir",
-    "open_in_new_tab": "Ouvrir dans un nouvel onglet"
+    "open_in_new_tab": "Ouvrir dans un nouvel onglet",
+    "prev": "Précédent",
+    "next": "Suivant"
   },
   "metrics": {
     "title": "Vos métriques",
     "courses_available": "Cours disponibles",
     "lessons_completed": "Leçons terminées",
     "access_modules": "Accédez à vos modules",
-    "continue_progress": "Continuez votre progression"
+    "continue_progress": "Continuez votre progression",
+    "progress_count": "{{completed}}/{{total}} leçons"
   },
   "modules": {
     "loading": "Chargement des modules...",
@@ -110,7 +121,10 @@
   "cta": {
     "continue_learning": "Poursuivre l’apprentissage",
     "access_modules_and_lessons": "Accédez à vos modules et leçons",
-    "view_my_courses": "Voir mes cours"
+    "view_my_courses": "Voir mes cours",
+    "track_learning": "Suivre mes apprentissages",
+    "club_signup": "Inscription au club",
+    "club_signup_desc": "Rejoignez le club et profitez des avantages."
   },
   "instructor": {
     "courses": {
@@ -166,6 +180,39 @@
       "set_in_progress": "En cours",
       "validate": "Valider",
       "not_modifiable": "Validation non modifiable (mode {{mode}})"
+    }
+  },
+  "admin": {
+    "comms": {
+      "title": "Communications (admin)",
+      "create_button": "+ Créer une communication",
+      "loading": "Chargement des communications...",
+      "error_loading": "Erreur lors du chargement des communications",
+      "list_empty": "Aucune communication pour le moment.",
+      "field_content": "Contenu",
+      "field_media": "Média (fileName)",
+      "field_visible_from": "Visible à partir du",
+      "field_visible_until": "Visible jusqu'au",
+      "file_name_placeholder": "Nom de fichier (fileName)",
+      "create": "Créer",
+      "creating": "Création...",
+      "create_success": "Communication créée",
+      "create_failed": "Création impossible",
+      "update": "Mettre à jour",
+      "update_success": "Communication mise à jour",
+      "update_failed": "Mise à jour impossible",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "delete_success": "Communication supprimée",
+      "delete_failed": "Suppression impossible",
+      "cancel": "Annuler",
+      "search_placeholder": "Rechercher par contenu...",
+      "page_label": "Page {{page}} / {{totalPages}}",
+      "confirm_delete_text": "Supprimer cette communication ?",
+      "validation": {
+        "content_required": "Le contenu est obligatoire",
+        "date_order": "La date de fin doit être postérieure à la date de début"
+      }
     }
   }
 }

@@ -21,6 +21,7 @@ const contentRoutes = require('./routes/contents');
 const progressRoutes = require('./routes/progress');
 const userRoutes = require('./routes/users');
 const fileRoutes = require('./routes/files');
+const communicationRoutes = require('./routes/communications');
 
 // Initialisation de l'application Express
 const app = express();
@@ -91,6 +92,7 @@ app.use('/api/contents', contentRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/files', fileRoutes);
+app.use('/api/communications', communicationRoutes);
 
 // Routes de base
 app.get('/', (req, res) => {

@@ -19,6 +19,7 @@ import InstructorCoursesPage from './pages/InstructorCoursesPage';
 import InstructorCourseDetailPage from './pages/InstructorCourseDetailPage';
 import InstructorLessonContentsPage from './pages/InstructorLessonContentsPage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import AdminCommunicationsPage from './pages/AdminCommunicationsPage';
 import './App.css';
 import { useAuth } from './hooks/useAuth';
 import QuizPage from './pages/QuizPage';
@@ -134,6 +135,11 @@ function App() {
             <Route path="admin/users" element={
               <RequireRole roles={["admin"]}>
                 <AdminUsersPage />
+              </RequireRole>
+            } />
+            <Route path="admin/communications" element={
+              <RequireRole roles={["admin"]}>
+                <AdminCommunicationsPage />
               </RequireRole>
             } />
           </Route>
