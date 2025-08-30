@@ -38,7 +38,7 @@ if ($changes) {
 Run git @("push","-u","origin", $currentBranch)
 
 # Ensure GitHub CLI is available
-$hasGh = (Get-Command gh -ErrorAction SilentlyContinue) -ne $null
+$hasGh = $null -ne (Get-Command gh -ErrorAction SilentlyContinue)
 if (-not $hasGh) {
   throw "GitHub CLI (gh) est requis. Installez-le puis exécutez 'gh auth login'."
 }
@@ -63,9 +63,9 @@ if (-not $NoWaitChecks) {
   Run gh @("pr","checks","--watch")
 }
 
-# Squash merge (ne PAS supprimer la branche)
-Write-Host "Squash merge de la PR (branche conservée)..." -ForegroundColor Cyan
-Run gh @("pr","merge","--squash")
+# Squash merge via auto-merge (ne PAS supprimer la branche); merge effectif après CI verte
+Write-Host "Activation de l'auto-merge en squash (branche conservée)..." -ForegroundColor Cyan
+Run gh @("pr","merge","--squash","--auto","--yes")
 
 # Sync local main
 Write-Host "Mise à jour de la branche locale '$BaseBranch'..." -ForegroundColor Cyan

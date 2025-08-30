@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const linkStyle: CSSProperties = {
   display: 'block',
@@ -18,6 +19,7 @@ const activeStyle: CSSProperties = {
 };
 
 const DashboardLayout = () => {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const role = user?.role;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -44,7 +46,7 @@ const DashboardLayout = () => {
   }, [isMobile, menuOpen]);
 
   const commonNav = [
-    { to: '/dashboard', label: 'Aperçu', end: true },
+    { to: '/dashboard', label: t('titles.dashboard'), end: true },
   ];
 
   const playerNav = [
@@ -59,6 +61,7 @@ const DashboardLayout = () => {
 
   const adminNav = [
     { to: '/admin/users', label: 'Utilisateurs (admin)' },
+    { to: '/admin/communications', label: 'Communications (admin)' },
   ];
 
   const gridColumns = isMobile ? '1fr' : '260px 1fr';
@@ -166,7 +169,7 @@ const DashboardLayout = () => {
             </NavLink>
           ))}
 
-          <button onClick={logout} style={{ marginTop: '0.8rem' }}>Se déconnecter</button>
+          <button onClick={logout} style={{ marginTop: '0.8rem' }}>{t('actions.logout')}</button>
         </nav>
       </aside>
 
