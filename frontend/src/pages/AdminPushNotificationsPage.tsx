@@ -1,18 +1,32 @@
-import { useState } from 'react';
-import FilePicker from '../components/FileManager/FilePicker';
-import type { PickedFile } from '../components/FileManager/FilePicker';
+import { useEffect, useState } from 'react';
+import { useToast } from '../contexts/toast-context';
+import api from '../services/api';
+import { getPushConfig, subscribeCurrentDevice, unsubscribeCurrentDevice } from '../services/push';
 
 // Page d'administration — Notifications Push (squelette UI)
 // - Historique des notifications (placeholder)
-// - Éditeur de nouvelle notification: titre, message, média optionnel
-// - Câblage API à faire plus tard (backend non implémenté)
+// - Éditeur de nouvelle notification: titre, message, icône, actions (0..2)
+// - Câblage API backend Web Push (subscribe/test/send)
 
 export default function AdminPushNotificationsPage() {
+  const toast = useToast();
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [mediaFileName, setMediaFileName] = useState('');
+  const [icon, setIcon] = useState('/icons/icon-192.png');
+  const [clickUrl, setClickUrl] = useState('');
+  const [actions, setActions] = useState<{ title: string; action: string; url: string }[]>([]);
+  const [sending, setSending] = useState(false);
 
-  const onPicked = (f: PickedFile) => setMediaFileName(f.fileName);
+  useEffect(() => {
+    (async () => {
+      try {
+        const cfg = await getPushConfig();
+        setIcon(cfg.defaultIcon || '/icons/icon-192.png');
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
 
   return (
     <div className="container">
@@ -44,15 +58,42 @@ export default function AdminPushNotificationsPage() {
             <textarea rows={6} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Votre message…" />
           </label>
           <label>
-            <div>Fichier média (optionnel)</div>
-            <input type="text" value={mediaFileName} onChange={(e) => setMediaFileName(e.target.value)} placeholder="Nom du fichier (Object Storage)" />
-            <div style={{ marginTop: 8 }}>
-              <FilePicker mode="inline" onSelect={onPicked} />
-            </div>
+            <div>Icône</div>
+            <input type="text" value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="URL icône (absolue de préférence)" />
+          </label>
+          <label>
+            <div>URL au clic (optionnel)</div>
+            <input type="text" value={clickUrl} onChange={(e) => setClickUrl(e.target.value)} placeholder="https://golf-rougemont.com/..." />
           </label>
           <div>
-            {/* Bouton désactivé tant que l'API n'est pas branchée */}
-            <button className="btn btn-primary" disabled>Envoyer (à venir)</button>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Actions (0..2)</div>
+            {actions.map((a, idx) => (
+              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 6, marginBottom: 6 }}>
+                <input placeholder="Titre" value={a.title} onChange={(e) => setActions(prev => prev.map((x, i) => i===idx ? { ...x, title: e.target.value } : x))} />
+                <input placeholder="Action (ex: open)" value={a.action} onChange={(e) => setActions(prev => prev.map((x, i) => i===idx ? { ...x, action: e.target.value } : x))} />
+                <input placeholder="URL" value={a.url} onChange={(e) => setActions(prev => prev.map((x, i) => i===idx ? { ...x, url: e.target.value } : x))} />
+                <button className="btn btn-outline" onClick={() => setActions(prev => prev.filter((_, i) => i !== idx))}>Retirer</button>
+              </div>
+            ))}
+            <button className="btn" disabled={actions.length >= 2} onClick={() => setActions(prev => [...prev, { title: '', action: 'open', url: '' }])}>Ajouter une action</button>
+          </div>
+          <div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button className="btn btn-outline" onClick={async () => { const ok = await subscribeCurrentDevice(); toast[ok ? 'success' : 'error'](ok ? 'Appareil abonné' : 'Abonnement refusé'); }}>Abonner cet appareil</button>
+              <button className="btn btn-outline" onClick={async () => { const ok = await unsubscribeCurrentDevice(); toast[ok ? 'success' : 'error'](ok ? 'Appareil désabonné' : 'Échec désabonnement'); }}>Désabonner cet appareil</button>
+              <button className="btn btn-outline" onClick={async () => { try { await api.post('/admin/push/test'); toast.success('Test envoyé'); } catch { toast.error('Échec test'); } }}>Test vers moi</button>
+              <button className="btn btn-primary" disabled={sending || !title || !message || !icon} onClick={async () => {
+                try {
+                  setSending(true);
+                  await api.post('/admin/push/messages', { title, body: message, icon, clickUrl: clickUrl || undefined, actions });
+                  toast.success('Notification envoyée');
+                } catch {
+                  toast.error('Échec envoi');
+                } finally {
+                  setSending(false);
+                }
+              }}>{sending ? 'Envoi…' : 'Envoyer'}</button>
+            </div>
           </div>
         </div>
       </div>

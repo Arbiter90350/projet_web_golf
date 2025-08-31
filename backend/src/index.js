@@ -24,6 +24,8 @@ const fileRoutes = require('./routes/files');
 const communicationRoutes = require('./routes/communications');
 const publicCommunicationRoutes = require('./routes/publicCommunications');
 const settingsRoutes = require('./routes/settings');
+const pushRoutes = require('./routes/push');
+const adminPushRoutes = require('./routes/adminPush');
 
 // Initialisation de l'application Express
 const app = express();
@@ -97,6 +99,8 @@ app.use('/api/files', fileRoutes);
 app.use('/api/communications', communicationRoutes);
 app.use('/api/public/communications', publicCommunicationRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/push', pushRoutes);
+app.use('/api/admin/push', adminPushRoutes);
 
 // Routes de base
 app.get('/', (req, res) => {
