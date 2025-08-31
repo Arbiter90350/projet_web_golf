@@ -14,10 +14,16 @@ Important:
 - DNS: enregistrez un enregistrement A pour le sous‑domaine `app` pointant vers `NEW_IP` (`app.golf-rougemont.com` → `NEW_IP`).
 
 ## Fichiers de configuration utilisés
+<<<<<<< HEAD
 - `docker-compose.yml` (base)
 - `docker-compose.prod.yml` (override prod — expose 80/443 sur le service `frontend` et monte les certificats)
 - `frontend/nginx/default.tls.conf` (Nginx TLS: SPA + proxy `/api/`)
 - `.env.prod.example` → copier en `.env` et remplir les secrets
+=======
+- `docker-compose.yml` (base dev) + `docker-compose.prod.yml` (override prod)
+- `frontend/nginx/default.tls.conf` (Nginx prod avec TLS: SPA + proxy `/api/`)
+- `.env.prod.example` → copier en `.env` (ou `.env.prod`) et remplir les secrets
+>>>>>>> 9fea6b1 (feat: implement TLS termination in frontend Nginx container with Let's Encrypt support)
 
 ## Étapes
 
@@ -40,11 +46,15 @@ cp .env.prod.example .env
 # - MONGO_INITDB_ROOT_USERNAME / MONGO_INITDB_ROOT_PASSWORD
 # - SMTP_* et EMAIL_FROM si emails actifs
 # - (optionnel) ajuster les limites de rate limiting
+<<<<<<< HEAD
 
 # Placer les certificats TLS (Let’s Encrypt ou équivalent) sur le VPS:
 # - fullchain.pem → ./secrets/tls/fullchain.pem
 # - privkey.pem   → ./secrets/tls/privkey.pem
 # Ces fichiers sont ignorés par git (voir .gitignore) et montés dans le conteneur Nginx.
+=======
+# - TLS_CERTS_DIR (voir section HTTPS)
+>>>>>>> 9fea6b1 (feat: implement TLS termination in frontend Nginx container with Let's Encrypt support)
 ```
 
 3) Vérifier la configuration Docker Compose
@@ -75,12 +85,51 @@ sudo docker compose logs -f backend
 sudo docker compose logs -f frontend
 ```
 
+<<<<<<< HEAD
 ## HTTPS
 
 TLS est géré par le conteneur frontend Nginx (Option B):
 - Les certificats sont montés depuis `./secrets/tls/` vers `/etc/nginx/certs/`.
 - La configuration Nginx utilisée est `frontend/nginx/default.tls.conf`.
 - HSTS est activé côté Nginx (en production uniquement).
+=======
+## HTTPS (terminaison TLS dans le conteneur frontend — Option B SÉLECTIONNÉE)
+
+Le projet est configuré pour terminer TLS directement dans le conteneur Nginx du frontend. Le fichier `docker-compose.prod.yml` expose `80:80` et `443:443`, monte `frontend/nginx/default.tls.conf` dans `/etc/nginx/conf.d/default.conf`, et monte un répertoire de certificats dans `/etc/nginx/certs`.
+
+1) Obtenir un certificat Let’s Encrypt (mode standalone ponctuel)
+
+```bash
+sudo systemctl stop nginx || true
+sudo docker compose down || true
+sudo certbot certonly --standalone -d app.golf-rougemont.com
+# Certificats installés typiquement sous:
+#   /etc/letsencrypt/live/app.golf-rougemont.com/fullchain.pem
+#   /etc/letsencrypt/live/app.golf-rougemont.com/privkey.pem
+```
+
+2) Configurer le montage des certificats
+
+Deux méthodes:
+
+- Recommandée (zéro copie, renouvellement auto): définir `TLS_CERTS_DIR` dans `.env` pour pointer directement vers le chemin live Let’s Encrypt:
+
+```env
+TLS_CERTS_DIR=/etc/letsencrypt/live/app.golf-rougemont.com
+```
+
+- Alternative (non recommandée): copier les fichiers dans `./secrets/tls` et laisser `TLS_CERTS_DIR` par défaut. À refaire à chaque renouvellement si vous ne pointez pas sur le chemin live.
+
+3) Relancer le stack
+
+```bash
+sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+sudo docker compose ps
+sudo docker compose logs -n 50 frontend
+```
+
+Nginx doit démarrer sans erreur de type « cannot load certificate … no start line ». Le serveur doit répondre en HTTPS et proxifier correctement `GET /api/health`.
+>>>>>>> 9fea6b1 (feat: implement TLS termination in frontend Nginx container with Let's Encrypt support)
 
 ## Points de sécurité essentiels
 
