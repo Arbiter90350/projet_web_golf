@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import FilePicker from '../components/FileManager/FilePicker';
 import type { PickedFile } from '../components/FileManager/FilePicker';
 import './InstructorLessonContentsPage.css';
-import ConfirmDialog from '../components/ConfirmDialog';
+// ConfirmDialog supprimé: UX demandée = bouton Enregistrer pour la description
 
 const contentSchema = z.object({
   // Pas de type par défaut: l'utilisateur doit choisir explicitement
@@ -48,9 +48,9 @@ const InstructorLessonContentsPage = () => {
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  // Brouillon de légende par contenu (édition inline)
+  const [captionDraft, setCaptionDraft] = useState<Record<string, string>>({});
   // Edition locale: on sépare du schéma pour permettre un état vide puis validation via backend si besoin
   const [editVals, setEditVals] = useState<{ contentType: ContentForm['contentType'] | ''; fileName: string; caption: string }>({ contentType: '', fileName: '', caption: '' });
   // plus de modal -> pas d'état d'ouverture
@@ -73,6 +73,10 @@ const InstructorLessonContentsPage = () => {
         url: c.url,
       })).filter((c) => !!c.id);
       setContents(mapped);
+      // Init des brouillons à partir des valeurs serveur
+      const draft: Record<string, string> = {};
+      for (const c of mapped) draft[c.id] = c.caption ?? '';
+      setCaptionDraft(draft);
     } catch (err: unknown) {
       const fallback = 'Erreur lors du chargement des contenus';
       if (isAxiosError(err)) {
@@ -138,25 +142,18 @@ const InstructorLessonContentsPage = () => {
     }
   };
 
-  const onDeleteClick = (id: string, e?: React.SyntheticEvent) => {
-    if (e) e.stopPropagation();
-    setPendingDeleteId(id);
-    setConfirmOpen(true);
-  };
-
-  const performDelete = async () => {
-    if (!pendingDeleteId) return;
+  const saveCaption = async (c: ContentItem) => {
     try {
-      setDeletingId(pendingDeleteId);
-      await api.delete(`/contents/${pendingDeleteId}`);
+      setSavingId(c.id);
+      const newCaption = captionDraft[c.id] ?? '';
+      // On envoie les champs nécessaires pour une mise à jour complète
+      await api.put(`/contents/${c.id}`, { contentType: c.contentType, fileName: c.fileName, caption: newCaption });
       await loadContents();
     } catch (err: unknown) {
       const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
-      alert(msg ?? 'Suppression impossible');
+      alert(msg ?? 'Enregistrement impossible');
     } finally {
-      setDeletingId(null);
-      setConfirmOpen(false);
-      setPendingDeleteId(null);
+      setSavingId(null);
     }
   };
 
@@ -169,18 +166,8 @@ const InstructorLessonContentsPage = () => {
     <div>
       <div style={{ marginBottom: '1rem' }}>
         <button type="button" onClick={() => navigate(-1)}>← Retour</button>
-        {/* Modal FilePicker - réutilisé pour create/edit */}
-      {/* supprimé: modal picker */}
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Supprimer le contenu"
-        message={<span>Cette action est irréversible. Confirmer la suppression ?</span>}
-        confirmLabel="Supprimer"
-        cancelLabel="Annuler"
-        onConfirm={performDelete}
-        onCancel={() => { setConfirmOpen(false); setPendingDeleteId(null); }}
-      />
-    </div>
+        {/* Modal/FilePicker supprimé ici; FilePicker inline conservé */}
+      </div>
       <h2>Contenus de la leçon</h2>
 
       <section style={{ margin: '1rem 0', padding: '1rem', border: '1px solid #e5e7eb', borderRadius: 8 }}>
@@ -274,24 +261,23 @@ const InstructorLessonContentsPage = () => {
                     </div>
                     <div className="caption">
                       <div style={{ fontWeight: 600, marginBottom: 6 }}>Description</div>
-                      <div style={{ whiteSpace: 'pre-wrap' }}>{(c.caption ?? '').trim() || <span style={{ color: '#64748b', fontStyle: 'italic' }}>Aucune description</span>}</div>
+                      <textarea
+                        rows={3}
+                        value={captionDraft[c.id] ?? ''}
+                        onChange={(e) => setCaptionDraft((m) => ({ ...m, [c.id]: e.target.value }))}
+                        placeholder="Ajouter une description"
+                        style={{ width: '100%' }}
+                      />
                     </div>
                     <div style={{ display: 'flex', gap: 8, gridColumn: '1 / -1' }}>
                       <button type="button" onClick={() => startEdit(c)}>Modifier</button>
                       <button
                         type="button"
-                        className="btn btn-danger"
-                        onPointerDownCapture={(e) => e.stopPropagation()}
-                        onMouseDownCapture={(e) => e.stopPropagation()}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onTouchStartCapture={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
-                        onTouchEnd={(e) => e.stopPropagation()}
-                        onClick={(e) => onDeleteClick(c.id, e)}
-                        disabled={deletingId === c.id}
+                        className="btn btn-primary"
+                        onClick={() => saveCaption(c)}
+                        disabled={savingId === c.id}
                       >
-                        {deletingId === c.id ? 'Suppression…' : 'Supprimer'}
+                        {savingId === c.id ? 'Enregistrement…' : 'Enregistrer'}
                       </button>
                     </div>
                   </div>
