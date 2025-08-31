@@ -9,6 +9,7 @@ node_modules/
 # Build output
 /dist
 /build
+frontend/dist
 
 # Logs
 logs
@@ -36,3 +37,10 @@ ehthumbs.db
 Thumbs.db
 user-policy.json
 cors-config.json
+
+# TLS certificates (do not commit secrets)
+secrets/
+
+# Frontend dev env files and local artifacts
+frontend/.env*
+frontend/node_modules/

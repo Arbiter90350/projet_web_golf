@@ -39,7 +39,7 @@ Notes:
   - Client API (`frontend/src/services/api.ts`): base `VITE_API_URL` normalisée. En prod compose: `/api/v1` (même origine). Intercepteurs: injecte JWT, gère 401/403 (logout/redirection), hook global d’erreurs.
   - Contexte auth (`frontend/src/context/AuthContext.tsx`): login/register/logout, `/auth/me` pour hydrater l’utilisateur.
   - Route guard (`frontend/src/components/ProtectedRoute.tsx`).
-- Nginx (SPA + proxy) (`frontend/nginx/default*.conf`):
+- Nginx (SPA + proxy TLS en prod) (`frontend/nginx/default.tls.conf` en prod; `frontend/nginx/default.conf` pour le build de base):
   - SPA: `try_files ... /index.html`, headers sécurité (CSP, HSTS, etc.).
   - Proxy `/api/` -> `http://backend:5000` (préserve l’URI). Timeouts 60s.
 - Docker Compose
@@ -135,15 +135,13 @@ docker compose ps
 docker compose logs -f backend
 ```
 
-7) Tests rapides HTTP (depuis votre poste)
-- SPA: `http://NEW_IP/` doit renvoyer l’app.
-- API via proxy: `curl http://NEW_IP/api/v1/auth/login -i` (attendu 400 si corps manquant).
-- Santé backend (non proxifié par défaut): option A — `docker exec -it fairway-backend curl -s http://localhost:5000/health`.
-  - Option B — ajouter en Nginx: `location = /health { proxy_pass http://backend:5000/health; }`.
+7) Tests rapides (depuis votre poste)
+- SPA: `https://app.golf-rougemont.com/` doit renvoyer l’app (HTTP redirige vers HTTPS).
+- API via proxy: `curl https://app.golf-rougemont.com/api/v1/auth/login -i` (attendu 400 si corps manquant).
+- Santé backend: exposé via Nginx sur `GET https://app.golf-rougemont.com/api/health` (proxy vers `/health` du backend).
 
 8) HTTPS/TLS
-- Recommandé: reverse proxy TLS externe (Nginx/Traefik/Caddy) gérant certificats Let’s Encrypt et pointant vers FRONTEND 80.
-- Alternative: activer 443 dans le conteneur Nginx et monter les certificats. Mettre à jour HSTS/CSP si nécessaire.
+- Implémenté: TLS terminé dans le conteneur frontend Nginx (Option B). Certificats montés depuis `./secrets/tls/` vers `/etc/nginx/certs/`, port 443 exposé. HSTS activé côté Nginx.
 
 ---
 
@@ -200,5 +198,5 @@ Critères d’acceptation MVP:
 
 - Backend: `backend/src/index.js`, `backend/src/db.js`, `backend/src/middleware/authMiddleware.js`, `backend/src/middleware/rateLimiters.js`, `backend/src/controllers/authController.js`, `backend/src/models/User.js`, `backend/src/services/emailService.js`, `backend/src/seeds/seed.js`
 - Frontend: `frontend/src/services/api.ts`, `frontend/src/context/AuthContext.tsx`, `frontend/src/components/ProtectedRoute.tsx`
-- Nginx: `frontend/nginx/default.conf`, `frontend/nginx/default.prod.conf`
+- Nginx: `frontend/nginx/default.conf`, `frontend/nginx/default.tls.conf`
 - Compose: `docker-compose.yml`, `docker-compose.prod.yml`

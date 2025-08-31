@@ -1,11 +1,12 @@
-# Déploiement VPS (Docker) — app.golf-rougemont.com
+# Déploiement VPS (Docker) — app.golf-rougemont.com (Option B: TLS dans Nginx frontend)
 
-Ce guide décrit le déploiement en pré‑production/production sur un VPS Debian 12 (ou Ubuntu) avec Docker Compose, pour le sous‑domaine app.golf-rougemont.com.
+Ce guide décrit le déploiement en pré‑production/production sur un VPS Ubuntu/Debian avec Docker Compose, pour le sous‑domaine app.golf-rougemont.com.
 
 Important:
 - Utiliser des clés SSH ed25519 pour se connecter au VPS (utilisateur par défaut: `ubuntu`).
 - Ne jamais committer d’adresses IP publiques ni de secrets. Dans la documentation, utiliser le placeholder `NEW_IP`. Au moment d’exécuter les commandes, remplacez `NEW_IP` par l’IP réelle du VPS.
 - Même origine (same-origin): Nginx du frontend sert l’app et proxifie `/api/` vers le backend en réseau Docker interne. Aucune exposition publique du backend ni de MongoDB.
+- TLS géré DANS le conteneur frontend (Option B). Les certificats sont montés en lecture seule.
 
 ## Pré-requis VPS
 - Debian 12 (ou Ubuntu) à jour (UFW activé si souhaité: HTTP/HTTPS/SSH ouverts).
@@ -13,9 +14,10 @@ Important:
 - DNS: enregistrez un enregistrement A pour le sous‑domaine `app` pointant vers `NEW_IP` (`app.golf-rougemont.com` → `NEW_IP`).
 
 ## Fichiers de configuration utilisés
-- `docker-compose.yml` (base dev) + `docker-compose.prod.yml` (override prod)
-- `frontend/nginx/default.prod.conf` (Nginx prod: SPA + proxy `/api/`)
-- `.env.prod.example` → copier en `.env` (ou `.env.prod`) et remplir les secrets
+- `docker-compose.yml` (base)
+- `docker-compose.prod.yml` (override prod — expose 80/443 sur le service `frontend` et monte les certificats)
+- `frontend/nginx/default.tls.conf` (Nginx TLS: SPA + proxy `/api/`)
+- `.env.prod.example` → copier en `.env` et remplir les secrets
 
 ## Étapes
 
@@ -38,6 +40,11 @@ cp .env.prod.example .env
 # - MONGO_INITDB_ROOT_USERNAME / MONGO_INITDB_ROOT_PASSWORD
 # - SMTP_* et EMAIL_FROM si emails actifs
 # - (optionnel) ajuster les limites de rate limiting
+
+# Placer les certificats TLS (Let’s Encrypt ou équivalent) sur le VPS:
+# - fullchain.pem → ./secrets/tls/fullchain.pem
+# - privkey.pem   → ./secrets/tls/privkey.pem
+# Ces fichiers sont ignorés par git (voir .gitignore) et montés dans le conteneur Nginx.
 ```
 
 3) Vérifier la configuration Docker Compose
@@ -50,7 +57,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml config
 4) Construire et lancer en arrière-plan
 
 ```bash
-# Construire les images et démarrer
+# Construire les images et démarrer (frontend expose 80 et 443)
 sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 # Vérifier les conteneurs
@@ -59,8 +66,8 @@ sudo docker compose ps
 
 5) Vérifications post-déploiement
 
-- Frontend: http://app.golf-rougemont.com (puis https après configuration TLS)
-- Health backend (via proxy): `http://app.golf-rougemont.com/api/health` (la route backend est `GET /health` et le proxy `/api/` la relaye)
+- Frontend: https://app.golf-rougemont.com
+- Health backend (via proxy): `https://app.golf-rougemont.com/api/health` (la route backend est `GET /health` et le proxy `/api/` la relaye)
 - Logs (non sensibles):
 
 ```bash
@@ -68,15 +75,12 @@ sudo docker compose logs -f backend
 sudo docker compose logs -f frontend
 ```
 
-## HTTPS (recommandé)
+## HTTPS
 
-Le conteneur Nginx inclus n’embarque pas la gestion de certificats. Deux options:
-
-- Option A (recommandée): utiliser un reverse proxy dédié (Traefik, Caddy, Nginx Proxy Manager) sur le VPS qui termine TLS en 443 et redirige vers le conteneur frontend port 80. Avantages: renouvellement automatique, séparation des préoccupations.
-
-- Option B: gérer Let’s Encrypt dans le conteneur Nginx du frontend. Plus complexe; nécessite de monter les certificats et d’exposer 443 dans `docker-compose.prod.yml`.
-
-Dans les deux cas, activer HSTS seulement en HTTPS effectif.
+TLS est géré par le conteneur frontend Nginx (Option B):
+- Les certificats sont montés depuis `./secrets/tls/` vers `/etc/nginx/certs/`.
+- La configuration Nginx utilisée est `frontend/nginx/default.tls.conf`.
+- HSTS est activé côté Nginx (en production uniquement).
 
 ## Points de sécurité essentiels
 
@@ -85,6 +89,12 @@ Dans les deux cas, activer HSTS seulement en HTTPS effectif.
 - `CORS_ORIGINS` strict sur `https://app.golf-rougemont.com`.
 - Backend et MongoDB non exposés publiquement (pas de mapping de ports en prod).
 - Journaux: pas de données sensibles, niveau `info` en prod.
+
+## Déploiement automatisé (GitHub Actions)
+
+Le workflow `.github/workflows/deploy-prod.yml` se connecte en SSH au VPS et exécute:
+- `git fetch/reset` sur `origin/main`, puis `docker compose up -d --build` avec les fichiers `docker-compose.yml` + `docker-compose.prod.yml`.
+- En cas de problème avec SSH vers GitHub (host keys / changements), un fallback HTTPS peut être utilisé si vous fournissez le secret `GITHUB_TOKEN_READONLY` (token en lecture seule) dans les secrets du dépôt. Le workflow basculera temporairement l’URL `origin` vers HTTPS avec ce token pour effectuer le `fetch`.
 
 ## Commandes utiles
 
