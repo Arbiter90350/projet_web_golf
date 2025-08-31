@@ -7,6 +7,8 @@ const mongoose = require('mongoose');
 const SettingSchema = new mongoose.Schema(
   {
     key: { type: String, required: true, unique: true, index: true, trim: true, maxlength: 120 },
+    // Titre optionnel affiché sur les tuiles (remplace le libellé i18n si présent)
+    title: { type: String, required: false, trim: true, maxlength: 160 },
     content: { type: String, required: false, trim: true, maxlength: 8000 },
     mediaFileName: { type: String, required: false },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false, select: false },
