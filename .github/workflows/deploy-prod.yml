@@ -10,6 +10,12 @@ on:
       - 'docker-compose.yml'
       - 'docker-compose.prod.yml'
       - '.github/workflows/deploy-prod.yml'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Pourquoi lancer le déploiement manuellement? (optionnel)'
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
