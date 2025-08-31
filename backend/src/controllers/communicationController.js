@@ -23,16 +23,16 @@ exports.listCommunications = async (req, res, next) => {
 
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
-    const q = (req.query.q || '').toString().trim();
-
-    const filter = {};
-    if (q) {
-      const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    const q = (ex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
       filter.content = regex;
     }
 
     const total = await Communication.countDocuments(filter).maxTimeMS(MAX_TIME_MS);
-    const items = await Communication.find(filter)
+    const ireq.query.q || '').toString().trim();
+
+    const filter = {};
+    if (q) {
+      const regtems = await Communication.find(filter)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
