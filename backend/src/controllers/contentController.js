@@ -27,6 +27,7 @@ exports.getContents = async (req, res, next) => {
         _id: c._id,
         contentType: c.contentType,
         fileName: c.fileName,
+        caption: c.caption ?? '',
         // compat FE: expose aussi `url` pour lien direct temporaire
         url: signedUrl,
         lesson: c.lesson,
@@ -75,6 +76,7 @@ exports.addContent = async (req, res, next) => {
     const content = await Content.create({
       contentType,
       fileName,
+      caption: typeof req.body.caption === 'string' ? req.body.caption : '',
       lesson: req.params.lessonId,
     });
 
@@ -85,6 +87,7 @@ exports.addContent = async (req, res, next) => {
         _id: content._id,
         contentType: content.contentType,
         fileName: content.fileName,
+        caption: content.caption ?? '',
         url: signedUrl,
         lesson: content.lesson,
         createdAt: content.createdAt,
@@ -114,6 +117,7 @@ exports.getContent = async (req, res, next) => {
               _id: content._id,
               contentType: content.contentType,
               fileName: content.fileName,
+              caption: content.caption ?? '',
               url: signedUrl,
               lesson: content.lesson,
               createdAt: content.createdAt,
@@ -143,10 +147,11 @@ exports.updateContent = async (req, res, next) => {
             return res.status(403).json({ status: 'error', message: 'User not authorized to update this content' });
         }
 
-        // N'autoriser que contentType et fileName à être modifiés (pas de lesson)
+        // N'autoriser que contentType, fileName et caption à être modifiés (pas de lesson)
         const payload = {};
         if (typeof req.body.contentType === 'string') payload.contentType = req.body.contentType;
         if (typeof req.body.fileName === 'string') payload.fileName = req.body.fileName;
+        if (typeof req.body.caption === 'string') payload.caption = req.body.caption;
 
         content = await Content.findByIdAndUpdate(req.params.id, payload, {
             new: true,
@@ -160,6 +165,7 @@ exports.updateContent = async (req, res, next) => {
               _id: content._id,
               contentType: content.contentType,
               fileName: content.fileName,
+              caption: content.caption ?? '',
               url: signedUrl,
               lesson: content.lesson,
               createdAt: content.createdAt,

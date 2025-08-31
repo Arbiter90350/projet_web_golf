@@ -15,6 +15,13 @@ const contentSchema = new mongoose.Schema({
     required: [true, 'Content fileName is required'],
     trim: true
   },
+  // Texte associé optionnel (légende / description)
+  caption: {
+    type: String,
+    trim: true,
+    maxlength: 1000,
+    default: ''
+  },
   // Référence à la leçon
   lesson: {
     type: mongoose.Schema.Types.ObjectId,

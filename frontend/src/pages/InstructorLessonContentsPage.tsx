@@ -9,12 +9,15 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FilePicker from '../components/FileManager/FilePicker';
 import type { PickedFile } from '../components/FileManager/FilePicker';
+import './InstructorLessonContentsPage.css';
 
 const contentSchema = z.object({
   // Pas de type par défaut: l'utilisateur doit choisir explicitement
   contentType: z.enum(['image', 'pdf', 'mp4'], { required_error: 'Type requis' }),
   // On envoie désormais la clé interne du fichier
   fileName: z.string().min(1, 'Fichier requis'),
+  // Légende/description optionnelle
+  caption: z.string().max(1000).optional().default(''),
 });
 
 type ContentForm = z.infer<typeof contentSchema>;
@@ -24,6 +27,7 @@ type BackendContent = {
   id?: string;
   contentType: 'image' | 'pdf' | 'mp4';
   fileName: string;
+  caption?: string;
   url?: string; // URL signée fournie par le backend pour l'affichage
 };
 
@@ -31,6 +35,7 @@ type ContentItem = {
   id: string;
   contentType: 'image' | 'pdf' | 'mp4';
   fileName: string;
+  caption?: string;
   url?: string;
 };
 
@@ -44,7 +49,7 @@ const InstructorLessonContentsPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   // Edition locale: on sépare du schéma pour permettre un état vide puis validation via backend si besoin
-  const [editVals, setEditVals] = useState<{ contentType: ContentForm['contentType'] | ''; fileName: string }>({ contentType: '', fileName: '' });
+  const [editVals, setEditVals] = useState<{ contentType: ContentForm['contentType'] | ''; fileName: string; caption: string }>({ contentType: '', fileName: '', caption: '' });
   // plus de modal -> pas d'état d'ouverture
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<ContentForm>({
@@ -61,6 +66,7 @@ const InstructorLessonContentsPage = () => {
         id: c._id ?? c.id ?? '',
         contentType: c.contentType,
         fileName: c.fileName,
+        caption: c.caption ?? '',
         url: c.url,
       })).filter((c) => !!c.id);
       setContents(mapped);
@@ -107,7 +113,7 @@ const InstructorLessonContentsPage = () => {
 
   const startEdit = (c: ContentItem) => {
     setEditingId(c.id);
-    setEditVals({ contentType: c.contentType, fileName: c.fileName });
+    setEditVals({ contentType: c.contentType, fileName: c.fileName, caption: c.caption ?? '' });
   };
 
   const cancelEdit = () => setEditingId(null);
@@ -120,7 +126,7 @@ const InstructorLessonContentsPage = () => {
         alert('Veuillez sélectionner un type et un fichier');
         return;
       }
-      await api.put(`/contents/${editingId}`, { contentType: editVals.contentType, fileName: editVals.fileName });
+      await api.put(`/contents/${editingId}`, { contentType: editVals.contentType, fileName: editVals.fileName, caption: editVals.caption ?? '' });
       await loadContents();
       setEditingId(null);
     } catch (err: unknown) {
@@ -181,6 +187,10 @@ const InstructorLessonContentsPage = () => {
                 <FilePicker mode="inline" onSelect={handlePickedForCreate} />
               </div>
             </label>
+            <label>
+              <div>Légende (optionnel)</div>
+              <textarea rows={3} placeholder="Décrivez ce média (max 1000 caractères)" {...register('caption')} />
+            </label>
             <div>
               <button type="submit" disabled={submitting}>{submitting ? 'Ajout…' : '+ Ajouter'}</button>
             </div>
@@ -214,32 +224,42 @@ const InstructorLessonContentsPage = () => {
                         <FilePicker mode="inline" onSelect={handlePickedForEdit} />
                       </div>
                     </label>
+                    <label>
+                      <div>Légende (optionnel)</div>
+                      <textarea rows={3} value={editVals.caption} onChange={(e) => setEditVals((v) => ({ ...v, caption: e.target.value }))} />
+                    </label>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button type="button" onClick={saveEdit}>Sauvegarder</button>
                       <button type="button" onClick={cancelEdit}>Annuler</button>
                     </div>
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gap: 8 }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{c.contentType.toUpperCase()}</div>
-                      <div style={{ fontSize: 14, color: '#475569' }}>{c.fileName}</div>
-                    </div>
-                    <div>
-                      {c.url ? (
-                        c.contentType === 'image' ? (
-                          <img src={c.url} alt={c.fileName} style={{ maxWidth: '100%', maxHeight: 380, objectFit: 'contain', border: '1px solid #e5e7eb', borderRadius: 6 }} />
-                        ) : c.contentType === 'mp4' ? (
-                          <video src={c.url} controls style={{ width: '100%', maxHeight: 420, border: '1px solid #e5e7eb', borderRadius: 6 }} />
+                  <div className="mediaRow" style={{ display: 'grid', gap: 12 }}>
+                    <div className="media">
+                      <div style={{ marginBottom: 6 }}>
+                        <div style={{ fontWeight: 600 }}>{c.contentType.toUpperCase()}</div>
+                        <div style={{ fontSize: 14, color: '#475569' }}>{c.fileName}</div>
+                      </div>
+                      <div>
+                        {c.url ? (
+                          c.contentType === 'image' ? (
+                            <img src={c.url} alt={c.fileName} style={{ maxWidth: '100%', maxHeight: 380, objectFit: 'contain', border: '1px solid #e5e7eb', borderRadius: 6 }} />
+                          ) : c.contentType === 'mp4' ? (
+                            <video src={c.url} controls style={{ width: '100%', maxHeight: 420, border: '1px solid #e5e7eb', borderRadius: 6 }} />
+                          ) : (
+                            // PDF inline via iframe
+                            <iframe title={c.fileName} src={c.url} style={{ width: '100%', height: 500, border: '1px solid #e5e7eb', borderRadius: 6 }} />
+                          )
                         ) : (
-                          // PDF inline via iframe
-                          <iframe title={c.fileName} src={c.url} style={{ width: '100%', height: 500, border: '1px solid #e5e7eb', borderRadius: 6 }} />
-                        )
-                      ) : (
-                        <div style={{ color: '#64748b', fontStyle: 'italic' }}>URL non disponible</div>
-                      )}
+                          <div style={{ color: '#64748b', fontStyle: 'italic' }}>URL non disponible</div>
+                        )}
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div className="caption">
+                      <div style={{ fontWeight: 600, marginBottom: 6 }}>Description</div>
+                      <div style={{ whiteSpace: 'pre-wrap' }}>{(c.caption ?? '').trim() || <span style={{ color: '#64748b', fontStyle: 'italic' }}>Aucune description</span>}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, gridColumn: '1 / -1' }}>
                       <button type="button" onClick={() => startEdit(c)}>Modifier</button>
                       <button type="button" className="btn btn-danger" onClick={() => onDelete(c.id)} disabled={deletingId === c.id}>{deletingId === c.id ? 'Suppression…' : 'Supprimer'}</button>
                     </div>
