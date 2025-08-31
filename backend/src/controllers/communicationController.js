@@ -21,18 +21,20 @@ exports.listCommunications = async (req, res, next) => {
       return res.status(400).json({ status: 'error', message: 'Validation failed', errors: errors.array() });
     }
 
+    // Pagination & filtre plein texte (champ content)
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
-    const q = (ex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    const q = (req.query.q || '').toString().trim();
+
+    const filter = {};
+    if (q) {
+      // Échapper les métacaractères regex et effectuer une recherche insensible à la casse
+      const regex = new RegExp(q.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&'), 'i');
       filter.content = regex;
     }
 
     const total = await Communication.countDocuments(filter).maxTimeMS(MAX_TIME_MS);
-    const ireq.query.q || '').toString().trim();
-
-    const filter = {};
-    if (q) {
-      const regtems = await Communication.find(filter)
+    const items = await Communication.find(filter)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -53,6 +55,71 @@ exports.listCommunications = async (req, res, next) => {
           firstName: c.createdBy.firstName,
           lastName: c.createdBy.lastName,
         } : null,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      }))
+    );
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        communications: withSigned,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/public/communications
+// Accès: public (lecture uniquement)
+// Règles de visibilité: visibleFrom <= now (ou absent) ET (visibleUntil >= now ou absent)
+exports.listPublicCommunications = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: errors.array() });
+    }
+
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const q = (req.query.q || '').toString().trim();
+
+    const now = new Date();
+    const filter = {
+      $and: [
+        { $or: [{ visibleFrom: null }, { visibleFrom: { $lte: now } }] },
+        { $or: [{ visibleUntil: null }, { visibleUntil: { $gte: now } }] },
+      ],
+    };
+
+    if (q) {
+      const regex = new RegExp(q.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&'), 'i');
+      filter.content = regex;
+    }
+
+    const total = await Communication.countDocuments(filter).maxTimeMS(MAX_TIME_MS);
+    const items = await Communication.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean()
+      .maxTimeMS(MAX_TIME_MS);
+
+    const withSigned = await Promise.all(
+      items.map(async (c) => ({
+        id: c._id,
+        content: c.content,
+        mediaFileName: c.mediaFileName || null,
+        mediaUrl: c.mediaFileName ? await storageService.getSignedUrl(c.mediaFileName) : null,
+        visibleFrom: c.visibleFrom || null,
+        visibleUntil: c.visibleUntil || null,
         createdAt: c.createdAt,
         updatedAt: c.updatedAt,
       }))
