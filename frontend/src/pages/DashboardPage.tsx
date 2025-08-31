@@ -12,6 +12,7 @@ const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [lessonsCompleted, setLessonsCompleted] = useState<number>(0);
   const [totalLessons, setTotalLessons] = useState<number>(0);
+  const [comms, setComms] = useState<Array<{ id: string; content: string; mediaUrl: string | null }>>([]);
 
   type BackendProgress = {
     status: 'not_started' | 'in_progress' | 'completed';
@@ -22,13 +23,17 @@ const DashboardPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const [progressRes] = await Promise.all([
+        const [progressRes, commsRes] = await Promise.all([
           api.get('/progress/me'),
+          api.get('/communications', { params: { page: 1, limit: 2 } }),
         ]);
 
         const progressArr = (Array.isArray(progressRes?.data?.data) ? progressRes.data.data : []) as BackendProgress[];
         setTotalLessons(progressArr.length);
         setLessonsCompleted(progressArr.filter((p) => p.status === 'completed').length);
+
+        const commList = ((commsRes?.data?.data?.communications) ?? []) as Array<{ id: string; content: string; mediaUrl?: string | null }>;
+        setComms(commList.map(c => ({ id: c.id, content: c.content, mediaUrl: c.mediaUrl ?? null })));
       } catch (err: unknown) {
         const fallback = t('errors.unexpected_error');
         if (isAxiosError(err)) {
@@ -94,7 +99,7 @@ const DashboardPage = () => {
           <div className="card" style={{ marginTop: '1rem' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'baseline' }}>
               <div style={{ fontWeight: 600 }}>{t('labels.welcome')}, {user.firstName} {user.lastName}</div>
-              <div style={{ color: 'var(--text-muted)' }}>{user.email} • {user.role}</div>
+              <div style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{user.email} • {user.role}</div>
             </div>
           </div>
         )}
@@ -124,16 +129,15 @@ const DashboardPage = () => {
                     transform="rotate(-90 60 60)"
                   />
                 </svg>
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 800 }}>{percent}%</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('metrics.lessons_completed')}</div>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>{t('metrics.lessons_completed')}</span>
                 <span style={{ fontSize: 36, fontWeight: 700 }}>{lessonsCompleted}</span>
                 <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                  {t('metrics.progress_count', { completed: lessonsCompleted, total: totalLessons })}
+                  {t('metrics.progress_count', { completed: lessonsCompleted, total: totalLessons })} • {percent}%
                 </span>
               </div>
             </div>
@@ -179,19 +183,37 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Zone communication/agenda (placeholders, admin éditera via page dédiée à venir) */}
+        {/* Zone communication/agenda: 2 tuiles */}
         <div style={{ marginTop: '1.5rem' }}>
-          <div className="grid grid-3 md:grid-1">
-            {/* Gestion des leçons */}
-            <div className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ fontWeight: 700 }}>{t('dashboard.schedule_mgmt_title')}</div>
-              <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.schedule_mgmt_desc')}</div>
+          <div className="grid grid-2 md:grid-1">
+            {/* Tuile 1: Horaire des leçons carte verte (contenu admin) */}
+            <div className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ fontWeight: 700 }}>{t('dashboard.green_card_schedule_title')}</div>
+              {comms[0] ? (
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {comms[0].mediaUrl && (
+                    <img src={comms[0].mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
+                  )}
+                  <div style={{ color: 'var(--text-muted)' }}>{comms[0].content}</div>
+                </div>
+              ) : (
+                <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.schedule_mgmt_desc')}</div>
+              )}
             </div>
 
-            {/* Communication & événements (s'étend sur 2 colonnes en desktop) */}
-            <div className="tile" style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {/* Tuile 2: Communication & événements (contenu admin) */}
+            <div className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontWeight: 700 }}>{t('dashboard.comms_title')}</div>
-              <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.comms_desc')}</div>
+              {comms[1] ? (
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {comms[1].mediaUrl && (
+                    <img src={comms[1].mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
+                  )}
+                  <div style={{ color: 'var(--text-muted)' }}>{comms[1].content}</div>
+                </div>
+              ) : (
+                <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.comms_desc')}</div>
+              )}
             </div>
           </div>
         </div>
