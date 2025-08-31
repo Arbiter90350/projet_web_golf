@@ -12,7 +12,8 @@ const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [lessonsCompleted, setLessonsCompleted] = useState<number>(0);
   const [totalLessons, setTotalLessons] = useState<number>(0);
-  const [comms, setComms] = useState<Array<{ id: string; content: string; mediaUrl: string | null }>>([]);
+  const [scheduleTile, setScheduleTile] = useState<{ content: string; mediaUrl: string | null } | null>(null);
+  const [eventsTile, setEventsTile] = useState<{ content: string; mediaUrl: string | null } | null>(null);
 
   type BackendProgress = {
     status: 'not_started' | 'in_progress' | 'completed';
@@ -23,9 +24,10 @@ const DashboardPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const [progressRes, commsRes] = await Promise.allSettled([
+        const [progressRes, scheduleRes, eventsRes] = await Promise.allSettled([
           api.get('/progress/me'),
-          api.get('/public/communications', { params: { page: 1, limit: 2 } }),
+          api.get('/settings/public/dashboard.green_card_schedule'),
+          api.get('/settings/public/dashboard.events'),
         ]);
 
         if (progressRes.status === 'fulfilled') {
@@ -39,12 +41,18 @@ const DashboardPage = () => {
           setError(t('errors.unexpected_error'));
         }
 
-        if (commsRes.status === 'fulfilled') {
-          const commList = ((commsRes.value?.data?.data?.communications) ?? []) as Array<{ id: string; content: string; mediaUrl?: string | null }>;
-          setComms(commList.map(c => ({ id: c.id, content: c.content, mediaUrl: c.mediaUrl ?? null })));
+        if (scheduleRes.status === 'fulfilled') {
+          const s = (scheduleRes.value?.data?.data?.setting ?? null) as { content?: string; mediaUrl?: string | null } | null;
+          setScheduleTile(s ? { content: s.content || '', mediaUrl: s.mediaUrl ?? null } : null);
         } else {
-          // Ne pas afficher d'erreur pour la section communications
-          setComms([]);
+          setScheduleTile(null);
+        }
+
+        if (eventsRes.status === 'fulfilled') {
+          const s = (eventsRes.value?.data?.data?.setting ?? null) as { content?: string; mediaUrl?: string | null } | null;
+          setEventsTile(s ? { content: s.content || '', mediaUrl: s.mediaUrl ?? null } : null);
+        } else {
+          setEventsTile(null);
         }
       } catch (err: unknown) {
         const fallback = t('errors.unexpected_error');
@@ -179,12 +187,12 @@ const DashboardPage = () => {
             {/* Tuile 1: Horaire des leçons carte verte (contenu admin) */}
             <div className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontWeight: 700 }}>{t('dashboard.green_card_schedule_title')}</div>
-              {comms[0] ? (
+              {scheduleTile ? (
                 <div style={{ display: 'grid', gap: 8 }}>
-                  {comms[0].mediaUrl && (
-                    <img src={comms[0].mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
+                  {scheduleTile.mediaUrl && (
+                    <img src={scheduleTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
                   )}
-                  <div style={{ color: 'var(--text-muted)' }}>{comms[0].content}</div>
+                  <div style={{ color: 'var(--text-muted)' }}>{scheduleTile.content}</div>
                 </div>
               ) : (
                 <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.schedule_mgmt_desc')}</div>
@@ -194,12 +202,12 @@ const DashboardPage = () => {
             {/* Tuile 2: Communication & événements (contenu admin) */}
             <div className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontWeight: 700 }}>{t('dashboard.comms_title')}</div>
-              {comms[1] ? (
+              {eventsTile ? (
                 <div style={{ display: 'grid', gap: 8 }}>
-                  {comms[1].mediaUrl && (
-                    <img src={comms[1].mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
+                  {eventsTile.mediaUrl && (
+                    <img src={eventsTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
                   )}
-                  <div style={{ color: 'var(--text-muted)' }}>{comms[1].content}</div>
+                  <div style={{ color: 'var(--text-muted)' }}>{eventsTile.content}</div>
                 </div>
               ) : (
                 <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.comms_desc')}</div>

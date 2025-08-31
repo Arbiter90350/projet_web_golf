@@ -78,63 +78,18 @@ exports.listCommunications = async (req, res, next) => {
 };
 
 // GET /api/public/communications
-// Accès: public (lecture uniquement)
-// Règles de visibilité: visibleFrom <= now (ou absent) ET (visibleUntil >= now ou absent)
+// Accès: public (DÉPRÉCIÉ) — remplacé par /api/settings/public/:key
+// Renvoie 410 Gone afin d'arrêter progressivement l'ancien usage côté clients.
 exports.listPublicCommunications = async (req, res, next) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ status: 'error', message: 'Validation failed', errors: errors.array() });
-    }
-
-    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
-    const q = (req.query.q || '').toString().trim();
-
-    const now = new Date();
-    const filter = {
-      $and: [
-        { $or: [{ visibleFrom: null }, { visibleFrom: { $lte: now } }] },
-        { $or: [{ visibleUntil: null }, { visibleUntil: { $gte: now } }] },
-      ],
-    };
-
-    if (q) {
-      const regex = new RegExp(q.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&'), 'i');
-      filter.content = regex;
-    }
-
-    const total = await Communication.countDocuments(filter).maxTimeMS(MAX_TIME_MS);
-    const items = await Communication.find(filter)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean()
-      .maxTimeMS(MAX_TIME_MS);
-
-    const withSigned = await Promise.all(
-      items.map(async (c) => ({
-        id: c._id,
-        content: c.content,
-        mediaFileName: c.mediaFileName || null,
-        mediaUrl: c.mediaFileName ? await storageService.getSignedUrl(c.mediaFileName) : null,
-        visibleFrom: c.visibleFrom || null,
-        visibleUntil: c.visibleUntil || null,
-        createdAt: c.createdAt,
-        updatedAt: c.updatedAt,
-      }))
-    );
-
-    return res.status(200).json({
-      status: 'success',
+    return res.status(410).json({
+      status: 'error',
+      message: 'Endpoint deprecated. Use /api/settings/public/dashboard.green_card_schedule et /api/settings/public/dashboard.events',
       data: {
-        communications: withSigned,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit),
-        },
+        replacementEndpoints: [
+          '/api/settings/public/dashboard.green_card_schedule',
+          '/api/settings/public/dashboard.events',
+        ],
       },
     });
   } catch (error) {

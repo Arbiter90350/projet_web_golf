@@ -19,7 +19,8 @@ import InstructorCoursesPage from './pages/InstructorCoursesPage';
 import InstructorCourseDetailPage from './pages/InstructorCourseDetailPage';
 import InstructorLessonContentsPage from './pages/InstructorLessonContentsPage';
 import AdminUsersPage from './pages/AdminUsersPage';
-import AdminCommunicationsPage from './pages/AdminCommunicationsPage';
+import AdminTilesPage from './pages/AdminTilesPage';
+import AdminPushNotificationsPage from './pages/AdminPushNotificationsPage';
 import './App.css';
 import { useAuth } from './hooks/useAuth';
 import QuizPage from './pages/QuizPage';
@@ -137,9 +138,14 @@ function App() {
                 <AdminUsersPage />
               </RequireRole>
             } />
-            <Route path="admin/communications" element={
+            <Route path="admin/tiles" element={
               <RequireRole roles={["admin"]}>
-                <AdminCommunicationsPage />
+                <AdminTilesPage />
+              </RequireRole>
+            } />
+            <Route path="admin/push-notifications" element={
+              <RequireRole roles={["admin"]}>
+                <AdminPushNotificationsPage />
               </RequireRole>
             } />
           </Route>
