@@ -24,7 +24,8 @@ services:
     # Use TLS-enabled Nginx config and mount certificates directory
     volumes:
       - ./frontend/nginx/default.tls.conf:/etc/nginx/conf.d/default.conf:ro
-      - ${TLS_CERTS_DIR:-./secrets/tls}:/etc/nginx/certs:ro
+      # Mount full Let's Encrypt tree so /live symlinks resolve inside the container
+      - /etc/letsencrypt:/etc/letsencrypt:ro
       # ACME webroot served by Nginx for Certbot renewals (host path mounted read-only in container)
       - ${CERTBOT_WEBROOT_DIR:-/var/www/certbot}:/var/www/certbot:ro
     build:
