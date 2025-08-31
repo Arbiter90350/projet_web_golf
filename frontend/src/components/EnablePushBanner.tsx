@@ -101,11 +101,11 @@ export default function EnablePushBanner() {
           <div style={{ fontSize: 14 }}>
             {platform === 'ios' ? (
               <>
-                Sur iOS, ouvrez les Réglages > Notifications, sélectionnez l'application (PWA) et autorisez les notifications.
+                Sur iOS, ouvrez les Réglages &gt; Notifications, sélectionnez l'application (PWA) et autorisez les notifications.
                 Si vous ne voyez pas l'app, assurez-vous de l'avoir ajoutée à l'écran d'accueil.
               </>
             ) : (
-              <>Sur Android, maintenez l'icône de l'application, puis Info de l'application > Notifications et activez-les.</>
+              <>Sur Android, maintenez l'icône de l'application, puis Info de l'application &gt; Notifications et activez-les.</>
             )}
           </div>
         </div>
