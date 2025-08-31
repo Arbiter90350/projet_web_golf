@@ -5,7 +5,7 @@ const logger = require('../utils/logger');
 
 const MAX_TIME_MS = Number(process.env.DB_QUERY_MAX_TIME_MS || 15000);
 
-// Contrôleur Communications (admin-only)
+// Contrôleur Communications (admin-only, plus lecture publique)
 // - listCommunications: liste paginée, filtrable
 // - createCommunication: création
 // - getCommunication: lecture

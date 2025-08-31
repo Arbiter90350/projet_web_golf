@@ -1,7 +1,9 @@
 param(
   [switch]$NoWaitChecks,
+  [switch]$NoWaitMerge,
   [switch]$DryRun,
-  [string]$BaseBranch = "main"
+  [string]$BaseBranch = "main",
+  [string]$CommitMessage
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,8 +30,10 @@ $changes = git status --porcelain
 if ($changes) {
   Run git @("add","-A")
   $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-  $autoMsg = "chore: release $currentBranch ($timestamp)"
-  Run git @("commit","-m", $autoMsg)
+  if (-not $CommitMessage -or $CommitMessage.Trim().Length -eq 0) {
+    $CommitMessage = "chore: release $currentBranch ($timestamp)"
+  }
+  Run git @("commit","-m", $CommitMessage)
 } else {
   Write-Host "Aucun changement à committer." -ForegroundColor Yellow
 }
@@ -57,11 +61,10 @@ if (-not $prExists) {
   Write-Host "PR existante détectée pour $currentBranch. Utilisation de la PR courante." -ForegroundColor Yellow
 }
 
-# Wait for checks (CI) if requested
+# Wait for checks (CI) if requested (default: wait)
 if (-not $NoWaitChecks) {
   Write-Host "Attente de la fin des vérifications CI..." -ForegroundColor Cyan
   try {
-    # Cible explicitement la PR de la branche courante pour éviter toute ambiguïté
     & gh pr checks $currentBranch --watch
     if ($LASTEXITCODE -ne 0) {
       Write-Warning "gh pr checks a retourné un code non nul ($LASTEXITCODE). On continue: l'auto-merge n'effectuera la fusion qu'après CI verte."
@@ -82,20 +85,53 @@ try {
   Write-Warning "Impossible d'activer l'auto-merge via gh: $_. Vous pouvez l'activer manuellement depuis l'UI GitHub."
 }
 
-# Sync local main
+# Optionnellement attendre la fusion effective puis resynchroniser main local
+if (-not $NoWaitMerge) {
+  Write-Host "Attente de la fusion effective de la PR (auto-merge)..." -ForegroundColor Cyan
+  $maxMinutes = 30
+  $deadline = (Get-Date).AddMinutes($maxMinutes)
+  while ($true) {
+    $out = & gh pr view $currentBranch --json state,mergeStateStatus,mergedAt 2>$null | Out-String
+    if ($LASTEXITCODE -eq 0 -and $out) {
+      try {
+        $json = $out | ConvertFrom-Json
+        if ($json.state -eq "MERGED" -or $json.mergedAt) {
+          Write-Host "PR fusionnée." -ForegroundColor Green
+          break
+        }
+        if ($json.state -eq "CLOSED") {
+          throw "La PR est fermée sans fusion."
+        }
+      } catch {}
+    }
+    if ((Get-Date) -gt $deadline) {
+      Write-Warning "Temps d'attente dépassé ($maxMinutes min). On continue sans vérifier davantage."
+      break
+    }
+    Start-Sleep -Seconds 10
+  }
+}
+
+# Sync local main (après fusion ou si NoWaitMerge)
 Write-Host "Mise à jour de la branche locale '$BaseBranch'..." -ForegroundColor Cyan
 Run git @("switch", $BaseBranch)
 Run git @("pull","--ff-only","origin", $BaseBranch)
 
-# Print VPS update commands
+# Infos déploiement
 $manual = @"
-Mise à jour manuelle sur le VPS (sans seed):
-1) SSH et pull du dépôt:
-   ssh -p <VPS_SSH_PORT> <VPS_USER>@<VPS_HOST>
-   cd <VPS_APP_DIR>
-   git pull --ff-only
+Déploiement en production: AUTOMATISÉ après merge sur '$BaseBranch' via le workflow GitHub Actions
+  .github/workflows/deploy-prod.yml
 
-2) Reconstruction/relance containers (sans profil seed):
+Vous n'avez rien à faire pour déployer: après la fusion en main, le job CI/CD met à jour le VPS (Docker) automatiquement.
+
+Fallback (manuel, si nécessaire uniquement):
+1) SSH et pull du dépôt:
+   ssh -p <VPS_SSH_PORT> debian@NEW_IP
+   cd <VPS_APP_DIR>
+   git fetch --all --prune
+   git reset --hard origin/$BaseBranch
+
+2) Reconstruction/relance containers:
    docker compose -f docker-compose.yml -f docker-compose.prod.yml pull || true
    docker compose -f docker-compose.yml -f docker-compose.prod.yml build --pull
    docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
