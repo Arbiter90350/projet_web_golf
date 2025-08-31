@@ -59,6 +59,26 @@ const InstructorLessonContentsPage = () => {
     resolver: zodResolver(contentSchema),
   });
 
+  // -------------------- Sauvegarde locale des brouillons (backup) --------------------
+  const storageKey = (id?: string) => `contents-caption-drafts:${id ?? ''}`;
+  const loadBackupDrafts = (): Record<string, string> => {
+    try {
+      if (!lessonId) return {};
+      const raw = localStorage.getItem(storageKey(lessonId));
+      return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    } catch {
+      return {};
+    }
+  };
+  const saveBackupDrafts = (drafts: Record<string, string>) => {
+    try {
+      if (!lessonId) return;
+      localStorage.setItem(storageKey(lessonId), JSON.stringify(drafts));
+    } catch {
+      // ignore quota errors
+    }
+  };
+
   const loadContents = async () => {
     if (!lessonId) return;
     try {
@@ -73,10 +93,13 @@ const InstructorLessonContentsPage = () => {
         url: c.url,
       })).filter((c) => !!c.id);
       setContents(mapped);
-      // Init des brouillons à partir des valeurs serveur
-      const draft: Record<string, string> = {};
-      for (const c of mapped) draft[c.id] = c.caption ?? '';
-      setCaptionDraft(draft);
+      // Init des brouillons: fusion backup local -> prioritaire s'il existe (pour ne pas perdre une saisie en cours)
+      const serverDraft: Record<string, string> = {};
+      for (const c of mapped) serverDraft[c.id] = c.caption ?? '';
+      const backup = loadBackupDrafts();
+      const merged: Record<string, string> = { ...serverDraft, ...backup };
+      setCaptionDraft(merged);
+      saveBackupDrafts(merged);
     } catch (err: unknown) {
       const fallback = 'Erreur lors du chargement des contenus';
       if (isAxiosError(err)) {
@@ -149,6 +172,13 @@ const InstructorLessonContentsPage = () => {
       // On envoie les champs nécessaires pour une mise à jour complète
       await api.put(`/contents/${c.id}`, { contentType: c.contentType, fileName: c.fileName, caption: newCaption });
       await loadContents();
+      // Nettoyer le backup pour cet élément (il est désormais enregistré)
+      setCaptionDraft((prev) => {
+        const next = { ...prev };
+        next[c.id] = newCaption; // garder la valeur à jour
+        saveBackupDrafts(next);
+        return next;
+      });
     } catch (err: unknown) {
       const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
       alert(msg ?? 'Enregistrement impossible');
@@ -264,7 +294,11 @@ const InstructorLessonContentsPage = () => {
                       <textarea
                         rows={3}
                         value={captionDraft[c.id] ?? ''}
-                        onChange={(e) => setCaptionDraft((m) => ({ ...m, [c.id]: e.target.value }))}
+                        onChange={(e) => setCaptionDraft((m) => {
+                          const next = { ...m, [c.id]: e.target.value };
+                          saveBackupDrafts(next);
+                          return next;
+                        })}
                         placeholder="Ajouter une description"
                         style={{ width: '100%' }}
                       />
