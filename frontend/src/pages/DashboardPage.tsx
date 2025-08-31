@@ -23,17 +23,29 @@ const DashboardPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const [progressRes, commsRes] = await Promise.all([
+        const [progressRes, commsRes] = await Promise.allSettled([
           api.get('/progress/me'),
-          api.get('/communications', { params: { page: 1, limit: 2 } }),
+          api.get('/public/communications', { params: { page: 1, limit: 2 } }),
         ]);
 
-        const progressArr = (Array.isArray(progressRes?.data?.data) ? progressRes.data.data : []) as BackendProgress[];
-        setTotalLessons(progressArr.length);
-        setLessonsCompleted(progressArr.filter((p) => p.status === 'completed').length);
+        if (progressRes.status === 'fulfilled') {
+          const progressArr = (Array.isArray(progressRes.value?.data?.data) ? progressRes.value.data.data : []) as BackendProgress[];
+          setTotalLessons(progressArr.length);
+          setLessonsCompleted(progressArr.filter((p) => p.status === 'completed').length);
+        } else if (isAxiosError(progressRes.reason)) {
+          const msg = (progressRes.reason.response?.data as { message?: string } | undefined)?.message;
+          setError(msg ?? t('errors.unexpected_error'));
+        } else {
+          setError(t('errors.unexpected_error'));
+        }
 
-        const commList = ((commsRes?.data?.data?.communications) ?? []) as Array<{ id: string; content: string; mediaUrl?: string | null }>;
-        setComms(commList.map(c => ({ id: c.id, content: c.content, mediaUrl: c.mediaUrl ?? null })));
+        if (commsRes.status === 'fulfilled') {
+          const commList = ((commsRes.value?.data?.data?.communications) ?? []) as Array<{ id: string; content: string; mediaUrl?: string | null }>;
+          setComms(commList.map(c => ({ id: c.id, content: c.content, mediaUrl: c.mediaUrl ?? null })));
+        } else {
+          // Ne pas afficher d'erreur pour la section communications
+          setComms([]);
+        }
       } catch (err: unknown) {
         const fallback = t('errors.unexpected_error');
         if (isAxiosError(err)) {
@@ -99,21 +111,18 @@ const DashboardPage = () => {
           <div className="card" style={{ marginTop: '1rem' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'baseline' }}>
               <div style={{ fontWeight: 600 }}>{t('labels.welcome')}, {user.firstName} {user.lastName}</div>
-              <div style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{user.email} • {user.role}</div>
+              <div style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap', fontVariantLigatures: 'none', WebkitFontSmoothing: 'antialiased', fontFeatureSettings: '"liga" 0, "clig" 0' }}>{user.email} • {user.role}</div>
             </div>
           </div>
         )}
 
-        <h2 style={{ marginTop: '1.5rem' }}>{t('metrics.title')}</h2>
-        {error && <div style={{ color: 'crimson' }}>{error}</div>}
-        {loading ? (
-          <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(1, minmax(0, 1fr))' }}>
-            <div className="card" style={{ height: 160, opacity: 0.6 }} />
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(1, minmax(0, 1fr))' }}>
-            {/* Tuile progression leçons terminées */}
-            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {error && <div style={{ color: 'crimson', marginTop: 8, fontSize: 13 }}>{error}</div>}
+
+        {/* Tuiles de navigation et métriques */}
+        <div style={{ marginTop: '1.5rem', opacity: loading ? 0.6 : 1 }}>
+          <div className="grid grid-3 md:grid-1">
+            {/* Tuile progression leçons terminées (déplacée ici) */}
+            <div className="tile" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ position: 'relative', width: 120, height: 120 }} aria-hidden>
                 <svg width="120" height="120" viewBox="0 0 120 120">
                   <circle cx="60" cy="60" r={radius} stroke="#e5e7eb" strokeWidth="12" fill="none" />
@@ -140,25 +149,6 @@ const DashboardPage = () => {
                   {t('metrics.progress_count', { completed: lessonsCompleted, total: totalLessons })} • {percent}%
                 </span>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tuiles de navigation */}
-        <div style={{ marginTop: '1.5rem' }}>
-          <div className="grid grid-3 md:grid-1">
-            {/* Poursuivre l'apprentissage */}
-            <div className="tile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontWeight: 600 }}>{t('cta.continue_learning')}</div>
-                <div style={{ color: 'var(--text-muted)' }}>{t('cta.access_modules_and_lessons')}</div>
-              </div>
-              <Link
-                to={user?.role === 'instructor' || user?.role === 'admin' ? '/instructor/courses' : '/courses'}
-                className="btn btn-primary"
-              >
-                {t('cta.view_my_courses')}
-              </Link>
             </div>
 
             {/* Suivre mes apprentissages */}

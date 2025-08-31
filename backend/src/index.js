@@ -22,6 +22,7 @@ const progressRoutes = require('./routes/progress');
 const userRoutes = require('./routes/users');
 const fileRoutes = require('./routes/files');
 const communicationRoutes = require('./routes/communications');
+const publicCommunicationRoutes = require('./routes/publicCommunications');
 
 // Initialisation de l'application Express
 const app = express();
@@ -93,6 +94,7 @@ app.use('/api/progress', progressRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/communications', communicationRoutes);
+app.use('/api/public/communications', publicCommunicationRoutes);
 
 // Routes de base
 app.get('/', (req, res) => {
