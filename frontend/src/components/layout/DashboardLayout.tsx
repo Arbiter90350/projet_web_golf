@@ -61,7 +61,8 @@ const DashboardLayout = () => {
 
   const adminNav = [
     { to: '/admin/users', label: 'Utilisateurs (admin)' },
-    { to: '/admin/communications', label: 'Communications (admin)' },
+    { to: '/admin/tiles', label: 'Tuiles (admin)' },
+    { to: '/admin/push-notifications', label: 'Notifications Push (admin)' },
   ];
 
   const gridColumns = isMobile ? '1fr' : '260px 1fr';
