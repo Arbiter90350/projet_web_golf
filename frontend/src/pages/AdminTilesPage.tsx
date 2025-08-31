@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 import FilePicker from '../components/FileManager/FilePicker';
 import type { PickedFile } from '../components/FileManager/FilePicker';
+import { useToast } from '../contexts/toast-context';
 
 // Page d'administration: édition simple de 2 tuiles du dashboard
 // - dashboard.green_card_schedule
@@ -17,12 +18,15 @@ type Setting = {
 };
 
 function TileEditor({ label, settingKey }: { label: string; settingKey: string }) {
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [content, setContent] = useState('');
   const [mediaFileName, setMediaFileName] = useState('');
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [tempPickedFileName, setTempPickedFileName] = useState('');
 
   const load = async () => {
     try {
@@ -45,7 +49,7 @@ function TileEditor({ label, settingKey }: { label: string; settingKey: string }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingKey]);
 
-  const onPicked = (f: PickedFile) => setMediaFileName(f.fileName);
+  const onPicked = (f: PickedFile) => setTempPickedFileName(f.fileName);
 
   const save = async () => {
     try {
@@ -57,8 +61,10 @@ function TileEditor({ label, settingKey }: { label: string; settingKey: string }
       });
       const s = data?.data?.setting as Setting;
       setMediaUrl(s?.mediaUrl ?? null);
+      toast.success('Contenu enregistré');
     } catch {
       setError('Échec de la sauvegarde');
+      toast.error('Échec de la sauvegarde');
     } finally {
       setSaving(false);
     }
@@ -75,18 +81,48 @@ function TileEditor({ label, settingKey }: { label: string; settingKey: string }
             <div>Texte</div>
             <textarea rows={5} value={content} onChange={(e) => setContent(e.target.value)} />
           </label>
-          <label>
-            <div>Fichier média (optionnel)</div>
-            <input type="text" value={mediaFileName} onChange={(e) => setMediaFileName(e.target.value)} placeholder="Nom du fichier (Object Storage)" />
-            <div style={{ marginTop: 8 }}>
-              <FilePicker mode="inline" onSelect={onPicked} />
-            </div>
-            {mediaUrl && (
-              <div style={{ marginTop: 8 }}>
-                <a href={mediaUrl} target="_blank" rel="noreferrer">Ouvrir le média</a>
+          {/* Zone contenus en cours + action d'ajout via modale */}
+          <div>
+            <div style={{ marginBottom: 6, fontWeight: 600 }}>Contenus ajoutés</div>
+            {mediaFileName ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', border: '1px solid #e5e7eb', borderRadius: 6 }}>
+                <span style={{ fontFamily: 'monospace' }}>{mediaFileName}</span>
+                <button className="btn btn-outline" onClick={() => setMediaFileName('')}>Retirer</button>
+                {mediaUrl && (
+                  <a className="btn" href={mediaUrl} target="_blank" rel="noreferrer">Prévisualiser</a>
+                )}
               </div>
+            ) : (
+              <div style={{ color: 'var(--text-muted)' }}>Aucun contenu média sélectionné</div>
             )}
-          </label>
+            <div style={{ marginTop: 8 }}>
+              <button className="btn" onClick={() => { setTempPickedFileName(''); setModalOpen(true); }}>Ajouter du contenu</button>
+            </div>
+          </div>
+
+          {/* Modale de sélection média */}
+          {modalOpen && (
+            <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 50, display: 'grid', placeItems: 'center' }}>
+              <div className="tile" style={{ width: 'min(860px, 92vw)', maxHeight: '85vh', overflow: 'auto', padding: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <div style={{ fontWeight: 700 }}>Ajouter un contenu</div>
+                  <button className="btn btn-outline" onClick={() => setModalOpen(false)}>✕</button>
+                </div>
+                <label>
+                  <div>Fichier média (optionnel)</div>
+                  <input type="text" value={tempPickedFileName} onChange={(e) => setTempPickedFileName(e.target.value)} placeholder="Nom du fichier (Object Storage)" />
+                </label>
+                <div style={{ marginTop: 8 }}>
+                  <FilePicker mode="inline" onSelect={onPicked} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
+                  <button className="btn btn-outline" onClick={() => setModalOpen(false)}>Annuler</button>
+                  <button className="btn btn-primary" onClick={() => { setMediaFileName(tempPickedFileName); setModalOpen(false); }}>Ajouter</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {error && <div style={{ color: 'crimson' }}>{error}</div>}
           <div>
             <button className="btn btn-primary" disabled={saving} onClick={save}>{saving ? 'Sauvegarde…' : 'Sauvegarder'}</button>
