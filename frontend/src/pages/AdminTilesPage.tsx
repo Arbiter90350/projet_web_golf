@@ -57,7 +57,8 @@ function TileEditor({ label, settingKey }: { label: string; settingKey: string }
       setError(null);
       const { data } = await api.put(`/settings/${encodeURIComponent(settingKey)}`, {
         content: content || undefined,
-        mediaFileName: mediaFileName || undefined,
+        // IMPORTANT: si vide, envoyer null pour effacer côté serveur (undefined = pas de changement)
+        mediaFileName: mediaFileName === '' ? null : mediaFileName,
       });
       const s = data?.data?.setting as Setting;
       setMediaUrl(s?.mediaUrl ?? null);
@@ -87,7 +88,16 @@ function TileEditor({ label, settingKey }: { label: string; settingKey: string }
             {mediaFileName ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', border: '1px solid #e5e7eb', borderRadius: 6 }}>
                 <span style={{ fontFamily: 'monospace' }}>{mediaFileName}</span>
-                <button className="btn btn-outline" onClick={() => setMediaFileName('')}>Retirer</button>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => {
+                    setMediaFileName('');
+                    setMediaUrl(null);
+                    toast.info('Média retiré. Cliquez sur "Sauvegarder" pour confirmer.');
+                  }}
+                >
+                  Retirer
+                </button>
                 {mediaUrl && (
                   <a className="btn" href={mediaUrl} target="_blank" rel="noreferrer">Prévisualiser</a>
                 )}
