@@ -36,12 +36,29 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
 
   // Stratégie: Network First, fallback Cache pour la SPA et assets
-  event.respondWith(
-    fetch(req).then((res) => {
+  event.respondWith((async () => {
+    const isNavigate = req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html');
+    try {
+      const res = await fetch(req);
       // Mettre en cache les réponses valides
-      const copy = res.clone();
-      caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => undefined);
+      try {
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(req, res.clone());
+      } catch (_) {
+        // ignore cache errors
+      }
       return res;
-    }).catch(() => caches.match(req).then((hit) => hit || (url.pathname === '/' ? caches.match('/index.html') : undefined)))
-  );
+    } catch (err) {
+      // Fallback navigation -> index.html pour routes SPA (/login, /instructor/players, ...)
+      if (isNavigate) {
+        const indexCached = await caches.match('/index.html');
+        if (indexCached) return indexCached;
+      }
+      // Sinon, tenter le cache de la ressource
+      const cached = await caches.match(req);
+      if (cached) return cached;
+      // Toujours renvoyer une Response valide
+      return new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+    }
+  })());
 });
