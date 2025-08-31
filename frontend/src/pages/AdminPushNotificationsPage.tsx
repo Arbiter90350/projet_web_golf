@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useToast } from '../contexts/toast-context';
 import api from '../services/api';
-import { getPushConfig, subscribeCurrentDevice, unsubscribeCurrentDevice } from '../services/push';
+// Note: Icône par défaut fixée; on ne propose plus l'édition côté UI admin
 
 // Page d'administration — Notifications Push (squelette UI)
 // - Historique des notifications (placeholder)
@@ -12,20 +12,14 @@ export default function AdminPushNotificationsPage() {
   const toast = useToast();
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [icon, setIcon] = useState('/icons/icon-192.png');
+  // Icône masquée à l'UI: valeur par défaut fixée
+  const DEFAULT_ICON = 'https://app.golf-rougemont.com/icons/icon-192.png';
+  const [icon] = useState(DEFAULT_ICON);
   const [clickUrl, setClickUrl] = useState('');
-  const [actions, setActions] = useState<{ title: string; action: string; url: string }[]>([]);
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const cfg = await getPushConfig();
-        setIcon(cfg.defaultIcon || '/icons/icon-192.png');
-      } catch {
-        // ignore
-      }
-    })();
+    // Aucun chargement distant requis pour l'icône par défaut
   }, []);
 
   return (
@@ -57,35 +51,19 @@ export default function AdminPushNotificationsPage() {
             <div>Message</div>
             <textarea rows={6} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Votre message…" />
           </label>
-          <label>
-            <div>Icône</div>
-            <input type="text" value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="URL icône (absolue de préférence)" />
-          </label>
+          {/* Icône masquée côté UI: valeur par défaut utilisée côté envoi */}
           <label>
             <div>URL au clic (optionnel)</div>
             <input type="text" value={clickUrl} onChange={(e) => setClickUrl(e.target.value)} placeholder="https://golf-rougemont.com/..." />
           </label>
-          <div>
-            <div style={{ fontWeight: 600, marginBottom: 6 }}>Actions (0..2)</div>
-            {actions.map((a, idx) => (
-              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 6, marginBottom: 6 }}>
-                <input placeholder="Titre" value={a.title} onChange={(e) => setActions(prev => prev.map((x, i) => i===idx ? { ...x, title: e.target.value } : x))} />
-                <input placeholder="Action (ex: open)" value={a.action} onChange={(e) => setActions(prev => prev.map((x, i) => i===idx ? { ...x, action: e.target.value } : x))} />
-                <input placeholder="URL" value={a.url} onChange={(e) => setActions(prev => prev.map((x, i) => i===idx ? { ...x, url: e.target.value } : x))} />
-                <button className="btn btn-outline" onClick={() => setActions(prev => prev.filter((_, i) => i !== idx))}>Retirer</button>
-              </div>
-            ))}
-            <button className="btn" disabled={actions.length >= 2} onClick={() => setActions(prev => [...prev, { title: '', action: 'open', url: '' }])}>Ajouter une action</button>
-          </div>
+          {/* Section Actions retirée de l'UI admin pour simplification */}
           <div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button className="btn btn-outline" onClick={async () => { const ok = await subscribeCurrentDevice(); toast[ok ? 'success' : 'error'](ok ? 'Appareil abonné' : 'Abonnement refusé'); }}>Abonner cet appareil</button>
-              <button className="btn btn-outline" onClick={async () => { const ok = await unsubscribeCurrentDevice(); toast[ok ? 'success' : 'error'](ok ? 'Appareil désabonné' : 'Échec désabonnement'); }}>Désabonner cet appareil</button>
               <button className="btn btn-outline" onClick={async () => { try { await api.post('/admin/push/test'); toast.success('Test envoyé'); } catch { toast.error('Échec test'); } }}>Test vers moi</button>
               <button className="btn btn-primary" disabled={sending || !title || !message || !icon} onClick={async () => {
                 try {
                   setSending(true);
-                  await api.post('/admin/push/messages', { title, body: message, icon, clickUrl: clickUrl || undefined, actions });
+                  await api.post('/admin/push/messages', { title, body: message, icon, clickUrl: clickUrl || undefined, actions: [] });
                   toast.success('Notification envoyée');
                 } catch {
                   toast.error('Échec envoi');
