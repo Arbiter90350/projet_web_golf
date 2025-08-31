@@ -62,3 +62,38 @@ self.addEventListener('fetch', (event) => {
     }
   })());
 });
+
+// --- Web Push: affichage des notifications ---
+self.addEventListener('push', (event) => {
+  try {
+    const data = event.data ? event.data.json() : null;
+    if (!data) return;
+    const { title, body, icon, actions = [], clickUrl } = data;
+    const options = {
+      body,
+      icon,
+      actions: actions.map((a) => ({ action: a.action || 'open', title: a.title || 'Ouvrir' })),
+      data: { clickUrl, actions },
+    };
+    event.waitUntil(self.registration.showNotification(title || 'Notification', options));
+  } catch (_) {
+    // do nothing
+  }
+});
+
+// Clic sur la notification ou une action
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const data = event.notification && event.notification.data || {};
+  let targetUrl = data.clickUrl || '/';
+  if (event.action && Array.isArray(data.actions)) {
+    const found = data.actions.find((a) => a.action === event.action);
+    if (found && found.url) targetUrl = found.url;
+  }
+  event.waitUntil((async () => {
+    const allClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const same = allClients.find((c) => c.url === targetUrl);
+    if (same) return same.focus();
+    return clients.openWindow(targetUrl);
+  })());
+});
