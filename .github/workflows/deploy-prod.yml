@@ -6,9 +6,9 @@ on:
     paths:
       - 'backend/**'
       - 'frontend/**'
+      - 'frontend/nginx/**'
       - 'docker-compose.yml'
       - 'docker-compose.prod.yml'
-      - 'caddy/**'
       - '.github/workflows/deploy-prod.yml'
 
 concurrency:
@@ -53,38 +53,52 @@ jobs:
             echo "Missing required secrets: ${missing[*]}" >&2
             exit 1
           fi
-
-      - name: Upload repository to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT || '22' }}
-          source: .
-          target: ${{ secrets.VPS_APP_DIR }}
-          overwrite: true
-          strip_components: 0
-          rm: false
+      # SCP step removed: move to git-based deployment on the VPS
 
       - name: Deploy on VPS with Docker Compose (prod)
         uses: appleboy/ssh-action@v1.2.0
         env:
           VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
+          GITHUB_TOKEN_READONLY: ${{ secrets.GITHUB_TOKEN_READONLY }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT || '22' }}
-          envs: VPS_APP_DIR
+          envs: VPS_APP_DIR,GITHUB_TOKEN_READONLY
           script: |
             set -euo pipefail
             cd "$VPS_APP_DIR"
+            # Ensure repository is initialized on the VPS
+            if [ ! -d .git ]; then
+              echo "Repository not initialized in $VPS_APP_DIR. Please clone the repo on the VPS and configure read-only deploy key for GitHub access." >&2
+              exit 1
+            fi
             # Ensure .env file exists (managed on VPS, not in repo)
             if [ ! -f .env ]; then
               echo "Missing .env on server. Aborting." >&2
               exit 1
             fi
+            # Update code from origin/main safely with SSH->HTTPS fallback if needed
+            if ! git fetch --all --prune; then
+              echo "git fetch via SSH failed. Attempting HTTPS fallback..." >&2
+              if [ -n "${GITHUB_TOKEN_READONLY:-}" ]; then
+                current_url=$(git remote get-url origin || true)
+                https_url="$current_url"
+                if echo "$current_url" | grep -qE '^git@github.com:'; then
+                  path=$(echo "$current_url" | sed -E 's#^git@github.com:(.+)\\.git$#\1#')
+                  https_url="https://github.com/$path.git"
+                fi
+                sanitized_host=$(echo "$https_url" | sed -E 's#^https?://##')
+                git remote set-url origin "https://${GITHUB_TOKEN_READONLY}@${sanitized_host}"
+                git fetch --all --prune
+              else
+                echo "No GITHUB_TOKEN_READONLY provided; cannot fallback to HTTPS." >&2
+                exit 1
+              fi
+            fi
+            git reset --hard origin/main
+            # Rebuild and redeploy containers
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull || true
             docker compose -f docker-compose.yml -f docker-compose.prod.yml build --pull
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
