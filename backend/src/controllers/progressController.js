@@ -35,6 +35,72 @@ exports.markAsRead = async (req, res, next) => {
   }
 };
 
+// @desc    Récapitulatif progression: totaux (toutes les leçons) + dernières mises à jour
+// @route   GET /api/v1/progress/summary
+// @access  Private (Player)
+exports.getMySummary = async (req, res, next) => {
+  try {
+    // Tous les joueurs ont le même cursus => total = nb total de leçons toutes courses confondues
+    const totalLessons = await Lesson.countDocuments({}).maxTimeMS(MAX_TIME_MS);
+
+    // Comptages utilisateur
+    const [completedCount, inProgressCount] = await Promise.all([
+      UserProgress.countDocuments({ user: req.user.id, status: 'completed' }).maxTimeMS(MAX_TIME_MS),
+      UserProgress.countDocuments({ user: req.user.id, status: 'in_progress' }).maxTimeMS(MAX_TIME_MS),
+    ]);
+
+    // 3 dernières mises à jour (quel que soit le statut)
+    const latest = await UserProgress.find({ user: req.user.id })
+      .sort('-updatedAt')
+      .limit(3)
+      .populate({ path: 'lesson', select: 'title order course' })
+      .lean()
+      .maxTimeMS(MAX_TIME_MS);
+
+    const latestChanges = latest.map((p) => ({
+      lessonId: p.lesson?._id || null,
+      lessonTitle: p.lesson?.title || '—',
+      order: typeof p.lesson?.order === 'number' ? p.lesson.order : null,
+      status: p.status,
+      updatedAt: p.updatedAt,
+    }));
+
+    // Étape la plus avancée en cours: plus grand order parmi les "in_progress"
+    const inProg = await UserProgress.find({ user: req.user.id, status: 'in_progress' })
+      .populate({ path: 'lesson', select: 'title order course' })
+      .lean()
+      .maxTimeMS(MAX_TIME_MS);
+    let mostAdvancedInProgress = null;
+    for (const p of inProg) {
+      if (!p.lesson || typeof p.lesson.order !== 'number') continue;
+      if (!mostAdvancedInProgress || p.lesson.order > mostAdvancedInProgress.order) {
+        mostAdvancedInProgress = {
+          lessonId: p.lesson._id,
+          lessonTitle: p.lesson.title,
+          order: p.lesson.order,
+          status: p.status,
+          updatedAt: p.updatedAt,
+        };
+      }
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        totals: {
+          totalLessons,
+          completedCount,
+          inProgressCount,
+        },
+        mostAdvancedInProgress,
+        latestChanges,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Valider/Dévalider une leçon pour un élève (action instructeur/admin)
 // @route   PATCH /api/v1/progress/lessons/:lessonId/pro-validate
 // @access  Private (Instructor, Admin)

@@ -14,28 +14,34 @@ const DashboardPage = () => {
   const [totalLessons, setTotalLessons] = useState<number>(0);
   const [scheduleTile, setScheduleTile] = useState<{ title?: string | null; content: string; mediaUrl: string | null } | null>(null);
   const [eventsTile, setEventsTile] = useState<{ title?: string | null; content: string; mediaUrl: string | null } | null>(null);
-
-  type BackendProgress = {
-    status: 'not_started' | 'in_progress' | 'completed';
-  };
+  const [extraTiles, setExtraTiles] = useState<Array<{ key: string; title?: string | null; content: string; mediaUrl: string | null }>>([]);
+  const [mostAdvanced, setMostAdvanced] = useState<{ lessonId: string; lessonTitle: string; order: number; status: string; updatedAt: string } | null>(null);
+  const [latestChanges, setLatestChanges] = useState<Array<{ lessonId: string | null; lessonTitle: string; order: number | null; status: string; updatedAt: string }>>([]);
 
   useEffect(() => {
     const run = async () => {
       try {
         setLoading(true);
         setError(null);
-        const [progressRes, scheduleRes, eventsRes] = await Promise.allSettled([
-          api.get('/progress/me'),
+        const [summaryRes, scheduleRes, eventsRes, extraRes] = await Promise.allSettled([
+          api.get('/progress/summary'),
           api.get('/settings/public/dashboard.green_card_schedule'),
           api.get('/settings/public/dashboard.events'),
+          api.get('/settings/public-by-prefix/dashboard.tile.'),
         ]);
 
-        if (progressRes.status === 'fulfilled') {
-          const progressArr = (Array.isArray(progressRes.value?.data?.data) ? progressRes.value.data.data : []) as BackendProgress[];
-          setTotalLessons(progressArr.length);
-          setLessonsCompleted(progressArr.filter((p) => p.status === 'completed').length);
-        } else if (isAxiosError(progressRes.reason)) {
-          const msg = (progressRes.reason.response?.data as { message?: string } | undefined)?.message;
+        if (summaryRes.status === 'fulfilled') {
+          const data = summaryRes.value?.data?.data as {
+            totals?: { totalLessons?: number; completedCount?: number };
+            mostAdvancedInProgress?: { lessonId: string; lessonTitle: string; order: number; status: string; updatedAt: string } | null;
+            latestChanges?: Array<{ lessonId: string | null; lessonTitle: string; order: number | null; status: string; updatedAt: string }>;
+          };
+          setTotalLessons(Number(data?.totals?.totalLessons || 0));
+          setLessonsCompleted(Number(data?.totals?.completedCount || 0));
+          setMostAdvanced(data?.mostAdvancedInProgress || null);
+          setLatestChanges(Array.isArray(data?.latestChanges) ? data!.latestChanges! : []);
+        } else if (isAxiosError(summaryRes.reason)) {
+          const msg = (summaryRes.reason.response?.data as { message?: string } | undefined)?.message;
           setError(msg ?? t('errors.unexpected_error'));
         } else {
           setError(t('errors.unexpected_error'));
@@ -53,6 +59,15 @@ const DashboardPage = () => {
           setEventsTile(s ? { title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null } : null);
         } else {
           setEventsTile(null);
+        }
+
+        if (extraRes.status === 'fulfilled') {
+          const arr = (extraRes.value?.data?.data?.settings ?? []) as Array<{ key: string; title?: string | null; content?: string; mediaUrl?: string | null }>;
+          setExtraTiles(
+            arr.map((s) => ({ key: s.key, title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null }))
+          );
+        } else {
+          setExtraTiles([]);
         }
       } catch (err: unknown) {
         const fallback = t('errors.unexpected_error');
@@ -181,6 +196,60 @@ const DashboardPage = () => {
           </div>
         </div>
 
+        {/* Tuiles supplémentaires dynamiques */}
+        {extraTiles.length > 0 && (
+          <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>Autres tuiles</div>
+            <div className="grid grid-2 md:grid-1">
+              {extraTiles.map((t) => (
+                <div key={t.key} className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ fontWeight: 700 }}>{t.title || '—'}</div>
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {t.mediaUrl && <img src={t.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />}
+                    <div style={{ whiteSpace: 'pre-wrap' }}>{t.content}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tuile récap progression (étape la plus avancée + dernières modifications) */}
+        <div style={{ marginTop: '1rem' }}>
+          <div className="tile" style={{ display: 'grid', gap: 8 }}>
+            <div style={{ fontWeight: 700 }}>{t('dashboard.progress_summary_title')}</div>
+            <div>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>{t('dashboard.most_advanced_in_progress')}</div>
+              {mostAdvanced ? (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span>{mostAdvanced.lessonTitle}</span>
+                  <span style={{ color: 'var(--text-muted)' }}>• ordre {mostAdvanced.order}</span>
+                  <span className="chip">{t(`status.${mostAdvanced.status}`)}</span>
+                </div>
+              ) : (
+                <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.none_in_progress')}</div>
+              )}
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>{t('dashboard.latest_changes')}</div>
+              {latestChanges.length ? (
+                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  {latestChanges.map((c, idx) => (
+                    <li key={`${c.lessonId ?? 'x'}-${idx}`} style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span>{c.lessonTitle}</span>
+                      {typeof c.order === 'number' && <span style={{ color: 'var(--text-muted)' }}>• ordre {c.order}</span>}
+                      <span className="chip">{t(`status.${c.status}`)}</span>
+                      <span style={{ color: 'var(--text-muted)' }}>• {new Date(c.updatedAt).toLocaleString()}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.no_recent_changes')}</div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Zone communication/agenda: 2 tuiles */}
         <div style={{ marginTop: '1.5rem' }}>
           <div className="grid grid-2 md:grid-1">
@@ -192,10 +261,10 @@ const DashboardPage = () => {
                   {scheduleTile.mediaUrl && (
                     <img src={scheduleTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
                   )}
-                  <div style={{ color: 'var(--text-muted)' }}>{scheduleTile.content}</div>
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{scheduleTile.content}</div>
                 </div>
               ) : (
-                <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.schedule_mgmt_desc')}</div>
+                <div style={{ color: 'var(--text-muted)' }}>—</div>
               )}
             </div>
 
