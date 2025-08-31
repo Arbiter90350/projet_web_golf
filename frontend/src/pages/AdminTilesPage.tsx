@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import FilePicker from '../components/FileManager/FilePicker';
 import type { PickedFile } from '../components/FileManager/FilePicker';
@@ -18,7 +18,7 @@ type Setting = {
   updatedAt?: string;
 };
 
-function TileEditor({ label, settingKey }: { label: string; settingKey: string }) {
+function TileEditor({ settingKey }: { settingKey: string }) {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -58,12 +58,19 @@ function TileEditor({ label, settingKey }: { label: string; settingKey: string }
     try {
       setSaving(true);
       setError(null);
-      const { data } = await api.put(`/settings/${encodeURIComponent(settingKey)}`, {
-        title: title || undefined,
+      if (!title.trim()) {
+        setError('Le titre est obligatoire');
+        toast.error('Le titre est obligatoire');
+        setSaving(false);
+        return;
+      }
+      const payload = {
+        title: title,
         content: content || undefined,
         // IMPORTANT: si vide, envoyer null pour effacer côté serveur (undefined = pas de changement)
         mediaFileName: mediaFileName === '' ? null : mediaFileName,
-      });
+      } as const;
+      const { data } = await api.put(`/settings/${encodeURIComponent(settingKey)}`, payload);
       const s = data?.data?.setting as Setting;
       setTitle(s?.title ?? '');
       setMediaUrl(s?.mediaUrl ?? null);
@@ -78,14 +85,13 @@ function TileEditor({ label, settingKey }: { label: string; settingKey: string }
 
   return (
     <div className="tile" style={{ padding: '1rem', display: 'grid', gap: 8 }}>
-      <div style={{ fontWeight: 700 }}>{label}</div>
       {loading ? (
         <div>Chargement…</div>
       ) : (
         <>
           <label>
-            <div>Titre (optionnel)</div>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre de la tuile" />
+            <div>Titre</div>
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre de la tuile" required />
           </label>
           <label>
             <div>Texte</div>
@@ -153,18 +159,69 @@ function TileEditor({ label, settingKey }: { label: string; settingKey: string }
 }
 
 export default function AdminTilesPage() {
+  const toast = useToast();
+  const [dynamicTiles, setDynamicTiles] = useState<Setting[]>([]);
+  const [loadingList, setLoadingList] = useState(false);
+
+  const loadDynamic = useCallback(async () => {
+    try {
+      setLoadingList(true);
+      const { data } = await api.get('/settings/list', { params: { prefix: 'dashboard.tile.' } });
+      const list = (data?.data?.settings ?? []) as Setting[];
+      setDynamicTiles(list);
+    } catch {
+      toast.error('Chargement des tuiles dynamiques impossible');
+    } finally {
+      setLoadingList(false);
+    }
+  }, [toast]);
+
+  useEffect(() => { void loadDynamic(); }, [loadDynamic]);
+
+  const slugify = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48);
+
+  const addTile = async () => {
+    const title = window.prompt('Titre de la nouvelle tuile ?');
+    if (!title || !title.trim()) return;
+    const slug = slugify(title.trim());
+    const key = `dashboard.tile.${slug}-${Date.now().toString().slice(-6)}`;
+    try {
+      await api.put(`/settings/${encodeURIComponent(key)}`, { title });
+      toast.success('Tuile créée');
+      await loadDynamic();
+    } catch {
+      toast.error('Création impossible');
+    }
+  };
+
   return (
     <div className="container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
         <h2 className="mt-3">Tuiles du dashboard</h2>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn" onClick={addTile}>+ Ajouter une tuile</button>
           <a className="btn btn-outline" href="/admin/push-notifications">Notifications Push</a>
         </div>
       </div>
 
       <div className="grid grid-2 md:grid-1" style={{ marginTop: 12, gap: 12 }}>
-        <TileEditor label="Horaire des leçons (carte verte)" settingKey="dashboard.green_card_schedule" />
-        <TileEditor label="Communication / Événement" settingKey="dashboard.events" />
+        <TileEditor settingKey="dashboard.green_card_schedule" />
+        <TileEditor settingKey="dashboard.events" />
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <h3 style={{ marginBottom: 8 }}>Tuiles supplémentaires</h3>
+        {loadingList ? (
+          <div>Chargement…</div>
+        ) : dynamicTiles.length === 0 ? (
+          <div style={{ color: 'var(--text-muted)' }}>Aucune tuile supplémentaire.</div>
+        ) : (
+          <div className="grid grid-2 md:grid-1" style={{ gap: 12 }}>
+            {dynamicTiles.map((t) => (
+              <TileEditor key={t.key} settingKey={t.key} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

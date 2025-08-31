@@ -11,6 +11,7 @@ const logger = require('../utils/logger');
 
 const MAX_TIME_MS = Number(process.env.DB_QUERY_MAX_TIME_MS || 15000);
 const ALLOWED_TILE_KEYS = new Set(['dashboard.events', 'dashboard.green_card_schedule']);
+const ALLOWED_PUBLIC_PREFIXES = ['dashboard.tile.'];
 
 // Validators (exported for routes)
 exports.validateKeyParam = [
@@ -22,6 +23,31 @@ exports.validateUpsert = [
   body('content').optional({ values: 'falsy' }).isString().trim().isLength({ max: 8000 }),
   body('mediaFileName').optional({ values: 'falsy' }).isString().trim(),
 ];
+
+// GET /api/settings/list?prefix=... (admin)
+exports.getSettingsByPrefixAdmin = async (req, res, next) => {
+  try {
+    const prefix = (req.query?.prefix || '').toString();
+    if (!prefix || prefix.length < 3 || prefix.length > 120) {
+      return res.status(400).json({ status: 'error', message: 'Invalid prefix' });
+    }
+    const docs = await Setting.find({ key: { $regex: `^${prefix}` } })
+      .sort('key')
+      .lean()
+      .maxTimeMS(MAX_TIME_MS);
+    const results = await Promise.all(
+      docs.map(async (s) => ({
+        key: s.key,
+        title: s.title || null,
+        content: s.content || '',
+        mediaFileName: s.mediaFileName || null,
+        mediaUrl: s.mediaFileName ? await storageService.getSignedUrl(s.mediaFileName) : null,
+        updatedAt: s.updatedAt,
+      }))
+    );
+    return res.status(200).json({ status: 'success', data: { settings: results } });
+  } catch (error) { next(error); }
+};
 
 // GET /api/settings/:key (admin)
 exports.getSettingAdmin = async (req, res, next) => {
@@ -35,6 +61,31 @@ exports.getSettingAdmin = async (req, res, next) => {
 
     const mediaUrl = s.mediaFileName ? await storageService.getSignedUrl(s.mediaFileName) : null;
     return res.status(200).json({ status: 'success', data: { setting: { key: s.key, title: s.title || null, content: s.content || '', mediaFileName: s.mediaFileName || null, mediaUrl, updatedAt: s.updatedAt } } });
+  } catch (error) { next(error); }
+};
+
+// GET /api/settings/public-by-prefix/:prefix — lecture publique limitée à certains préfixes
+exports.getSettingsByPrefixPublic = async (req, res, next) => {
+  try {
+    const prefix = req.params?.prefix || '';
+    if (!ALLOWED_PUBLIC_PREFIXES.includes(prefix)) {
+      return res.status(404).json({ status: 'error', message: 'Not found' });
+    }
+    const docs = await Setting.find({ key: { $regex: `^${prefix}` } })
+      .lean()
+      .sort('key')
+      .maxTimeMS(MAX_TIME_MS);
+    const results = await Promise.all(
+      docs.map(async (s) => ({
+        key: s.key,
+        title: s.title || null,
+        content: s.content || '',
+        mediaFileName: s.mediaFileName || null,
+        mediaUrl: s.mediaFileName ? await storageService.getSignedUrl(s.mediaFileName) : null,
+        updatedAt: s.updatedAt,
+      }))
+    );
+    return res.status(200).json({ status: 'success', data: { settings: results } });
   } catch (error) { next(error); }
 };
 

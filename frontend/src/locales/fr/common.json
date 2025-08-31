@@ -48,7 +48,12 @@
     "schedule_mgmt_desc": "Planifiez vos leçons et visualisez votre agenda.",
     "green_card_schedule_title": "Horaire des leçons carte verte",
     "comms_title": "Communication & événements",
-    "comms_desc": "Actualités du club, événements et messages importants."
+    "comms_desc": "Actualités du club, événements et messages importants.",
+    "progress_summary_title": "Récapitulatif de progression",
+    "most_advanced_in_progress": "Étape la plus avancée en cours",
+    "none_in_progress": "Aucune leçon en cours",
+    "latest_changes": "Dernières mises à jour",
+    "no_recent_changes": "Aucune mise à jour récente"
   },
   "forbidden": {
     "title": "Accès interdit",
