@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import EnablePushBanner from '../EnablePushBanner';
 
 const linkStyle: CSSProperties = {
   display: 'block',
@@ -188,6 +189,7 @@ const DashboardLayout = () => {
             </button>
           </div>
         )}
+        {user && <EnablePushBanner />}
         <Outlet />
       </main>
     </div>
