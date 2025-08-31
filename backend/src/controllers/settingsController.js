@@ -18,6 +18,7 @@ exports.validateKeyParam = [
 ];
 
 exports.validateUpsert = [
+  body('title').optional({ values: 'falsy' }).isString().trim().isLength({ max: 160 }),
   body('content').optional({ values: 'falsy' }).isString().trim().isLength({ max: 8000 }),
   body('mediaFileName').optional({ values: 'falsy' }).isString().trim(),
 ];
@@ -33,7 +34,7 @@ exports.getSettingAdmin = async (req, res, next) => {
     if (!s) return res.status(200).json({ status: 'success', data: { setting: null } });
 
     const mediaUrl = s.mediaFileName ? await storageService.getSignedUrl(s.mediaFileName) : null;
-    return res.status(200).json({ status: 'success', data: { setting: { key: s.key, content: s.content || '', mediaFileName: s.mediaFileName || null, mediaUrl, updatedAt: s.updatedAt } } });
+    return res.status(200).json({ status: 'success', data: { setting: { key: s.key, title: s.title || null, content: s.content || '', mediaFileName: s.mediaFileName || null, mediaUrl, updatedAt: s.updatedAt } } });
   } catch (error) { next(error); }
 };
 
@@ -44,9 +45,10 @@ exports.upsertSettingAdmin = async (req, res, next) => {
     if (!errors.isEmpty()) return res.status(400).json({ status: 'error', message: 'Validation failed', errors: errors.array() });
 
     const { key } = req.params;
-    const { content, mediaFileName } = req.body || {};
+    const { title, content, mediaFileName } = req.body || {};
     const payload = {
       key,
+      title: typeof title === 'string' ? title : undefined,
       content: typeof content === 'string' ? content : undefined,
       mediaFileName: typeof mediaFileName === 'string' && mediaFileName ? mediaFileName : undefined,
       updatedBy: req.user?._id,
@@ -62,7 +64,7 @@ exports.upsertSettingAdmin = async (req, res, next) => {
 
     logger.info('Admin upsert setting', { key, actorId: req.user?._id });
 
-    return res.status(200).json({ status: 'success', data: { setting: { key: updated.key, content: updated.content || '', mediaFileName: updated.mediaFileName || null, mediaUrl, updatedAt: updated.updatedAt } } });
+    return res.status(200).json({ status: 'success', data: { setting: { key: updated.key, title: updated.title || null, content: updated.content || '', mediaFileName: updated.mediaFileName || null, mediaUrl, updatedAt: updated.updatedAt } } });
   } catch (error) { next(error); }
 };
 
@@ -79,6 +81,6 @@ exports.getSettingPublic = async (req, res, next) => {
     if (!s) return res.status(200).json({ status: 'success', data: { setting: null } });
 
     const mediaUrl = s.mediaFileName ? await storageService.getSignedUrl(s.mediaFileName) : null;
-    return res.status(200).json({ status: 'success', data: { setting: { key: s.key, content: s.content || '', mediaFileName: s.mediaFileName || null, mediaUrl, updatedAt: s.updatedAt } } });
+    return res.status(200).json({ status: 'success', data: { setting: { key: s.key, title: s.title || null, content: s.content || '', mediaFileName: s.mediaFileName || null, mediaUrl, updatedAt: s.updatedAt } } });
   } catch (error) { next(error); }
 };

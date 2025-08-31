@@ -11,6 +11,7 @@ import { useToast } from '../contexts/toast-context';
 
 type Setting = {
   key: string;
+  title?: string | null;
   content: string;
   mediaFileName: string | null;
   mediaUrl: string | null;
@@ -21,6 +22,7 @@ function TileEditor({ label, settingKey }: { label: string; settingKey: string }
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [mediaFileName, setMediaFileName] = useState('');
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
@@ -34,6 +36,7 @@ function TileEditor({ label, settingKey }: { label: string; settingKey: string }
       setError(null);
       const { data } = await api.get(`/settings/${encodeURIComponent(settingKey)}`);
       const s = (data?.data?.setting ?? null) as Setting | null;
+      setTitle(s?.title ?? '');
       setContent(s?.content ?? '');
       setMediaFileName(s?.mediaFileName ?? '');
       setMediaUrl(s?.mediaUrl ?? null);
@@ -56,11 +59,13 @@ function TileEditor({ label, settingKey }: { label: string; settingKey: string }
       setSaving(true);
       setError(null);
       const { data } = await api.put(`/settings/${encodeURIComponent(settingKey)}`, {
+        title: title || undefined,
         content: content || undefined,
         // IMPORTANT: si vide, envoyer null pour effacer côté serveur (undefined = pas de changement)
         mediaFileName: mediaFileName === '' ? null : mediaFileName,
       });
       const s = data?.data?.setting as Setting;
+      setTitle(s?.title ?? '');
       setMediaUrl(s?.mediaUrl ?? null);
       toast.success('Contenu enregistré');
     } catch {
@@ -78,6 +83,10 @@ function TileEditor({ label, settingKey }: { label: string; settingKey: string }
         <div>Chargement…</div>
       ) : (
         <>
+          <label>
+            <div>Titre (optionnel)</div>
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre de la tuile" />
+          </label>
           <label>
             <div>Texte</div>
             <textarea rows={5} value={content} onChange={(e) => setContent(e.target.value)} />

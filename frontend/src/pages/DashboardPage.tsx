@@ -12,8 +12,8 @@ const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [lessonsCompleted, setLessonsCompleted] = useState<number>(0);
   const [totalLessons, setTotalLessons] = useState<number>(0);
-  const [scheduleTile, setScheduleTile] = useState<{ content: string; mediaUrl: string | null } | null>(null);
-  const [eventsTile, setEventsTile] = useState<{ content: string; mediaUrl: string | null } | null>(null);
+  const [scheduleTile, setScheduleTile] = useState<{ title?: string | null; content: string; mediaUrl: string | null } | null>(null);
+  const [eventsTile, setEventsTile] = useState<{ title?: string | null; content: string; mediaUrl: string | null } | null>(null);
 
   type BackendProgress = {
     status: 'not_started' | 'in_progress' | 'completed';
@@ -42,15 +42,15 @@ const DashboardPage = () => {
         }
 
         if (scheduleRes.status === 'fulfilled') {
-          const s = (scheduleRes.value?.data?.data?.setting ?? null) as { content?: string; mediaUrl?: string | null } | null;
-          setScheduleTile(s ? { content: s.content || '', mediaUrl: s.mediaUrl ?? null } : null);
+          const s = (scheduleRes.value?.data?.data?.setting ?? null) as { title?: string | null; content?: string; mediaUrl?: string | null } | null;
+          setScheduleTile(s ? { title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null } : null);
         } else {
           setScheduleTile(null);
         }
 
         if (eventsRes.status === 'fulfilled') {
-          const s = (eventsRes.value?.data?.data?.setting ?? null) as { content?: string; mediaUrl?: string | null } | null;
-          setEventsTile(s ? { content: s.content || '', mediaUrl: s.mediaUrl ?? null } : null);
+          const s = (eventsRes.value?.data?.data?.setting ?? null) as { title?: string | null; content?: string; mediaUrl?: string | null } | null;
+          setEventsTile(s ? { title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null } : null);
         } else {
           setEventsTile(null);
         }
@@ -186,7 +186,7 @@ const DashboardPage = () => {
           <div className="grid grid-2 md:grid-1">
             {/* Tuile 1: Horaire des leçons carte verte (contenu admin) */}
             <div className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontWeight: 700 }}>{t('dashboard.green_card_schedule_title')}</div>
+              <div style={{ fontWeight: 700 }}>{scheduleTile?.title || t('dashboard.green_card_schedule_title')}</div>
               {scheduleTile ? (
                 <div style={{ display: 'grid', gap: 8 }}>
                   {scheduleTile.mediaUrl && (
@@ -201,7 +201,7 @@ const DashboardPage = () => {
 
             {/* Tuile 2: Communication & événements (contenu admin) */}
             <div className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontWeight: 700 }}>{t('dashboard.comms_title')}</div>
+              <div style={{ fontWeight: 700 }}>{eventsTile?.title || t('dashboard.comms_title')}</div>
               {eventsTile ? (
                 <div style={{ display: 'grid', gap: 8 }}>
                   {eventsTile.mediaUrl && (
