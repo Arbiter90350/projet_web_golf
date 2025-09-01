@@ -99,9 +99,13 @@ const DashboardPage = () => {
 
         if (extraRes.status === 'fulfilled') {
           const arr = (extraRes.value?.data?.data?.settings ?? []) as Array<{ key: string; title?: string | null; content?: string; mediaUrl?: string | null }>;
-          setExtraTiles(
-            arr.map((s) => ({ key: s.key, title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null }))
-          );
+          const mapped = arr.map((s) => ({ key: s.key, title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null }));
+          setExtraTiles(mapped);
+          // Si une tuile ".header" existe avec mediaUrl, l'utiliser comme image d'en-tête par défaut
+          const headerTile = mapped.find((s) => /\.header$/.test(s.key) && s.mediaUrl);
+          if (headerTile?.mediaUrl) {
+            setHeaderImageUrl((prev) => prev ?? headerTile!.mediaUrl!);
+          }
         } else {
           setExtraTiles([]);
         }
