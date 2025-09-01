@@ -3,3 +3,28 @@
   text-align: center;
   margin-top: 2rem;
 }
+
+/* Animations de transition de page */
+@keyframes fadeInFast {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOutFast {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Appliqué dans `DashboardLayout` sur <main> */
+.route-fade-in {
+  animation: fadeInFast 160ms ease-out;
+}
+
+.route-fade-out {
+  animation: fadeOutFast 140ms ease-in forwards;
+}
+
+/* Classe utilitaire pour un fade-in sur montage */
+.page-fade-in {
+  animation: fadeInFast 220ms ease-out;
+}

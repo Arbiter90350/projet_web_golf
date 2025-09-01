@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
@@ -25,6 +25,9 @@ const DashboardLayout = () => {
   const role = user?.role;
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Détecte le mode mobile (<= 768px)
   useEffect(() => {
@@ -45,6 +48,25 @@ const DashboardLayout = () => {
       };
     }
   }, [isMobile, menuOpen]);
+
+  // Fin de transition quand la route change
+  useEffect(() => {
+    setIsTransitioning(false);
+  }, [location.pathname]);
+
+  const handleNavWithFade = (to: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // On ne gère l'effet que pour /dashboard et /courses
+    if (to === '/dashboard' || to === '/courses') {
+      if (location.pathname !== to) {
+        e.preventDefault();
+        setIsTransitioning(true);
+        // Laisser le temps à l'animation CSS de jouer
+        window.setTimeout(() => navigate(to), 140);
+        return;
+      }
+    }
+    // Sinon comportement normal
+  };
 
   const commonNav = [
     { to: '/dashboard', label: t('titles.dashboard'), end: true },
@@ -147,14 +169,24 @@ const DashboardLayout = () => {
 
         <nav style={{ display: 'grid', gap: 6 }}>
           {role === 'player' && commonNav.map((n) => (
-            <NavLink key={n.to} to={n.to} end={n.end}
-              style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
+            <NavLink
+              key={n.to}
+              to={n.to}
+              end={n.end}
+              onClick={handleNavWithFade(n.to)}
+              style={({ isActive }) => (isActive ? activeStyle : linkStyle)}
+            >
               {n.label}
             </NavLink>
           ))}
 
           {role === 'player' && playerNav.map((n) => (
-            <NavLink key={n.to} to={n.to} style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
+            <NavLink
+              key={n.to}
+              to={n.to}
+              onClick={handleNavWithFade(n.to)}
+              style={({ isActive }) => (isActive ? activeStyle : linkStyle)}
+            >
               {n.label}
             </NavLink>
           ))}
@@ -175,7 +207,7 @@ const DashboardLayout = () => {
         </nav>
       </aside>
 
-      <main style={{ padding: '1.5rem' }}>
+      <main style={{ padding: '1.5rem' }} className={isTransitioning ? 'route-fade-out' : 'route-fade-in'}>
         {/* Barre supérieure avec bouton hamburger en mobile */}
         {isMobile && (
           <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: 8 }}>

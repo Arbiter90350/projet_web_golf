@@ -5,6 +5,7 @@ import type { PickedFile } from '../components/FileManager/FilePicker';
 import { useToast } from '../contexts/toast-context';
 import Modal from '../components/Modal';
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 
 // Page d'administration: édition simple de 2 tuiles du dashboard
 // - dashboard.green_card_schedule
@@ -205,7 +206,8 @@ export default function AdminTilesPage() {
   const [addError, setAddError] = useState<string | null>(null);
   // État pour la modale d'image d'en-tête
   const [headerOpen, setHeaderOpen] = useState(false);
-  const [headerTempFile, setHeaderTempFile] = useState('');
+  const [headerFile, setHeaderFile] = useState<File | null>(null);
+  const [headerPreview, setHeaderPreview] = useState<string | null>(null);
   const [headerSaving, setHeaderSaving] = useState(false);
   const [headerCurrent, setHeaderCurrent] = useState<{ fileName: string | null; url: string | null }>({ fileName: null, url: null });
 
@@ -279,7 +281,13 @@ export default function AdminTilesPage() {
         <h2 className="mt-3">Gestion page accueil</h2>
         <div style={{ display: 'flex', gap: 8 }}>
           <button type="button" className="btn" onClick={openAdd}>+ Ajouter une tuile</button>
-          <button type="button" className="btn btn-outline" onClick={() => { setHeaderTempFile(''); setHeaderOpen(true); }}>
+          <button type="button" className="btn btn-outline" onClick={() => { 
+            // Réinitialiser la sélection
+            if (headerPreview) URL.revokeObjectURL(headerPreview);
+            setHeaderFile(null);
+            setHeaderPreview(null);
+            setHeaderOpen(true); 
+          }}>
             Définir l'image d'en-tête
           </button>
         </div>
@@ -331,7 +339,7 @@ export default function AdminTilesPage() {
         </div>
       )}
 
-      {/* Modale — Définir l'image d'en-tête du dashboard */}
+      {/* Modale — Définir l'image d'en-tête du dashboard (upload + aperçu) */}
       {headerOpen && (
         <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 50, display: 'grid', placeItems: 'center' }}>
           <div className="tile" style={{ width: 'min(720px, 92vw)', maxHeight: '85vh', overflow: 'auto', padding: 16 }}>
@@ -346,24 +354,64 @@ export default function AdminTilesPage() {
             ) : (
               <div style={{ marginBottom: 8, fontSize: 12, color: 'var(--text-muted)' }}>Aucune image définie pour l'instant.</div>
             )}
-            <label>
-              <div>Fichier (Object Storage)</div>
-              <input type="text" placeholder="ex: header-2025.png" value={headerTempFile} onChange={(e) => setHeaderTempFile(e.target.value)} />
-            </label>
-            <div style={{ marginTop: 8 }}>
-              <FilePicker mode="inline" onSelect={(f) => setHeaderTempFile(f.fileName)} />
+            <div>
+              <label>
+                <div>Choisir un fichier image</div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] || null;
+                    if (headerPreview) URL.revokeObjectURL(headerPreview);
+                    setHeaderFile(f);
+                    setHeaderPreview(f ? URL.createObjectURL(f) : null);
+                  }}
+                />
+              </label>
+              {headerPreview && (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>Aperçu</div>
+                  <img src={headerPreview} alt="Aperçu de l'en-tête" style={{ maxWidth: '100%', maxHeight: 260, borderRadius: 8 }} />
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
               <button className="btn btn-outline" onClick={() => setHeaderOpen(false)}>Annuler</button>
               <button
                 className="btn btn-primary"
-                disabled={headerSaving || !headerTempFile}
+                disabled={headerSaving || !headerFile}
                 onClick={async () => {
+                  if (!headerFile) return;
                   try {
                     setHeaderSaving(true);
-                    await api.put(`/settings/${encodeURIComponent('dashboard.header_image')}`, { mediaFileName: headerTempFile });
+                    // 1) Demander une URL pré-signée
+                    const presignRes = await api.post('/files/presign', {
+                      mimeType: headerFile.type,
+                      size: headerFile.size,
+                      originalName: headerFile.name,
+                    }, { timeout: 30_000 });
+                    const { url, fileName } = presignRes.data?.data as { url: string; fileName: string };
+
+                    // 2) Upload direct vers le stockage
+                    await axios.put(url, headerFile, {
+                      headers: { 'Content-Type': headerFile.type || 'application/octet-stream' },
+                    });
+
+                    // 3) Enregistrer les métadonnées fichier (modèle privé)
+                    await api.post('/files/record', {
+                      fileName,
+                      originalName: headerFile.name,
+                      mimeType: headerFile.type,
+                      size: headerFile.size,
+                    });
+
+                    // 4) Associer au paramètre de configuration du dashboard
+                    await api.put(`/settings/${encodeURIComponent('dashboard.header_image')}`, { mediaFileName: fileName });
                     toast.success("Image d'en-tête enregistrée");
-                    setHeaderCurrent({ fileName: headerTempFile, url: null });
+                    setHeaderCurrent({ fileName, url: null });
+                    if (headerPreview) URL.revokeObjectURL(headerPreview);
+                    setHeaderFile(null);
+                    setHeaderPreview(null);
                     setHeaderOpen(false);
                   } catch {
                     toast.error("Impossible d'enregistrer l'image d'en-tête");
