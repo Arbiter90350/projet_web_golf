@@ -82,6 +82,8 @@ const BackgroundDecor: React.FC = () => {
 
   return (
     <div className={className} aria-hidden>
+      {/* Couche image de fond (configurée via CSS variables selon la page) */}
+      <div className="decor-image" />
       {/* Coins avec ondes fines */}
       <CornerWavesTL />
       <CornerWavesBR />
