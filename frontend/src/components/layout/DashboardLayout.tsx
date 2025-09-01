@@ -62,7 +62,7 @@ const DashboardLayout = () => {
 
   const adminNav = [
     { to: '/admin/users', label: 'Utilisateurs (admin)' },
-    { to: '/admin/tiles', label: 'Tuiles (admin)' },
+    { to: '/admin/tiles', label: 'Gestion page accueil' },
     { to: '/admin/push-notifications', label: 'Notifications Push (admin)' },
   ];
 

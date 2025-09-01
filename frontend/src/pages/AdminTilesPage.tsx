@@ -203,6 +203,11 @@ export default function AdminTilesPage() {
   const [addTitle, setAddTitle] = useState('');
   const [addSaving, setAddSaving] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  // État pour la modale d'image d'en-tête
+  const [headerOpen, setHeaderOpen] = useState(false);
+  const [headerTempFile, setHeaderTempFile] = useState('');
+  const [headerSaving, setHeaderSaving] = useState(false);
+  const [headerCurrent, setHeaderCurrent] = useState<{ fileName: string | null; url: string | null }>({ fileName: null, url: null });
 
   const loadDynamic = useCallback(async () => {
     try {
@@ -218,6 +223,20 @@ export default function AdminTilesPage() {
   }, [toast]);
 
   useEffect(() => { void loadDynamic(); }, [loadDynamic]);
+
+  // Charge l'image d'en-tête actuelle pour information
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const { data } = await api.get('/settings/dashboard.header_image');
+        const s = (data?.data?.setting ?? null) as Setting | null;
+        setHeaderCurrent({ fileName: s?.mediaFileName ?? null, url: s?.mediaUrl ?? null });
+      } catch {
+        // silencieux: la clé peut ne pas exister encore
+      }
+    };
+    void run();
+  }, []);
 
   const slugify = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48);
   
@@ -257,9 +276,12 @@ export default function AdminTilesPage() {
   return (
     <div className="container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-        <h2 className="mt-3">Tuiles du dashboard</h2>
+        <h2 className="mt-3">Gestion page accueil</h2>
         <div style={{ display: 'flex', gap: 8 }}>
           <button type="button" className="btn" onClick={openAdd}>+ Ajouter une tuile</button>
+          <button type="button" className="btn btn-outline" onClick={() => { setHeaderTempFile(''); setHeaderOpen(true); }}>
+            Définir l'image d'en-tête
+          </button>
         </div>
       </div>
 
@@ -305,6 +327,54 @@ export default function AdminTilesPage() {
                 <button type="submit" className="btn btn-primary" disabled={addSaving}>{addSaving ? 'Création…' : 'Créer'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modale — Définir l'image d'en-tête du dashboard */}
+      {headerOpen && (
+        <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 50, display: 'grid', placeItems: 'center' }}>
+          <div className="tile" style={{ width: 'min(720px, 92vw)', maxHeight: '85vh', overflow: 'auto', padding: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ fontWeight: 700 }}>Choisir une image d'en-tête</div>
+              <button className="btn btn-outline" onClick={() => setHeaderOpen(false)}>✕</button>
+            </div>
+            {headerCurrent.fileName ? (
+              <div style={{ marginBottom: 8, fontSize: 12, color: 'var(--text-muted)' }}>
+                Actuel: <code>{headerCurrent.fileName}</code> {headerCurrent.url && (<a className="btn" href={headerCurrent.url} target="_blank" rel="noreferrer">Prévisualiser</a>)}
+              </div>
+            ) : (
+              <div style={{ marginBottom: 8, fontSize: 12, color: 'var(--text-muted)' }}>Aucune image définie pour l'instant.</div>
+            )}
+            <label>
+              <div>Fichier (Object Storage)</div>
+              <input type="text" placeholder="ex: header-2025.png" value={headerTempFile} onChange={(e) => setHeaderTempFile(e.target.value)} />
+            </label>
+            <div style={{ marginTop: 8 }}>
+              <FilePicker mode="inline" onSelect={(f) => setHeaderTempFile(f.fileName)} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
+              <button className="btn btn-outline" onClick={() => setHeaderOpen(false)}>Annuler</button>
+              <button
+                className="btn btn-primary"
+                disabled={headerSaving || !headerTempFile}
+                onClick={async () => {
+                  try {
+                    setHeaderSaving(true);
+                    await api.put(`/settings/${encodeURIComponent('dashboard.header_image')}`, { mediaFileName: headerTempFile });
+                    toast.success("Image d'en-tête enregistrée");
+                    setHeaderCurrent({ fileName: headerTempFile, url: null });
+                    setHeaderOpen(false);
+                  } catch {
+                    toast.error("Impossible d'enregistrer l'image d'en-tête");
+                  } finally {
+                    setHeaderSaving(false);
+                  }
+                }}
+              >
+                {headerSaving ? 'Enregistrement…' : 'Enregistrer'}
+              </button>
+            </div>
           </div>
         </div>
       )}

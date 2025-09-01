@@ -40,127 +40,15 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   color: var(--text-strong);
-  background: var(--brand-bg);
-}
-
-/* ===================== */
-/* Décor d'arrière-plan  */
-/* ===================== */
-
-/* Calque décor global, non-interactif, ajusté par variante de page */
-.decor-root {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0; /* contenu app au-dessus */
-  color: var(--text-muted);
-  --decor-opacity: 0.12;
-  /* Variables de décor image (défauts) */
-  --decor-image: none;
-  --decor-image-size: 70% auto;
-  --decor-image-position: top left;
-  --decor-image-opacity: 0.14;
-  /* Variables de masque/atténuation */
-  --decor-mask-pos: 80% 20%;
-  --decor-mask-radius: 75%;
-}
-
-.decor-corner {
-  position: fixed;
-  width: 38vw;
-  max-width: 520px;
-  min-width: 260px;
-}
-
-.decor-tl { top: -24px; left: -16px; }
-.decor-br { bottom: -24px; right: -16px; }
-
-.decor-grid {
-  position: fixed;
-  inset: 0;
-  opacity: 1; /* géré par --decor-opacity dans le motif */
-}
-
-/* Couche image de fond sur toute la page */
-.decor-image {
-  position: fixed;
-  inset: 0;
-  background-image: var(--decor-image);
+  /* Fond global: image unique étendue en vertical */
+  background-color: var(--brand-bg);
+  background-image: url('/backgrounds/background.png');
   background-repeat: no-repeat;
-  background-position: var(--decor-image-position);
-  background-size: var(--decor-image-size);
-  opacity: var(--decor-image-opacity);
-  /* Améliore le rendu pour se rapprocher de l'image fournie */
-  filter: saturate(0.92) contrast(1.05) brightness(1.02);
-  mix-blend-mode: multiply;
-  /* Estompe douce vers les bords pour mieux fondre dans le fond */
-  -webkit-mask-image: radial-gradient(
-    circle var(--decor-mask-radius) at var(--decor-mask-pos),
-    rgba(0,0,0,0.95) 0%,
-    rgba(0,0,0,0.75) 60%,
-    rgba(0,0,0,0.0) 100%
-  );
-          mask-image: radial-gradient(
-    circle var(--decor-mask-radius) at var(--decor-mask-pos),
-    rgba(0,0,0,0.95) 0%,
-    rgba(0,0,0,0.75) 60%,
-    rgba(0,0,0,0.0) 100%
-  );
+  background-position: center top;
+  /* Étendu pour un affichage complet en vertical */
+  background-size: auto 100vh;
 }
 
-/* Variantes par zones (auth / dashboard / player / instructor / admin) */
-.decor-auth {
-  color: var(--brand-primary);
-  --decor-opacity: 0.14;
-  --decor-image: url('/backgrounds/background.png');
-  --decor-image-size: 86% auto;
-  --decor-image-position: bottom right;
-  --decor-image-opacity: 0.25;
-  --decor-mask-pos: 75% 80%;
-}
-.decor-dashboard {
-  color: var(--text-muted);
-  --decor-opacity: 0.14;
-  --decor-image: url('/backgrounds/background.png');
-  --decor-image-size: 70% auto;
-  --decor-image-position: top left;
-  --decor-image-opacity: 0.18;
-  --decor-mask-pos: 22% 18%;
-}
-.decor-player {
-  color: var(--brand-primary);
-  --decor-opacity: 0.12;
-  --decor-image: url('/backgrounds/background.png');
-  --decor-image-size: 78% auto;
-  --decor-image-position: bottom right;
-  --decor-image-opacity: 0.20;
-  --decor-mask-pos: 80% 82%;
-}
-.decor-instructor {
-  color: var(--brand-accent);
-  --decor-opacity: 0.12;
-  --decor-image: url('/backgrounds/background.png');
-  --decor-image-size: 80% auto;
-  --decor-image-position: top right;
-  --decor-image-opacity: 0.18;
-  --decor-mask-pos: 78% 18%;
-}
-.decor-admin {
-  color: var(--brand-danger);
-  --decor-opacity: 0.10;
-  --decor-image: url('/backgrounds/background.png');
-  --decor-image-size: 78% auto;
-  --decor-image-position: top left;
-  --decor-image-opacity: 0.16;
-  --decor-mask-pos: 20% 20%;
-}
-.decor-plain { color: var(--text-muted); --decor-opacity: 0.10; }
-
-/* Calque contenu principal au-dessus du décor */
-.app-content {
-  position: relative;
-  z-index: 1;
-}
 
 /* Titres et variantes */
 h1, h2, h3 {
