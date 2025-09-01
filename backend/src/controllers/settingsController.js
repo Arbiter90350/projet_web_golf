@@ -49,6 +49,34 @@ exports.getSettingsByPrefixAdmin = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+// DELETE /api/settings/:key (admin) — suppression restreinte aux tuiles dynamiques
+exports.deleteSettingAdmin = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res
+        .status(400)
+        .json({ status: 'error', message: 'Validation failed', errors: errors.array() });
+    }
+
+    const { key } = req.params;
+    // Par sécurité, on n'autorise la suppression que pour les clés dynamiques
+    if (!key || !key.startsWith('dashboard.tile.')) {
+      return res.status(403).json({ status: 'error', message: 'Deletion not allowed for this key' });
+    }
+
+    const deleted = await Setting.findOneAndDelete({ key }).maxTimeMS(MAX_TIME_MS);
+
+    logger.info('Admin delete setting', { key, actorId: req.user?._id, found: Boolean(deleted) });
+
+    return res
+      .status(200)
+      .json({ status: 'success', data: { deleted: Boolean(deleted) } });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // GET /api/settings/:key (admin)
 exports.getSettingAdmin = async (req, res, next) => {
   try {

@@ -18,7 +18,7 @@ type Setting = {
   updatedAt?: string;
 };
 
-function TileEditor({ settingKey }: { settingKey: string }) {
+function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?: () => void | Promise<void> }) {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,6 +29,8 @@ function TileEditor({ settingKey }: { settingKey: string }) {
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [tempPickedFileName, setTempPickedFileName] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const isDynamic = settingKey.startsWith('dashboard.tile.');
 
   const load = async () => {
     try {
@@ -44,6 +46,22 @@ function TileEditor({ settingKey }: { settingKey: string }) {
       setError('Erreur de chargement');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const doDelete = async () => {
+    if (!isDynamic) return;
+    const ok = window.confirm('Supprimer cette tuile ? Cette action est irréversible.');
+    if (!ok) return;
+    try {
+      setDeleting(true);
+      await api.delete(`/settings/${encodeURIComponent(settingKey)}`);
+      toast.success('Tuile supprimée');
+      if (onDeleted) await onDeleted();
+    } catch {
+      toast.error('Suppression impossible');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -85,6 +103,13 @@ function TileEditor({ settingKey }: { settingKey: string }) {
 
   return (
     <div className="tile" style={{ padding: '1rem', display: 'grid', gap: 8 }}>
+      {isDynamic && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <button className="btn btn-danger btn-sm" disabled={deleting} onClick={doDelete}>
+            {deleting ? 'Suppression…' : 'Supprimer'}
+          </button>
+        </div>
+      )}
       {loading ? (
         <div>Chargement…</div>
       ) : (
@@ -241,7 +266,7 @@ export default function AdminTilesPage() {
         ) : (
           <div className="grid grid-2 md:grid-1" style={{ gap: 12 }}>
             {dynamicTiles.map((t) => (
-              <TileEditor key={t.key} settingKey={t.key} />
+              <TileEditor key={t.key} settingKey={t.key} onDeleted={loadDynamic} />
             ))}
           </div>
         )}

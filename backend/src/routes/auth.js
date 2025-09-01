@@ -23,7 +23,14 @@ const validateRegister = [
   body('email')
     .isEmail()
     .withMessage('Please enter a valid email')
-    .normalizeEmail(),
+    .normalizeEmail({
+      gmail_remove_dots: false,
+      gmail_remove_subaddress: false,
+      gmail_convert_googlemaildotcom: false,
+      outlookdotcom_remove_subaddress: false,
+      yahoo_remove_subaddress: false,
+      icloud_remove_subaddress: false,
+    }),
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long'),
@@ -42,7 +49,14 @@ const validateLogin = [
   body('email')
     .isEmail()
     .withMessage('Please enter a valid email')
-    .normalizeEmail(),
+    .normalizeEmail({
+      gmail_remove_dots: false,
+      gmail_remove_subaddress: false,
+      gmail_convert_googlemaildotcom: false,
+      outlookdotcom_remove_subaddress: false,
+      yahoo_remove_subaddress: false,
+      icloud_remove_subaddress: false,
+    }),
   body('password').notEmpty().withMessage('Password is required'),
 ];
 

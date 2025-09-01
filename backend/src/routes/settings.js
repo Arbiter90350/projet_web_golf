@@ -6,6 +6,7 @@ const {
   getSettingPublic,
   getSettingsByPrefixAdmin,
   getSettingsByPrefixPublic,
+  deleteSettingAdmin,
   validateKeyParam,
   validateUpsert,
 } = require('../controllers/settingsController');
@@ -21,5 +22,6 @@ router.use(protect, authorize('admin'));
 router.get('/list', getSettingsByPrefixAdmin);
 router.get('/:key', validateKeyParam, getSettingAdmin);
 router.put('/:key', [...validateKeyParam, ...validateUpsert], upsertSettingAdmin);
+router.delete('/:key', validateKeyParam, deleteSettingAdmin);
 
 module.exports = router;

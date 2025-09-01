@@ -103,23 +103,39 @@ export default function LessonModal({
                 <div style={{ marginBottom: 8 }}>
                   <strong style={{ fontSize: 14 }}>{t(`lessons.content_type.${c.contentType}`)}</strong>
                 </div>
-                {/* Prévisualisation inline selon le type */}
-                {!c.url ? (
-                  <div style={{ color: '#64748b', fontStyle: 'italic' }}>{t('lessons.no_content')}</div>
-                ) : c.contentType === 'image' ? (
-                  <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, border: '1px solid #e5e7eb' }} />
-                ) : c.contentType === 'mp4' || c.contentType === 'video' ? (
-                  <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8, border: '1px solid #e5e7eb' }} />
-                ) : c.contentType === 'pdf' || c.contentType === 'doc' ? (
-                  <iframe title={c.fileName || 'pdf'} src={c.url} style={{ width: '100%', height: 520, border: 'none', borderRadius: 8 }} />
-                ) : (
-                  <div style={{ color: '#64748b', fontStyle: 'italic' }}>Unsupported content type</div>
-                )}
+                {/* Media + légende en 2 colonnes sur desktop, empilé en mobile lorsque la légende existe */}
                 {c.caption ? (
-                  <div style={{ marginTop: 8, whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
-                    {c.caption}
+                  <div className="grid grid-2 md:grid-1" style={{ gap: '0.75rem' }}>
+                    <div>
+                      {!c.url ? (
+                        <div style={{ color: '#64748b', fontStyle: 'italic' }}>{t('lessons.no_content')}</div>
+                      ) : c.contentType === 'image' ? (
+                        <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                      ) : c.contentType === 'mp4' || c.contentType === 'video' ? (
+                        <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                      ) : c.contentType === 'pdf' || c.contentType === 'doc' ? (
+                        <iframe title={c.fileName || 'pdf'} src={c.url} style={{ width: '100%', height: 520, border: 'none', borderRadius: 8 }} />
+                      ) : (
+                        <div style={{ color: '#64748b', fontStyle: 'italic' }}>Unsupported content type</div>
+                      )}
+                    </div>
+                    <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{c.caption}</div>
                   </div>
-                ) : null}
+                ) : (
+                  <>
+                    {!c.url ? (
+                      <div style={{ color: '#64748b', fontStyle: 'italic' }}>{t('lessons.no_content')}</div>
+                    ) : c.contentType === 'image' ? (
+                      <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                    ) : c.contentType === 'mp4' || c.contentType === 'video' ? (
+                      <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                    ) : c.contentType === 'pdf' || c.contentType === 'doc' ? (
+                      <iframe title={c.fileName || 'pdf'} src={c.url} style={{ width: '100%', height: 520, border: 'none', borderRadius: 8 }} />
+                    ) : (
+                      <div style={{ color: '#64748b', fontStyle: 'italic' }}>Unsupported content type</div>
+                    )}
+                  </>
+                )}
               </div>
             ))
           )}

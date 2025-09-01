@@ -166,7 +166,7 @@ const DashboardPage = () => {
           <div className="card" style={{ marginTop: '1rem' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'baseline' }}>
               <div style={{ fontWeight: 600 }}>{t('labels.welcome')}, {user.firstName} {user.lastName}</div>
-              <div style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap', fontVariantLigatures: 'none', WebkitFontSmoothing: 'antialiased', fontFeatureSettings: '"liga" 0, "clig" 0' }}>{user.email} • {user.role}</div>
+              <div style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap', fontVariantLigatures: 'none', WebkitFontSmoothing: 'antialiased', fontFeatureSettings: '"liga" 0, "clig" 0' }}>{user.role}</div>
             </div>
           </div>
         )}
