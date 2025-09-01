@@ -34,16 +34,20 @@ const DashboardPage = () => {
     courseOrder?: number | null;
   }>>([]);
 
+  // Image d'en-tête configurable (depuis settings publics)
+  const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
+
   useEffect(() => {
     const run = async () => {
       try {
         setLoading(true);
         setError(null);
-        const [summaryRes, scheduleRes, eventsRes, extraRes] = await Promise.allSettled([
+        const [summaryRes, scheduleRes, eventsRes, extraRes, headerImgRes] = await Promise.allSettled([
           api.get('/progress/summary'),
           api.get('/settings/public/dashboard.green_card_schedule'),
           api.get('/settings/public/dashboard.events'),
           api.get('/settings/public-by-prefix/dashboard.tile.'),
+          api.get('/settings/public/dashboard.header_image'),
         ]);
 
         if (summaryRes.status === 'fulfilled') {
@@ -101,6 +105,14 @@ const DashboardPage = () => {
         } else {
           setExtraTiles([]);
         }
+
+        // Header image setting (facultatif)
+        if (headerImgRes.status === 'fulfilled') {
+          const s = (headerImgRes.value?.data?.data?.setting ?? null) as { mediaUrl?: string | null } | null;
+          setHeaderImageUrl(s?.mediaUrl ?? null);
+        } else {
+          setHeaderImageUrl(null);
+        }
       } catch (err: unknown) {
         const fallback = t('errors.unexpected_error');
         if (isAxiosError(err)) {
@@ -140,7 +152,7 @@ const DashboardPage = () => {
         {/* Image d'en-tête */}
         <div style={{ marginTop: '1rem' }}>
           <img
-            src="/jpg_dashboard.jpg"
+            src={headerImageUrl || '/jpg_dashboard.jpg'}
             alt={t('dashboard.alt_header')}
             style={{ width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 12, boxShadow: 'var(--shadow-lg)' }}
           />
@@ -155,7 +167,7 @@ const DashboardPage = () => {
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: 400,
-            fontSize: 22,
+            fontSize: 28,
             color: 'var(--text-strong)'
           }}
         >
@@ -175,7 +187,7 @@ const DashboardPage = () => {
 
         {/* Tuiles de navigation et métriques */}
         <div style={{ marginTop: '1.5rem', opacity: loading ? 0.6 : 1 }}>
-          <div className="grid grid-3 md:grid-1">
+          <div className="grid grid-2 md:grid-1">
             {/* Tuile progression leçons terminées (déplacée ici) */}
             <div className="tile" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ position: 'relative', width: 120, height: 120 }} aria-hidden>
@@ -214,17 +226,6 @@ const DashboardPage = () => {
               </div>
               <Link to="/courses" className="btn btn-primary">{t('cta.view_my_courses')}</Link>
             </div>
-
-            {/* Inscription au club */}
-            <div className="tile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontWeight: 600 }}>{t('cta.club_signup')}</div>
-                <div style={{ color: 'var(--text-muted)' }}>{t('cta.club_signup_desc')}</div>
-              </div>
-              <a href="https://golf-rougemont.com" target="_blank" rel="noreferrer" className="btn btn-outline">
-                {t('common.open')}
-              </a>
-            </div>
           </div>
         </div>
 
@@ -255,7 +256,7 @@ const DashboardPage = () => {
                       <span>{c.lessonTitle}</span>
                       {typeof c.order === 'number' && <span style={{ color: 'var(--text-muted)' }}>• ordre {c.order}</span>}
                       <span className="chip">{t(`status.${c.status}`)}</span>
-                      <span style={{ color: 'var(--text-muted)' }}>• {new Date(c.updatedAt).toLocaleString()}</span>
+                      <span style={{ color: 'var(--text-muted)' }}>• {new Date(c.updatedAt).toLocaleDateString('fr-FR')}</span>
                     </li>
                   ))}
                 </ul>
@@ -304,7 +305,6 @@ const DashboardPage = () => {
         {/* Tuiles supplémentaires dynamiques (sous les tuiles fixes) */}
         {extraTiles.length > 0 && (
           <div style={{ marginTop: '1.5rem' }}>
-            <div style={{ fontWeight: 700, marginBottom: 8 }}>Autres tuiles</div>
             <div className="grid grid-2 md:grid-1">
               {extraTiles.map((t) => (
                 <div key={t.key} className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
