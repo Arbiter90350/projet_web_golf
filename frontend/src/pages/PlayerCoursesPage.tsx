@@ -176,7 +176,7 @@ const PlayerCoursesPage = () => {
   if (error) return <div style={{ color: 'crimson' }}>{error}</div>;
 
   return (
-    <div>
+    <div className="page-fade-in">
       <h2>{t('modules.my_modules')}</h2>
       {prefetching && (
         <div style={{ marginBottom: 8, padding: '6px 10px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 6 }}>

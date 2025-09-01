@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 const DashboardPage = () => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lessonsCompleted, setLessonsCompleted] = useState<number>(0);
@@ -143,7 +144,7 @@ const DashboardPage = () => {
   const dash = (percent / 100) * circumference;
 
   return (
-    <div style={{ padding: '2rem 1rem' }}>
+    <div style={{ padding: '2rem 1rem' }} className="page-fade-in">
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         {/* Titre + bouton */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
@@ -228,7 +229,18 @@ const DashboardPage = () => {
                 <div style={{ fontWeight: 600 }}>{t('cta.track_learning')}</div>
                 <div style={{ color: 'var(--text-muted)' }}>{t('metrics.continue_progress')}</div>
               </div>
-              <Link to="/courses" className="btn btn-primary">{t('cta.view_my_courses')}</Link>
+              <Link
+                to="/courses"
+                className="btn btn-primary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const main = document.querySelector('main');
+                  main?.classList.add('route-fade-out');
+                  window.setTimeout(() => navigate('/courses'), 140);
+                }}
+              >
+                {t('cta.view_my_courses')}
+              </Link>
             </div>
           </div>
         </div>
