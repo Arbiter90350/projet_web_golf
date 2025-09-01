@@ -47,6 +47,8 @@ body {
   background-position: center top;
   /* Étendu pour un affichage complet en vertical */
   background-size: auto 100vh;
+  /* Le fond reste fixe, seul le contenu défile */
+  background-attachment: fixed;
 }
 
 
