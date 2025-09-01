@@ -97,17 +97,21 @@ exports.upsertSettingAdmin = async (req, res, next) => {
 
     const { key } = req.params;
     const { title, content, mediaFileName } = req.body || {};
-    const payload = {
-      key,
-      title: typeof title === 'string' ? title : undefined,
-      content: typeof content === 'string' ? content : undefined,
-      mediaFileName: typeof mediaFileName === 'string' && mediaFileName ? mediaFileName : undefined,
-      updatedBy: req.user?._id,
-    };
+    // Construction précise de l'update:
+    // - $set pour les champs fournis
+    // - $unset si mediaFileName === null ou '' afin de SUPPRIMER le média associé
+    const updateDoc = { $set: { key, updatedBy: req.user?._id } };
+    if (typeof title === 'string') updateDoc.$set.title = title;
+    if (typeof content === 'string') updateDoc.$set.content = content;
+    if (mediaFileName === null || mediaFileName === '') {
+      updateDoc.$unset = { ...(updateDoc.$unset || {}), mediaFileName: '' };
+    } else if (typeof mediaFileName === 'string' && mediaFileName) {
+      updateDoc.$set.mediaFileName = mediaFileName;
+    }
 
     const updated = await Setting.findOneAndUpdate(
       { key },
-      { $set: payload },
+      updateDoc,
       { upsert: true, new: true, runValidators: true }
     ).maxTimeMS(MAX_TIME_MS);
 

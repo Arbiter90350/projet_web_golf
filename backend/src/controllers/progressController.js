@@ -53,7 +53,12 @@ exports.getMySummary = async (req, res, next) => {
     const latest = await UserProgress.find({ user: req.user.id })
       .sort('-updatedAt')
       .limit(3)
-      .populate({ path: 'lesson', select: 'title order course' })
+      // Populate de la leçon + du module (course) pour récupérer les titres
+      .populate({
+        path: 'lesson',
+        select: 'title order course',
+        populate: { path: 'course', select: 'title order' },
+      })
       .lean()
       .maxTimeMS(MAX_TIME_MS);
 
@@ -61,13 +66,20 @@ exports.getMySummary = async (req, res, next) => {
       lessonId: p.lesson?._id || null,
       lessonTitle: p.lesson?.title || '—',
       order: typeof p.lesson?.order === 'number' ? p.lesson.order : null,
+      // Champs supplémentaires côté client: informations de module (course)
+      courseTitle: typeof p.lesson?.course === 'object' && p.lesson?.course?.title ? p.lesson.course.title : null,
+      courseOrder: typeof p.lesson?.course === 'object' && typeof p.lesson?.course?.order === 'number' ? p.lesson.course.order : null,
       status: p.status,
       updatedAt: p.updatedAt,
     }));
 
     // Étape la plus avancée en cours: plus grand order parmi les "in_progress"
     const inProg = await UserProgress.find({ user: req.user.id, status: 'in_progress' })
-      .populate({ path: 'lesson', select: 'title order course' })
+      .populate({
+        path: 'lesson',
+        select: 'title order course',
+        populate: { path: 'course', select: 'title order' },
+      })
       .lean()
       .maxTimeMS(MAX_TIME_MS);
     let mostAdvancedInProgress = null;
@@ -78,6 +90,9 @@ exports.getMySummary = async (req, res, next) => {
           lessonId: p.lesson._id,
           lessonTitle: p.lesson.title,
           order: p.lesson.order,
+          // Exposition des infos module (course)
+          courseTitle: typeof p.lesson.course === 'object' && p.lesson.course?.title ? p.lesson.course.title : null,
+          courseOrder: typeof p.lesson.course === 'object' && typeof p.lesson.course?.order === 'number' ? p.lesson.course.order : null,
           status: p.status,
           updatedAt: p.updatedAt,
         };

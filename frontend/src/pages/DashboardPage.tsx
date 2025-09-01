@@ -15,8 +15,24 @@ const DashboardPage = () => {
   const [scheduleTile, setScheduleTile] = useState<{ title?: string | null; content: string; mediaUrl: string | null } | null>(null);
   const [eventsTile, setEventsTile] = useState<{ title?: string | null; content: string; mediaUrl: string | null } | null>(null);
   const [extraTiles, setExtraTiles] = useState<Array<{ key: string; title?: string | null; content: string; mediaUrl: string | null }>>([]);
-  const [mostAdvanced, setMostAdvanced] = useState<{ lessonId: string; lessonTitle: string; order: number; status: string; updatedAt: string } | null>(null);
-  const [latestChanges, setLatestChanges] = useState<Array<{ lessonId: string | null; lessonTitle: string; order: number | null; status: string; updatedAt: string }>>([]);
+  const [mostAdvanced, setMostAdvanced] = useState<{
+    lessonId: string;
+    lessonTitle: string;
+    order: number;
+    status: string;
+    updatedAt: string;
+    courseTitle?: string | null;
+    courseOrder?: number | null;
+  } | null>(null);
+  const [latestChanges, setLatestChanges] = useState<Array<{
+    lessonId: string | null;
+    lessonTitle: string;
+    order: number | null;
+    status: string;
+    updatedAt: string;
+    courseTitle?: string | null;
+    courseOrder?: number | null;
+  }>>([]);
 
   useEffect(() => {
     const run = async () => {
@@ -33,8 +49,24 @@ const DashboardPage = () => {
         if (summaryRes.status === 'fulfilled') {
           const data = summaryRes.value?.data?.data as {
             totals?: { totalLessons?: number; completedCount?: number };
-            mostAdvancedInProgress?: { lessonId: string; lessonTitle: string; order: number; status: string; updatedAt: string } | null;
-            latestChanges?: Array<{ lessonId: string | null; lessonTitle: string; order: number | null; status: string; updatedAt: string }>;
+            mostAdvancedInProgress?: {
+              lessonId: string;
+              lessonTitle: string;
+              order: number;
+              status: string;
+              updatedAt: string;
+              courseTitle?: string | null;
+              courseOrder?: number | null;
+            } | null;
+            latestChanges?: Array<{
+              lessonId: string | null;
+              lessonTitle: string;
+              order: number | null;
+              status: string;
+              updatedAt: string;
+              courseTitle?: string | null;
+              courseOrder?: number | null;
+            }>;
           };
           setTotalLessons(Number(data?.totals?.totalLessons || 0));
           setLessonsCompleted(Number(data?.totals?.completedCount || 0));
@@ -222,7 +254,7 @@ const DashboardPage = () => {
               <div style={{ fontWeight: 600, marginBottom: 4 }}>{t('dashboard.most_advanced_in_progress')}</div>
               {mostAdvanced ? (
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span>{mostAdvanced.lessonTitle}</span>
+                  <span>{mostAdvanced.courseTitle || mostAdvanced.lessonTitle}</span>
                   <span style={{ color: 'var(--text-muted)' }}>• ordre {mostAdvanced.order}</span>
                   <span className="chip">{t(`status.${mostAdvanced.status}`)}</span>
                 </div>
@@ -276,7 +308,7 @@ const DashboardPage = () => {
                   {eventsTile.mediaUrl && (
                     <img src={eventsTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
                   )}
-                  <div style={{ color: 'var(--text-muted)' }}>{eventsTile.content}</div>
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{eventsTile.content}</div>
                 </div>
               ) : (
                 <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.comms_desc')}</div>

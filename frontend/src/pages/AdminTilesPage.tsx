@@ -162,6 +162,11 @@ export default function AdminTilesPage() {
   const toast = useToast();
   const [dynamicTiles, setDynamicTiles] = useState<Setting[]>([]);
   const [loadingList, setLoadingList] = useState(false);
+  // État pour la modale d'ajout de tuile
+  const [addOpen, setAddOpen] = useState(false);
+  const [addTitle, setAddTitle] = useState('');
+  const [addSaving, setAddSaving] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
   const loadDynamic = useCallback(async () => {
     try {
@@ -179,18 +184,37 @@ export default function AdminTilesPage() {
   useEffect(() => { void loadDynamic(); }, [loadDynamic]);
 
   const slugify = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48);
+  
+  // Ouvre la modale d'ajout
+  const openAdd = () => {
+    setAddTitle('');
+    setAddError(null);
+    setAddOpen(true);
+  };
 
-  const addTile = async () => {
-    const title = window.prompt('Titre de la nouvelle tuile ?');
-    if (!title || !title.trim()) return;
-    const slug = slugify(title.trim());
+  // Création via la modale (validation + appel API)
+  const submitAdd = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const title = addTitle.trim();
+    if (!title || title.length < 3) {
+      setAddError('Le titre doit comporter au moins 3 caractères');
+      return;
+    }
+    const slug = slugify(title);
     const key = `dashboard.tile.${slug}-${Date.now().toString().slice(-6)}`;
     try {
+      setAddSaving(true);
+      setAddError(null);
       await api.put(`/settings/${encodeURIComponent(key)}`, { title });
       toast.success('Tuile créée');
+      setAddOpen(false);
+      setAddTitle('');
       await loadDynamic();
     } catch {
+      setAddError('Création impossible');
       toast.error('Création impossible');
+    } finally {
+      setAddSaving(false);
     }
   };
 
@@ -199,8 +223,7 @@ export default function AdminTilesPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
         <h2 className="mt-3">Tuiles du dashboard</h2>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn" onClick={addTile}>+ Ajouter une tuile</button>
-          <a className="btn btn-outline" href="/admin/push-notifications">Notifications Push</a>
+          <button type="button" className="btn" onClick={openAdd}>+ Ajouter une tuile</button>
         </div>
       </div>
 
@@ -223,6 +246,32 @@ export default function AdminTilesPage() {
           </div>
         )}
       </div>
+
+      {/* Modale d'ajout de tuile (remplace window.prompt) */}
+      {addOpen && (
+        <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 50, display: 'grid', placeItems: 'center' }}>
+          <div className="tile" style={{ width: 'min(640px, 92vw)', maxHeight: '85vh', overflow: 'auto', padding: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ fontWeight: 700 }}>Ajouter une tuile</div>
+              <button className="btn btn-outline" onClick={() => setAddOpen(false)}>✕</button>
+            </div>
+            <form onSubmit={submitAdd}>
+              <label>
+                <div>Titre de la tuile</div>
+                <input type="text" placeholder="Ex: Promotion d'automne" value={addTitle} onChange={(e) => setAddTitle(e.target.value)} />
+              </label>
+              <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 4 }}>
+                Clé générée: {`dashboard.tile.${slugify(addTitle || 'nouvelle-tuile')}-XXXXXX`}
+              </div>
+              {addError && <div style={{ color: 'crimson', marginTop: 8 }}>{addError}</div>}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
+                <button type="button" className="btn btn-outline" onClick={() => setAddOpen(false)}>Annuler</button>
+                <button type="submit" className="btn btn-primary" disabled={addSaving}>{addSaving ? 'Création…' : 'Créer'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

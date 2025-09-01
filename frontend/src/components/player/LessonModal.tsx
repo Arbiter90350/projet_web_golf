@@ -23,7 +23,7 @@ export default function LessonModal({
 }) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [contents, setContents] = useState<Array<{ _id: string; contentType: 'image' | 'pdf' | 'mp4' | 'video' | 'doc'; fileName?: string; url?: string }>>([]);
+  const [contents, setContents] = useState<Array<{ _id: string; contentType: 'image' | 'pdf' | 'mp4' | 'video' | 'doc'; fileName?: string; url?: string; caption?: string }>>([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [lessonInfo, setLessonInfo] = useState<{ description?: string } | null>(null);
 
@@ -115,6 +115,11 @@ export default function LessonModal({
                 ) : (
                   <div style={{ color: '#64748b', fontStyle: 'italic' }}>Unsupported content type</div>
                 )}
+                {c.caption ? (
+                  <div style={{ marginTop: 8, whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                    {c.caption}
+                  </div>
+                ) : null}
               </div>
             ))
           )}
