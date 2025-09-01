@@ -74,11 +74,11 @@
 .file-manager .file-icon {
   margin-right: 8px;
   font-size: 18px;
-  color: #1890ff;
+  color: var(--brand-primary);
 }
 
 .file-manager .file-link {
-  color: #1890ff;
+  color: var(--brand-primary);
   cursor: pointer;
 }
 
