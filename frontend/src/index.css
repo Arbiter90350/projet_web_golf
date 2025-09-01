@@ -55,6 +55,11 @@ body {
   z-index: 0; /* contenu app au-dessus */
   color: var(--text-muted);
   --decor-opacity: 0.12;
+  /* Variables de décor image (défauts) */
+  --decor-image: none;
+  --decor-image-size: 70% auto;
+  --decor-image-position: top left;
+  --decor-image-opacity: 0.14;
 }
 
 .decor-corner {
@@ -73,12 +78,58 @@ body {
   opacity: 1; /* géré par --decor-opacity dans le motif */
 }
 
+/* Couche image de fond sur toute la page */
+.decor-image {
+  position: fixed;
+  inset: 0;
+  background-image: var(--decor-image);
+  background-repeat: no-repeat;
+  background-position: var(--decor-image-position);
+  background-size: var(--decor-image-size);
+  opacity: var(--decor-image-opacity);
+}
+
 /* Variantes par zones (auth / dashboard / player / instructor / admin) */
-.decor-auth { color: var(--brand-primary); --decor-opacity: 0.14; }
-.decor-dashboard { color: var(--text-muted); --decor-opacity: 0.14; }
-.decor-player { color: var(--brand-primary); --decor-opacity: 0.12; }
-.decor-instructor { color: var(--brand-accent); --decor-opacity: 0.12; }
-.decor-admin { color: var(--brand-danger); --decor-opacity: 0.10; }
+.decor-auth {
+  color: var(--brand-primary);
+  --decor-opacity: 0.14;
+  --decor-image: url('/backgrounds/contours.png');
+  --decor-image-size: 86% auto;
+  --decor-image-position: bottom right;
+  --decor-image-opacity: 0.25;
+}
+.decor-dashboard {
+  color: var(--text-muted);
+  --decor-opacity: 0.14;
+  --decor-image: url('/backgrounds/contours.png');
+  --decor-image-size: 70% auto;
+  --decor-image-position: top left;
+  --decor-image-opacity: 0.18;
+}
+.decor-player {
+  color: var(--brand-primary);
+  --decor-opacity: 0.12;
+  --decor-image: url('/backgrounds/contours.png');
+  --decor-image-size: 78% auto;
+  --decor-image-position: bottom right;
+  --decor-image-opacity: 0.20;
+}
+.decor-instructor {
+  color: var(--brand-accent);
+  --decor-opacity: 0.12;
+  --decor-image: url('/backgrounds/contours.png');
+  --decor-image-size: 80% auto;
+  --decor-image-position: top right;
+  --decor-image-opacity: 0.18;
+}
+.decor-admin {
+  color: var(--brand-danger);
+  --decor-opacity: 0.10;
+  --decor-image: url('/backgrounds/contours.png');
+  --decor-image-size: 78% auto;
+  --decor-image-position: top left;
+  --decor-image-opacity: 0.16;
+}
 .decor-plain { color: var(--text-muted); --decor-opacity: 0.10; }
 
 /* Calque contenu principal au-dessus du décor */
