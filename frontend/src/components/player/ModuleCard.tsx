@@ -29,6 +29,7 @@ export default function ModuleCard({
   const total = lessons?.length || 0;
   const completed = total === 0 ? 0 : lessons.filter((l) => getLessonStatus(l._id) === 'completed').length;
   const pct = total === 0 ? 0 : Math.round((completed / total) * 100);
+  const panelId = `module-${module.id}-panel`;
 
   return (
     <div className="card">
@@ -47,7 +48,7 @@ export default function ModuleCard({
             <span>{pct}%</span>
           </div>
         </div>
-        <button onClick={onToggle} className="btn btn-primary">
+        <button onClick={onToggle} className="btn btn-primary" aria-expanded={expanded} aria-controls={panelId}>
           {expanded ? t('common.hide') : t('modules.show_lessons')}
         </button>
       </div>
@@ -59,15 +60,22 @@ export default function ModuleCard({
         </div>
       </div>
 
-      {expanded && (
-        <div style={{ marginTop: '0.75rem', display: 'grid', gap: '0.75rem' }}>
+      {/* Panneau déroulant animé (toujours monté pour transition fluide) */}
+      <div
+        id={panelId}
+        role="region"
+        aria-label={t('modules.lessons_panel_label')}
+        className={`collapse-content ${expanded ? 'expanded' : ''}`}
+        style={{ marginTop: '0.75rem' }}
+      >
+        <div className="content" style={{ display: 'grid', gap: '0.75rem' }}>
           {[...(lessons || [])]
             .sort((a, b) => a.order - b.order)
             .map((l) => (
               <LessonTile key={l._id} lesson={l} status={getLessonStatus(l._id)} onOpen={onOpenLesson} />
             ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }
