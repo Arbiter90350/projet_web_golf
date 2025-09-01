@@ -93,7 +93,7 @@ body {
 .decor-auth {
   color: var(--brand-primary);
   --decor-opacity: 0.14;
-  --decor-image: url('/backgrounds/contours.png');
+  --decor-image: url('/backgrounds/background.png');
   --decor-image-size: 86% auto;
   --decor-image-position: bottom right;
   --decor-image-opacity: 0.25;
@@ -101,7 +101,7 @@ body {
 .decor-dashboard {
   color: var(--text-muted);
   --decor-opacity: 0.14;
-  --decor-image: url('/backgrounds/contours.png');
+  --decor-image: url('/backgrounds/background.png');
   --decor-image-size: 70% auto;
   --decor-image-position: top left;
   --decor-image-opacity: 0.18;
@@ -109,7 +109,7 @@ body {
 .decor-player {
   color: var(--brand-primary);
   --decor-opacity: 0.12;
-  --decor-image: url('/backgrounds/contours.png');
+  --decor-image: url('/backgrounds/background.png');
   --decor-image-size: 78% auto;
   --decor-image-position: bottom right;
   --decor-image-opacity: 0.20;
@@ -117,7 +117,7 @@ body {
 .decor-instructor {
   color: var(--brand-accent);
   --decor-opacity: 0.12;
-  --decor-image: url('/backgrounds/contours.png');
+  --decor-image: url('/backgrounds/background.png');
   --decor-image-size: 80% auto;
   --decor-image-position: top right;
   --decor-image-opacity: 0.18;
@@ -125,7 +125,7 @@ body {
 .decor-admin {
   color: var(--brand-danger);
   --decor-opacity: 0.10;
-  --decor-image: url('/backgrounds/contours.png');
+  --decor-image: url('/backgrounds/background.png');
   --decor-image-size: 78% auto;
   --decor-image-position: top left;
   --decor-image-opacity: 0.16;
