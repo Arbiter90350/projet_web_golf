@@ -1,6 +1,9 @@
 :root {
   /* Typo & rendu */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-sans: 'DM Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-display: 'League Spartan', 'DM Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-script: 'Allura', 'Segoe Script', cursive;
+  font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
   text-rendering: optimizeLegibility;
@@ -8,14 +11,23 @@
   -moz-osx-font-smoothing: grayscale;
   color-scheme: light;
 
-  /* Thème */
-  --brand-bg: #f6f8fa;
-  --brand-primary: #004d40;
-  --brand-primary-hover: #00382e;
-  --text-strong: #2c3e50;
-  --text-muted: #6b7280;
-  --card-bg: rgba(255, 255, 255, 0.95);
-  --focus-ring: 0 0 0 3px rgba(0, 77, 64, 0.2);
+  /* Thème (Rougemont le Château) */
+  --brand-bg: #f3f7f6;               /* Soft minty surface */
+  --brand-primary: #1d8786;          /* Teal */
+  --brand-primary-hover: #163b3f;    /* Deep teal */
+  --brand-primary-border: rgba(29,135,134,0.35);
+  --brand-primary-soft: rgba(29,135,134,0.10);
+  --brand-accent: #23c796;           /* Emerald accent */
+  --brand-accent-hover: #1fb386;
+  --brand-accent-soft: rgba(35,199,150,0.12);
+  --brand-danger: #b15232;           /* Terracotta */
+  --brand-danger-hover: #953e24;
+  --brand-danger-bg: rgba(177,82,50,0.10);
+  --brand-danger-border: rgba(177,82,50,0.25);
+  --text-strong: #163b3f;            /* Headings/body strong */
+  --text-muted: #7ea89e;             /* Muted */
+  --card-bg: #ffffff;
+  --focus-ring: 0 0 0 3px rgba(29, 135, 134, 0.30);
   --radius: 10px;
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
 }
@@ -29,6 +41,18 @@ body {
   min-width: 320px;
   background: var(--brand-bg);
   color: var(--text-strong);
+}
+
+/* Titres et variantes */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--text-strong);
+}
+.signature {
+  font-family: var(--font-script);
+  font-weight: 400;
+  letter-spacing: 0.02em;
 }
 
 a {
@@ -73,9 +97,9 @@ a:focus-visible {
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 .tile:hover {
-  border-color: #d1d5db;
+  border-color: rgba(29,135,134,0.35);
   box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-  background: #fbfbfb;
+  background: #fbfefe;
 }
 
 .btn {
@@ -102,24 +126,24 @@ a:focus-visible {
   background: var(--brand-primary-hover);
 }
 .btn-outline {
-  background: #f9fafb;
-  color: var(--text-strong);
-  border-color: #d1d5db;
+  background: rgba(29,135,134,0.08);
+  color: var(--brand-primary);
+  border-color: rgba(29,135,134,0.35);
 }
 .btn-outline:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+  background: rgba(29,135,134,0.14);
+  border-color: var(--brand-primary);
 }
 
 /* Bouton d'action destructrice (rouge) */
 .btn-danger {
-  background: #b91c1c; /* red-700 */
+  background: var(--brand-danger);
   color: #fff;
-  border-color: #991b1b; /* red-800 */
+  border-color: #9d472a;
 }
 .btn-danger:hover {
-  background: #991b1b; /* red-800 */
-  border-color: #7f1d1d; /* red-900 */
+  background: var(--brand-danger-hover);
+  border-color: #7f331f;
 }
 
 .badge {
@@ -132,8 +156,8 @@ a:focus-visible {
   border: 1px solid rgba(0,0,0,0.06);
 }
 .badge-mode {
-  background: #eef2ff;
-  color: #3730a3;
+  background: rgba(35,199,150,0.12);
+  color: var(--brand-primary);
 }
 
 /* Badge pour utilisateur non vérifié */
@@ -141,6 +165,20 @@ a:focus-visible {
   background: #f3f4f6; /* gray-100 */
   color: #374151; /* gray-700 */
   border-color: #e5e7eb; /* gray-200 */
+}
+
+/* Pastille statuts (dashboard, listes) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.15rem 0.55rem;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  background: rgba(29,135,134,0.12);
+  color: var(--brand-primary);
+  border: 1px solid rgba(29,135,134,0.35);
 }
 
 /* Boutons: focus accessible et animation de press subtile */
@@ -182,7 +220,7 @@ a:focus-visible {
 }
 /* Focus visuel quand on interagit avec le sélecteur de rôle */
 .table-row-focused td {
-  background: #eef2ff;
+  background: rgba(29,135,134,0.10);
 }
 /* Mise en avant des comptes non vérifiés */
 .table-row-unverified td {

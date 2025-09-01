@@ -10,7 +10,7 @@
   background: linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)),
     url('https://images.unsplash.com/photo-1587174486073-ae5e3c2e6a44?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
   background-color: var(--brand-bg); /* fallback couleur */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased; /* rendu police plus net */
   text-rendering: optimizeLegibility;
   color-scheme: light;
@@ -133,9 +133,9 @@
   padding: 0.75rem 1rem;
   max-width: 420px;
   text-align: center;
-  color: #c0392b;
-  background: #fdecea;
-  border: 1px solid #f5c6cb;
+  color: var(--brand-danger);
+  background: var(--brand-danger-bg);
+  border: 1px solid var(--brand-danger-border);
   border-radius: 6px;
 }
 

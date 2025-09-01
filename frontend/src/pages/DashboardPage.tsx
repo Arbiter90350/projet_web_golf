@@ -148,14 +148,14 @@ const DashboardPage = () => {
 
         {/* Accroche */}
         <div
-          className="tile"
+          className="tile signature"
           style={{
             marginTop: '0.8rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: 18,
+            fontWeight: 400,
+            fontSize: 22,
             color: 'var(--text-strong)'
           }}
         >

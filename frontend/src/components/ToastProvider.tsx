@@ -76,10 +76,14 @@ const toastBaseStyle: React.CSSProperties = {
 };
 
 const typeStyles: Record<ToastType, React.CSSProperties> = {
-  success: { backgroundColor: '#16a34a' },
-  error: { backgroundColor: '#dc2626' },
-  info: { backgroundColor: '#2563eb' },
-  warning: { backgroundColor: '#d97706' },
+  // Succès: vert émeraude de la charte
+  success: { backgroundColor: 'var(--brand-accent)' },
+  // Erreur: terracotta de la charte
+  error: { backgroundColor: 'var(--brand-danger)' },
+  // Info: teal principal
+  info: { backgroundColor: 'var(--brand-primary)' },
+  // Avertissement: teal adouci (lisible avec texte foncé)
+  warning: { backgroundColor: '#7ea89e', color: '#163b3f' },
 };
 
 // Type interne pour la liste de toasts gérée par le provider
