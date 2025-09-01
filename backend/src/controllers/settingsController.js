@@ -10,7 +10,12 @@ const storageService = require('../services/storageService');
 const logger = require('../utils/logger');
 
 const MAX_TIME_MS = Number(process.env.DB_QUERY_MAX_TIME_MS || 15000);
-const ALLOWED_TILE_KEYS = new Set(['dashboard.events', 'dashboard.green_card_schedule']);
+const ALLOWED_TILE_KEYS = new Set([
+  'dashboard.events',
+  'dashboard.green_card_schedule',
+  // Image d'en-tête du dashboard (lecture publique autorisée)
+  'dashboard.header_image',
+]);
 const ALLOWED_PUBLIC_PREFIXES = ['dashboard.tile.'];
 
 // Validators (exported for routes)
