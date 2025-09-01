@@ -29,7 +29,6 @@ import InstructorPlayersPage from './pages/InstructorPlayersPage';
 import InstructorPlayerProgressPage from './pages/InstructorPlayerProgressPage';
 import ProfilePage from './pages/ProfilePage';
 import FileManagerPage from './pages/FileManagerPage';
-import BackgroundDecor from './components/decor/BackgroundDecor';
 
 // Redirection d'accueil selon le rôle
 function HomeRedirect() {
@@ -46,8 +45,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <BackgroundDecor />
-        <div className="app-content">
+        <div>
         <Routes>
 
           {/* Routes for unauthenticated users */}
