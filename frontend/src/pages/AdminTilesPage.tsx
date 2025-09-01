@@ -3,6 +3,8 @@ import api from '../services/api';
 import FilePicker from '../components/FileManager/FilePicker';
 import type { PickedFile } from '../components/FileManager/FilePicker';
 import { useToast } from '../contexts/toast-context';
+import Modal from '../components/Modal';
+import { useTranslation } from 'react-i18next';
 
 // Page d'administration: édition simple de 2 tuiles du dashboard
 // - dashboard.green_card_schedule
@@ -19,6 +21,7 @@ type Setting = {
 };
 
 function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?: () => void | Promise<void> }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -31,6 +34,7 @@ function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?:
   const [tempPickedFileName, setTempPickedFileName] = useState('');
   const [deleting, setDeleting] = useState(false);
   const isDynamic = settingKey.startsWith('dashboard.tile.');
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const load = async () => {
     try {
@@ -51,12 +55,11 @@ function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?:
 
   const doDelete = async () => {
     if (!isDynamic) return;
-    const ok = window.confirm('Supprimer cette tuile ? Cette action est irréversible.');
-    if (!ok) return;
     try {
       setDeleting(true);
       await api.delete(`/settings/${encodeURIComponent(settingKey)}`);
       toast.success('Tuile supprimée');
+      setConfirmOpen(false);
       if (onDeleted) await onDeleted();
     } catch {
       toast.error('Suppression impossible');
@@ -105,8 +108,8 @@ function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?:
     <div className="tile" style={{ padding: '1rem', display: 'grid', gap: 8 }}>
       {isDynamic && (
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button className="btn btn-danger btn-sm" disabled={deleting} onClick={doDelete}>
-            {deleting ? 'Suppression…' : 'Supprimer'}
+          <button className="btn btn-danger btn-sm" disabled={deleting} onClick={() => setConfirmOpen(true)}>
+            {deleting ? t('admin.tiles.deleting') : t('admin.tiles.delete')}
           </button>
         </div>
       )}
@@ -179,6 +182,14 @@ function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?:
           </div>
         </>
       )}
+      {/* Modal de confirmation de suppression */}
+      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} title={t('admin.tiles.confirm_delete_title')}>
+        <div>{t('admin.tiles.confirm_delete_text')}</div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
+          <button className="btn btn-outline" onClick={() => setConfirmOpen(false)}>{t('admin.tiles.cancel')}</button>
+          <button className="btn btn-danger" onClick={doDelete} disabled={deleting}>{deleting ? t('admin.tiles.deleting') : t('admin.tiles.delete')}</button>
+        </div>
+      </Modal>
     </div>
   );
 }

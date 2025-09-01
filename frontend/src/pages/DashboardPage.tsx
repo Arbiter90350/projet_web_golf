@@ -228,23 +228,7 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Tuiles supplémentaires dynamiques */}
-        {extraTiles.length > 0 && (
-          <div style={{ marginTop: '1.5rem' }}>
-            <div style={{ fontWeight: 700, marginBottom: 8 }}>Autres tuiles</div>
-            <div className="grid grid-2 md:grid-1">
-              {extraTiles.map((t) => (
-                <div key={t.key} className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ fontWeight: 700 }}>{t.title || '—'}</div>
-                  <div style={{ display: 'grid', gap: 8 }}>
-                    {t.mediaUrl && <img src={t.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />}
-                    <div style={{ whiteSpace: 'pre-wrap' }}>{t.content}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* (Déplacé en bas) Tuiles supplémentaires dynamiques */}
 
         {/* Tuile récap progression (étape la plus avancée + dernières modifications) */}
         <div style={{ marginTop: '1rem' }}>
@@ -316,6 +300,24 @@ const DashboardPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Tuiles supplémentaires dynamiques (sous les tuiles fixes) */}
+        {extraTiles.length > 0 && (
+          <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>Autres tuiles</div>
+            <div className="grid grid-2 md:grid-1">
+              {extraTiles.map((t) => (
+                <div key={t.key} className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ fontWeight: 700 }}>{t.title || '—'}</div>
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {t.mediaUrl && <img src={t.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />}
+                    <div style={{ whiteSpace: 'pre-wrap' }}>{t.content}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

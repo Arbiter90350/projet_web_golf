@@ -219,6 +219,13 @@
         "content_required": "Le contenu est obligatoire",
         "date_order": "La date de fin doit être postérieure à la date de début"
       }
+    },
+    "tiles": {
+      "delete": "Supprimer",
+      "deleting": "Suppression...",
+      "confirm_delete_title": "Supprimer cette tuile ?",
+      "confirm_delete_text": "Cette action est irréversible.",
+      "cancel": "Annuler"
     }
   }
 }
