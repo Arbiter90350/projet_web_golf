@@ -60,6 +60,9 @@ body {
   --decor-image-size: 70% auto;
   --decor-image-position: top left;
   --decor-image-opacity: 0.14;
+  /* Variables de masque/atténuation */
+  --decor-mask-pos: 80% 20%;
+  --decor-mask-radius: 75%;
 }
 
 .decor-corner {
@@ -87,6 +90,22 @@ body {
   background-position: var(--decor-image-position);
   background-size: var(--decor-image-size);
   opacity: var(--decor-image-opacity);
+  /* Améliore le rendu pour se rapprocher de l'image fournie */
+  filter: saturate(0.92) contrast(1.05) brightness(1.02);
+  mix-blend-mode: multiply;
+  /* Estompe douce vers les bords pour mieux fondre dans le fond */
+  -webkit-mask-image: radial-gradient(
+    circle var(--decor-mask-radius) at var(--decor-mask-pos),
+    rgba(0,0,0,0.95) 0%,
+    rgba(0,0,0,0.75) 60%,
+    rgba(0,0,0,0.0) 100%
+  );
+          mask-image: radial-gradient(
+    circle var(--decor-mask-radius) at var(--decor-mask-pos),
+    rgba(0,0,0,0.95) 0%,
+    rgba(0,0,0,0.75) 60%,
+    rgba(0,0,0,0.0) 100%
+  );
 }
 
 /* Variantes par zones (auth / dashboard / player / instructor / admin) */
@@ -97,6 +116,7 @@ body {
   --decor-image-size: 86% auto;
   --decor-image-position: bottom right;
   --decor-image-opacity: 0.25;
+  --decor-mask-pos: 75% 80%;
 }
 .decor-dashboard {
   color: var(--text-muted);
@@ -105,6 +125,7 @@ body {
   --decor-image-size: 70% auto;
   --decor-image-position: top left;
   --decor-image-opacity: 0.18;
+  --decor-mask-pos: 22% 18%;
 }
 .decor-player {
   color: var(--brand-primary);
@@ -113,6 +134,7 @@ body {
   --decor-image-size: 78% auto;
   --decor-image-position: bottom right;
   --decor-image-opacity: 0.20;
+  --decor-mask-pos: 80% 82%;
 }
 .decor-instructor {
   color: var(--brand-accent);
@@ -121,6 +143,7 @@ body {
   --decor-image-size: 80% auto;
   --decor-image-position: top right;
   --decor-image-opacity: 0.18;
+  --decor-mask-pos: 78% 18%;
 }
 .decor-admin {
   color: var(--brand-danger);
@@ -129,6 +152,7 @@ body {
   --decor-image-size: 78% auto;
   --decor-image-position: top left;
   --decor-image-opacity: 0.16;
+  --decor-mask-pos: 20% 20%;
 }
 .decor-plain { color: var(--text-muted); --decor-opacity: 0.10; }
 
@@ -168,6 +192,27 @@ textarea:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
+}
+
+/* ================================ */
+/* Effet d'ouverture/fermeture doux */
+/* ================================ */
+/* Technique CSS Grid "auto-height" sans JS */
+.collapse-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: grid-template-rows 260ms ease, opacity 220ms ease, transform 220ms ease;
+}
+.collapse-content > .content {
+  min-height: 0; /* indispensable pour 0fr */
+}
+.collapse-content.expanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Utilitaires UI (cartes, boutons, badges, tuiles) */
