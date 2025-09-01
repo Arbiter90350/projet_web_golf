@@ -38,9 +38,53 @@ html, body, #root {
 
 body {
   margin: 0;
-  min-width: 320px;
-  background: var(--brand-bg);
+  font-family: var(--font-sans);
   color: var(--text-strong);
+  background: var(--brand-bg);
+}
+
+/* ===================== */
+/* Décor d'arrière-plan  */
+/* ===================== */
+
+/* Calque décor global, non-interactif, ajusté par variante de page */
+.decor-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0; /* contenu app au-dessus */
+  color: var(--text-muted);
+  --decor-opacity: 0.12;
+}
+
+.decor-corner {
+  position: fixed;
+  width: 38vw;
+  max-width: 520px;
+  min-width: 260px;
+}
+
+.decor-tl { top: -24px; left: -16px; }
+.decor-br { bottom: -24px; right: -16px; }
+
+.decor-grid {
+  position: fixed;
+  inset: 0;
+  opacity: 1; /* géré par --decor-opacity dans le motif */
+}
+
+/* Variantes par zones (auth / dashboard / player / instructor / admin) */
+.decor-auth { color: var(--brand-primary); --decor-opacity: 0.14; }
+.decor-dashboard { color: var(--text-muted); --decor-opacity: 0.14; }
+.decor-player { color: var(--brand-primary); --decor-opacity: 0.12; }
+.decor-instructor { color: var(--brand-accent); --decor-opacity: 0.12; }
+.decor-admin { color: var(--brand-danger); --decor-opacity: 0.10; }
+.decor-plain { color: var(--text-muted); --decor-opacity: 0.10; }
+
+/* Calque contenu principal au-dessus du décor */
+.app-content {
+  position: relative;
+  z-index: 1;
 }
 
 /* Titres et variantes */
