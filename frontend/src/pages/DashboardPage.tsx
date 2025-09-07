@@ -102,11 +102,6 @@ const DashboardPage = () => {
           const arr = (extraRes.value?.data?.data?.settings ?? []) as Array<{ key: string; title?: string | null; content?: string; mediaUrl?: string | null }>;
           const mapped = arr.map((s) => ({ key: s.key, title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null }));
           setExtraTiles(mapped);
-          // Si une tuile ".header" existe avec mediaUrl, l'utiliser comme image d'en-tête par défaut
-          const headerTile = mapped.find((s) => /\.header$/.test(s.key) && s.mediaUrl);
-          if (headerTile?.mediaUrl) {
-            setHeaderImageUrl((prev) => prev ?? headerTile!.mediaUrl!);
-          }
         } else {
           setExtraTiles([]);
         }
@@ -154,14 +149,16 @@ const DashboardPage = () => {
           )}
         </div>
 
-        {/* Image d'en-tête */}
-        <div style={{ marginTop: '1rem' }}>
-          <img
-            src={headerImageUrl || '/jpg_dashboard.jpg'}
-            alt={t('dashboard.alt_header')}
-            style={{ width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 12, boxShadow: 'var(--shadow-lg)' }}
-          />
-        </div>
+        {/* Image d'en-tête (Object Storage uniquement) */}
+        {headerImageUrl && (
+          <div style={{ marginTop: '1rem' }}>
+            <img
+              src={headerImageUrl}
+              alt={t('dashboard.alt_header')}
+              style={{ width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 12, boxShadow: 'var(--shadow-lg)' }}
+            />
+          </div>
+        )}
 
         {/* Accroche */}
         <div
