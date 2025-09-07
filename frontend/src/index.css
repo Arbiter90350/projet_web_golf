@@ -220,6 +220,32 @@ a:focus-visible {
   transform: translateY(1px);
 }
 
+/* Champs de formulaire unifiés (sans modifier les tailles)
+   Applique un style cohérent aux inputs/textarea/select à l'échelle du projet.
+   Note: pas de padding ni de font-size ici pour ne pas affecter les tailles existantes. */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="url"],
+textarea,
+select {
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb; /* gray-200 */
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: var(--focus-ring);
+}
+
 /* Variante petite pour l'action dans les tableaux */
 .btn-sm {
   padding: 0.3rem 0.6rem;

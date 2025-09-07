@@ -166,12 +166,15 @@ const LoginPage = () => {
             )}
           </div>
         )}
-        <Link to="/forgot-password" className={styles.link}>
-          {t('auth:links.forgot_password')}
-        </Link>
-        <Link to="/register" className={styles.link}>
-          {t('auth:links.to_register')}
-        </Link>
+        <div className={styles.links}>
+          <Link to="/forgot-password" className={styles.link}>
+            {t('auth:links.forgot_password')}
+          </Link>
+          <Link to="/register" className={styles.link}>
+            {t('auth:links.to_register')}
+          </Link>
+        </div>
+
       </div>
     </div>
   );

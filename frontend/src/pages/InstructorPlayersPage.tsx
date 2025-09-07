@@ -68,10 +68,10 @@ export default function InstructorPlayersPage() {
     const d = daysSince(iso);
     if (d === 0) return t('instructor.players.rel.today', "Aujourd'hui");
     if (d === 1) return t('instructor.players.rel.one_day', '1 jour');
-    if (d < 7) return t('instructor.players.rel.n_days', { count: d });
-    const weeks = Math.floor(d / 7);
-    if (weeks === 1) return t('instructor.players.rel.one_week', '1 semaine');
-    return t('instructor.players.rel.n_weeks', { count: weeks });
+    if (d < 30) return t('instructor.players.rel.n_days', { count: d });
+    const months = Math.floor(d / 30);
+    if (months === 1) return t('instructor.players.rel.one_month', '1 mois');
+    return t('instructor.players.rel.n_months', { count: months });
   }, [daysSince, t]);
 
   useEffect(() => {
@@ -180,10 +180,10 @@ export default function InstructorPlayersPage() {
               {/* Zone tags en grille 2 colonnes pour position fixe */}
               <div style={{ display: 'grid', gridTemplateColumns: 'max-content max-content', gap: 6, marginTop: 6, minHeight: 28, alignItems: 'center' }}>
                 {/* Colonne 1: Module en cours (placeholder si absent) */}
-                {p.mostAdvancedInProgress?.courseTitle ? (
+                {p.topCourseByProgress?.courseTitle ? (
                   <button
                     type="button"
-                    onClick={() => setModuleFilter(p.mostAdvancedInProgress?.courseTitle || '')}
+                    onClick={() => setModuleFilter(p.topCourseByProgress?.courseTitle || '')}
                     style={{
                       border: '1px solid #cbd5e1',
                       borderRadius: 999,
@@ -195,7 +195,7 @@ export default function InstructorPlayersPage() {
                     }}
                     title={t('instructor.players.tags.filter_by_module', 'Filtrer par module')}
                   >
-                    {t('instructor.players.tags.module', 'Module')}: {p.mostAdvancedInProgress.courseTitle}
+                    {t('instructor.players.tags.module', 'Module')}: {p.topCourseByProgress.courseTitle}
                   </button>
                 ) : (
                   <span aria-hidden style={{ visibility: 'hidden' }}>placeholder</span>
@@ -214,7 +214,7 @@ export default function InstructorPlayersPage() {
                   }}
                   title={`${t('instructor.players.tags.filter_by_activity', 'Filtrer par activité')} — ${relativeLabel(p.lastProgressAt)}`}
                 >
-                  {t('instructor.players.tags.last_progress', 'Dernière progression')}: {p.topCourseByProgress?.courseTitle || p.mostAdvancedInProgress?.courseTitle || '—'}
+                  {t('instructor.players.tags.last_progress', 'Dernière progression')}: {relativeLabel(p.lastProgressAt)}
                 </button>
               </div>
             </div>

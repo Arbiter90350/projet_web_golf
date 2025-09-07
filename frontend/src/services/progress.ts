@@ -34,7 +34,8 @@ export interface MostAdvancedInProgressLite {
 export interface TopCourseByProgressLite {
   courseId?: string;
   courseTitle?: string | null;
-  maxOrder?: number | null;
+  maxOrder?: number | null; // rétro-compat éventuelle
+  courseOrder?: number | null; // nouveau: ordre du module (1 = moins avancé)
 }
 
 export interface PlayerLite {
@@ -74,6 +75,7 @@ type BackendPlayerLite = {
     courseId?: string;
     courseTitle?: string | null;
     maxOrder?: number | null;
+    courseOrder?: number | null;
   } | null;
 };
 
@@ -137,7 +139,10 @@ const ProgressService = {
           ? {
               courseId: u.topCourseByProgress.courseId,
               courseTitle: u.topCourseByProgress.courseTitle ?? null,
-              maxOrder: u.topCourseByProgress.maxOrder ?? null,
+              maxOrder: typeof u.topCourseByProgress.maxOrder === 'number' ? u.topCourseByProgress.maxOrder : null,
+              courseOrder: typeof (u.topCourseByProgress as { courseOrder?: number | null }).courseOrder === 'number'
+                ? (u.topCourseByProgress as { courseOrder?: number | null }).courseOrder!
+                : null,
             }
           : null,
       }))

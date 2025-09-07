@@ -17,6 +17,12 @@
   gap: 12px;
   max-width: 720px;
 }
+/* Exception: sur la page cours, agrandir les champs pour plus de confort (sans changer la taille de police) */
+.formGrid input,
+.formGrid textarea,
+.formGrid select {
+  padding: 0.9rem 1rem;
+}
 .list {
   list-style: none;
   padding: 0;
