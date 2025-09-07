@@ -210,7 +210,8 @@ const DashboardLayout = () => {
       <main
         style={{
           padding: '1.5rem',
-          background: '#fff', // évite la transparence sur le fond avec motif
+          // Fond blanc pour instructeur/admin uniquement. Les pages "player" gardent le fond décoratif.
+          background: role === 'player' ? 'transparent' : '#fff',
         }}
         className={isTransitioning ? 'route-fade-out' : 'route-fade-in'}
       >

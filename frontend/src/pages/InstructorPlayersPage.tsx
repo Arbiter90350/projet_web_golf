@@ -28,7 +28,7 @@ export default function InstructorPlayersPage() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [moduleFilter, setModuleFilter] = useState<string>('');
-  const [activityFilter, setActivityFilter] = useState<string>(''); // '', 'today', '1d', '4d', '7dplus'
+  const [activityFilter, setActivityFilter] = useState<string>(''); // '', 'lt15', 'd15to30', 'gt30', 'never'
 
   // Helpers temps relatif (memorized)
   const daysSince = useCallback((iso?: string | null) => {
@@ -40,12 +40,29 @@ export default function InstructorPlayersPage() {
     return Math.floor(diff / (24 * 60 * 60 * 1000));
   }, []);
   const activityBucket = useCallback((iso?: string | null) => {
+    if (!iso) return 'never';
     const d = daysSince(iso);
-    if (d === 0) return 'today';
-    if (d <= 1) return '1d';
-    if (d <= 4) return '4d';
-    return '7dplus';
+    if (!Number.isFinite(d)) return 'never';
+    if (d < 15) return 'lt15';
+    if (d <= 30) return 'd15to30';
+    return 'gt30';
   }, [daysSince]);
+
+  // Couleurs du tag "Dernière progression" selon ancienneté
+  const activityStyles = useCallback((iso?: string | null): React.CSSProperties => {
+    const bucket = activityBucket(iso);
+    if (bucket === 'lt15') {
+      return { background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.35)', color: '#047857' }; // vert
+    }
+    if (bucket === 'd15to30') {
+      return { background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.35)', color: '#92400e' }; // orange
+    }
+    if (bucket === 'gt30') {
+      return { background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', color: '#991b1b' }; // rouge
+    }
+    // never
+    return { background: 'rgba(148,163,184,0.12)', border: '1px solid rgba(148,163,184,0.35)', color: '#334155' }; // gris
+  }, [activityBucket]);
   const relativeLabel = useCallback((iso?: string | null) => {
     if (!iso) return t('instructor.players.tags.never', 'Jamais');
     const d = daysSince(iso);
@@ -83,7 +100,8 @@ export default function InstructorPlayersPage() {
       return ln.includes(q) || fn.includes(q) || em.includes(q);
     });
     if (moduleFilter) {
-      arr = arr.filter((p) => (p.mostAdvancedInProgress?.courseTitle || '') === moduleFilter);
+      // Filtre par module (préférence: topCourseByProgress sinon fallback sur module en cours)
+      arr = arr.filter((p) => (p.topCourseByProgress?.courseTitle || p.mostAdvancedInProgress?.courseTitle || '') === moduleFilter);
     }
     if (activityFilter) {
       arr = arr.filter((p) => activityBucket(p.lastProgressAt) === activityFilter);
@@ -94,7 +112,7 @@ export default function InstructorPlayersPage() {
   const moduleOptions = useMemo(() => {
     const set = new Set<string>();
     for (const p of players) {
-      const title = p.mostAdvancedInProgress?.courseTitle;
+      const title = p.topCourseByProgress?.courseTitle || p.mostAdvancedInProgress?.courseTitle;
       if (title) set.add(title);
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'fr'));
@@ -135,10 +153,10 @@ export default function InstructorPlayersPage() {
           <span style={{ fontSize: 13, color: '#475569' }}>{t('instructor.players.filters.activity_label', 'Activité')}</span>
           <select value={activityFilter} onChange={(e) => setActivityFilter(e.target.value)}>
             <option value="">{t('instructor.players.filters.activity_all', 'Toute activité')}</option>
-            <option value="today">{t('instructor.players.filters.activity_today', "Aujourd'hui")}</option>
-            <option value="1d">{t('instructor.players.filters.activity_1d', '≤ 1 jour')}</option>
-            <option value="4d">{t('instructor.players.filters.activity_4d', '≤ 4 jours')}</option>
-            <option value="7dplus">{t('instructor.players.filters.activity_7plus', '≥ 7 jours')}</option>
+            <option value="lt15">{t('instructor.players.filters.activity_lt15', '< 15 jours')}</option>
+            <option value="d15to30">{t('instructor.players.filters.activity_15to30', '15–30 jours')}</option>
+            <option value="gt30">{t('instructor.players.filters.activity_gt30', '> 30 jours')}</option>
+            <option value="never">{t('instructor.players.filters.activity_never', 'Jamais')}</option>
           </select>
         </label>
         {(moduleFilter || activityFilter) && (
@@ -159,9 +177,10 @@ export default function InstructorPlayersPage() {
             <div>
               <div style={titleStyle}>{p.lastName} {p.firstName}</div>
               <div style={subtitleStyle}>{p.email}</div>
-              {/* Tags */}
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
-                {p.mostAdvancedInProgress?.courseTitle && (
+              {/* Zone tags en grille 2 colonnes pour position fixe */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'max-content max-content', gap: 6, marginTop: 6, minHeight: 28, alignItems: 'center' }}>
+                {/* Colonne 1: Module en cours (placeholder si absent) */}
+                {p.mostAdvancedInProgress?.courseTitle ? (
                   <button
                     type="button"
                     onClick={() => setModuleFilter(p.mostAdvancedInProgress?.courseTitle || '')}
@@ -172,26 +191,30 @@ export default function InstructorPlayersPage() {
                       background: 'white',
                       fontSize: 12,
                       cursor: 'pointer',
+                      whiteSpace: 'nowrap',
                     }}
                     title={t('instructor.players.tags.filter_by_module', 'Filtrer par module')}
                   >
                     {t('instructor.players.tags.module', 'Module')}: {p.mostAdvancedInProgress.courseTitle}
                   </button>
+                ) : (
+                  <span aria-hidden style={{ visibility: 'hidden' }}>placeholder</span>
                 )}
+                {/* Colonne 2: Dernière progression — module >0% + couleur ancienneté */}
                 <button
                   type="button"
                   onClick={() => setActivityFilter(activityBucket(p.lastProgressAt))}
                   style={{
-                    border: '1px solid #cbd5e1',
                     borderRadius: 999,
                     padding: '2px 8px',
-                    background: 'white',
                     fontSize: 12,
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    ...activityStyles(p.lastProgressAt),
                   }}
-                  title={t('instructor.players.tags.filter_by_activity', 'Filtrer par activité')}
+                  title={`${t('instructor.players.tags.filter_by_activity', 'Filtrer par activité')} — ${relativeLabel(p.lastProgressAt)}`}
                 >
-                  {t('instructor.players.tags.last_progress', 'Dernière progression')}: {relativeLabel(p.lastProgressAt)}
+                  {t('instructor.players.tags.last_progress', 'Dernière progression')}: {p.topCourseByProgress?.courseTitle || p.mostAdvancedInProgress?.courseTitle || '—'}
                 </button>
               </div>
             </div>

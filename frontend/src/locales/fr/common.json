@@ -185,10 +185,10 @@
         "module_all": "Tous modules",
         "activity_label": "Activité",
         "activity_all": "Toute activité",
-        "activity_today": "Aujourd'hui",
-        "activity_1d": "≤ 1 jour",
-        "activity_4d": "≤ 4 jours",
-        "activity_7plus": "≥ 7 jours",
+        "activity_lt15": "< 15 jours",
+        "activity_15to30": "15–30 jours",
+        "activity_gt30": "> 30 jours",
+        "activity_never": "Jamais",
         "clear": "Effacer filtres"
       },
       "tags": {

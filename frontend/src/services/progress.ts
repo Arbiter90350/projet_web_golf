@@ -31,6 +31,12 @@ export interface MostAdvancedInProgressLite {
   updatedAt?: string;
 }
 
+export interface TopCourseByProgressLite {
+  courseId?: string;
+  courseTitle?: string | null;
+  maxOrder?: number | null;
+}
+
 export interface PlayerLite {
   id: string;
   firstName: string;
@@ -42,6 +48,7 @@ export interface PlayerLite {
   // Ajouts pour les tags de la page instructeur
   lastProgressAt?: string | null;
   mostAdvancedInProgress?: MostAdvancedInProgressLite | null;
+  topCourseByProgress?: TopCourseByProgressLite | null;
 }
 
 // Forme retournée par le backend pour listMyPlayers
@@ -62,6 +69,11 @@ type BackendPlayerLite = {
     courseId?: string;
     courseTitle?: string | null;
     updatedAt?: string;
+  } | null;
+  topCourseByProgress?: {
+    courseId?: string;
+    courseTitle?: string | null;
+    maxOrder?: number | null;
   } | null;
 };
 
@@ -119,6 +131,13 @@ const ProgressService = {
               courseId: u.mostAdvancedInProgress.courseId,
               courseTitle: u.mostAdvancedInProgress.courseTitle ?? null,
               updatedAt: u.mostAdvancedInProgress.updatedAt,
+            }
+          : null,
+        topCourseByProgress: u.topCourseByProgress
+          ? {
+              courseId: u.topCourseByProgress.courseId,
+              courseTitle: u.topCourseByProgress.courseTitle ?? null,
+              maxOrder: u.topCourseByProgress.maxOrder ?? null,
             }
           : null,
       }))
