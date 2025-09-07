@@ -177,8 +177,36 @@
     "players": {
       "title": "Élèves (instructeur)",
       "none": "Aucun élève assigné.",
-      "error_loading": "Erreur lors du chargement des élèves"
-    },
+      "error_loading": "Erreur lors du chargement des élèves",
+      "search_label": "Rechercher",
+      "search_placeholder": "Nom, prénom ou email...",
+      "filters": {
+        "module_label": "Module",
+        "module_all": "Tous modules",
+        "activity_label": "Activité",
+        "activity_all": "Toute activité",
+        "activity_today": "Aujourd'hui",
+        "activity_1d": "≤ 1 jour",
+        "activity_4d": "≤ 4 jours",
+        "activity_7plus": "≥ 7 jours",
+        "clear": "Effacer filtres"
+      },
+      "tags": {
+        "module": "Module",
+        "last_progress": "Dernière progression",
+        "filter_by_module": "Filtrer par module",
+        "filter_by_activity": "Filtrer par activité",
+        "never": "Jamais"
+      },
+      "rel": {
+        "today": "Aujourd'hui",
+        "one_day": "1 jour",
+        "n_days": "{{count}} jours",
+        "one_week": "1 semaine",
+        "n_weeks": "{{count}} semaines"
+      }
+    }
+    ,
     "player_progress": {
       "title": "Progression de l'élève",
       "student_label": "Élève",

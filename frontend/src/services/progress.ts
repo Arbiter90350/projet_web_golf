@@ -22,6 +22,15 @@ export interface ProValidatePayload {
 }
 
 // Représentation légère d'un joueur pour les vues instructeur
+export interface MostAdvancedInProgressLite {
+  lessonId?: string;
+  lessonTitle?: string;
+  order?: number | null;
+  courseId?: string;
+  courseTitle?: string | null;
+  updatedAt?: string;
+}
+
 export interface PlayerLite {
   id: string;
   firstName: string;
@@ -30,6 +39,9 @@ export interface PlayerLite {
   isActive?: boolean;
   lastLogin?: string;
   assignedInstructor?: string;
+  // Ajouts pour les tags de la page instructeur
+  lastProgressAt?: string | null;
+  mostAdvancedInProgress?: MostAdvancedInProgressLite | null;
 }
 
 // Forme retournée par le backend pour listMyPlayers
@@ -42,6 +54,15 @@ type BackendPlayerLite = {
   isActive?: boolean;
   lastLogin?: string;
   assignedInstructor?: string;
+  lastProgressAt?: string | null;
+  mostAdvancedInProgress?: {
+    lessonId?: string;
+    lessonTitle?: string;
+    order?: number | null;
+    courseId?: string;
+    courseTitle?: string | null;
+    updatedAt?: string;
+  } | null;
 };
 
 // Service Progress — toutes les méthodes supposent un utilisateur authentifié (JWT via intercepteur)
@@ -89,6 +110,17 @@ const ProgressService = {
         isActive: u.isActive,
         lastLogin: u.lastLogin,
         assignedInstructor: u.assignedInstructor,
+        lastProgressAt: u.lastProgressAt ?? null,
+        mostAdvancedInProgress: u.mostAdvancedInProgress
+          ? {
+              lessonId: u.mostAdvancedInProgress.lessonId,
+              lessonTitle: u.mostAdvancedInProgress.lessonTitle,
+              order: u.mostAdvancedInProgress.order ?? null,
+              courseId: u.mostAdvancedInProgress.courseId,
+              courseTitle: u.mostAdvancedInProgress.courseTitle ?? null,
+              updatedAt: u.mostAdvancedInProgress.updatedAt,
+            }
+          : null,
       }))
       .filter((u) => !!u.id);
     return mapped;
