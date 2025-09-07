@@ -21,7 +21,40 @@ const userProgressSchema = new mongoose.Schema({
     type: Number,
     min: 0,
     max: 100
-  }
+  },
+  // Champs spécifiques au QCM (verrouillage et dernières réponses)
+  // Date jusqu'à laquelle un nouvel essai est bloqué (échec => +24h)
+  quizLockedUntil: {
+    type: Date,
+    default: null
+  },
+  // Date de réussite (bloque définitivement les nouveaux essais)
+  passedAt: {
+    type: Date,
+    default: null
+  },
+  // Dernier score obtenu au QCM
+  lastQuizScore: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: null
+  },
+  // Date du dernier essai
+  lastQuizAttemptAt: {
+    type: Date,
+    default: null
+  },
+  // Détails du dernier essai (persistés pour visualisation)
+  // Chaque entrée contient: question, selectedIds, correctIds, isCorrect
+  lastQuizDetails: [
+    {
+      question: { type: mongoose.Schema.Types.ObjectId, ref: 'Question', required: true },
+      selectedIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Answer' }],
+      correctIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Answer' }],
+      isCorrect: { type: Boolean, default: false },
+    }
+  ]
 }, {
   timestamps: true
 });

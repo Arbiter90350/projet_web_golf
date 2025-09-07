@@ -58,9 +58,32 @@ exports.getQuizForLesson = async (req, res, next) => {
       questions: questionsWithAnswers,
     };
 
+    // État joueur: verrouillage 24h, réussite, dernier résultat
+    const prog = await UserProgress.findOne({ user: req.user.id, lesson: baseQuiz.lesson }).lean();
+    const player = prog ? {
+      lockedUntil: prog.quizLockedUntil || null,
+      passedAt: prog.passedAt || null,
+      lastScore: prog.lastQuizScore ?? null,
+      lastAttemptAt: prog.lastQuizAttemptAt || null,
+      lastDetails: Array.isArray(prog.lastQuizDetails)
+        ? prog.lastQuizDetails.map((d) => ({
+            question: d.question?.toString?.() || String(d.question),
+            selectedIds: (d.selectedIds || []).map((id) => id.toString()),
+            correctIds: (d.correctIds || []).map((id) => id.toString()),
+            isCorrect: !!d.isCorrect,
+          }))
+        : [],
+    } : {
+      lockedUntil: null,
+      passedAt: null,
+      lastScore: null,
+      lastAttemptAt: null,
+      lastDetails: [],
+    };
+
     res.status(200).json({
       status: 'success',
-      data: quizPayload
+      data: { quiz: quizPayload, player }
     });
   } catch (error) {
     next(error);
@@ -209,6 +232,21 @@ exports.submitQuiz = async (req, res, next) => {
 
     // Expected format: [{ questionId: '...', answerIds: ['...', ...] }]
     const userAnswers = Array.isArray(req.body.answers) ? req.body.answers : [];
+    // Vérifier verrouillage existant / réussite antérieure
+    const existing = await UserProgress.findOne({ user: req.user.id, lesson: quiz.lesson }).lean();
+    const now = new Date();
+    if (existing?.passedAt) {
+      return res.status(403).json({ status: 'error', message: 'Quiz already passed; no further attempts allowed', data: {
+        lockedUntil: null,
+        passed: true,
+      }});
+    }
+    if (existing?.quizLockedUntil && new Date(existing.quizLockedUntil) > now) {
+      return res.status(429).json({ status: 'error', message: 'Quiz locked. Please retry later', data: {
+        lockedUntil: existing.quizLockedUntil,
+        passed: false,
+      }});
+    }
     // Robust: always fetch questions by quiz id, then answers by Answer.question
     const questions = await Question.find({ quiz: quiz._id }).maxTimeMS(MAX_TIME_MS).lean();
     const questionIds = questions.map((q) => q._id);
@@ -225,6 +263,7 @@ exports.submitQuiz = async (req, res, next) => {
     }
 
     let correctAnswersCount = 0;
+    const details = [];
     questions.forEach((question) => {
       const userAnswer = userAnswers.find((ua) => ua.questionId === question._id.toString());
       const correctIds = (correctIdsByQuestion.get(question._id.toString()) || []).sort();
@@ -237,6 +276,13 @@ exports.submitQuiz = async (req, res, next) => {
         correctIds.every((id, idx) => id === selectedIds[idx]);
 
       if (isCorrect) correctAnswersCount++;
+
+      details.push({
+        question: question._id,
+        selectedIds,
+        correctIds,
+        isCorrect,
+      });
     });
 
     const total = questions.length;
@@ -245,20 +291,23 @@ exports.submitQuiz = async (req, res, next) => {
       : 0;
     const passed = score >= quiz.passingScore;
 
-    const progressData = {
+    // Mise à jour du verrouillage et persistance des détails
+    const lockedUntil = passed ? null : new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const update = {
       user: req.user.id,
       lesson: quiz.lesson,
-      score,
       status: passed ? 'completed' : 'in_progress',
+      score,
+      lastQuizScore: score,
+      lastQuizAttemptAt: now,
+      lastQuizDetails: details,
+      quizLockedUntil: lockedUntil,
+      passedAt: passed ? now : (existing?.passedAt || null),
     };
-
-    if (passed) {
-      progressData.completedAt = Date.now();
-    }
 
     const userProgress = await UserProgress.findOneAndUpdate(
       { user: req.user.id, lesson: quiz.lesson },
-      progressData,
+      update,
       { new: true, upsert: true, runValidators: true }
     ).maxTimeMS(MAX_TIME_MS);
 
@@ -267,7 +316,14 @@ exports.submitQuiz = async (req, res, next) => {
       data: {
         score,
         passed,
-        userProgress
+        lockedUntil,
+        details: details.map(d => ({
+          question: d.question.toString(),
+          selectedIds: d.selectedIds,
+          correctIds: d.correctIds,
+          isCorrect: d.isCorrect,
+        })),
+        userProgress,
       }
     });
 
