@@ -12,12 +12,9 @@ import type { PickedFile } from '../components/FileManager/FilePicker';
 import './InstructorLessonContentsPage.css';
 // ConfirmDialog supprimé: UX demandée = bouton Enregistrer pour la description
 
+// Nouveau: on ne demande plus le type à l'utilisateur; il est déduit du fichier choisi
 const contentSchema = z.object({
-  // Pas de type par défaut: l'utilisateur doit choisir explicitement
-  contentType: z.enum(['image', 'pdf', 'mp4'], { required_error: 'Type requis' }),
-  // On envoie désormais la clé interne du fichier
   fileName: z.string().min(1, 'Fichier requis'),
-  // Légende/description optionnelle
   caption: z.string().max(1000).optional().default(''),
 });
 
@@ -49,10 +46,13 @@ const InstructorLessonContentsPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
+  // Mimes retenus au moment du pick (création/édition) pour déduire le type
+  const [createPickedMime, setCreatePickedMime] = useState<string | null>(null);
+  const [editPickedMime, setEditPickedMime] = useState<string | null>(null);
   // Brouillon de légende par contenu (édition inline)
   const [captionDraft, setCaptionDraft] = useState<Record<string, string>>({});
   // Edition locale: on sépare du schéma pour permettre un état vide puis validation via backend si besoin
-  const [editVals, setEditVals] = useState<{ contentType: ContentForm['contentType'] | ''; fileName: string; caption: string }>({ contentType: '', fileName: '', caption: '' });
+  const [editVals, setEditVals] = useState<{ fileName: string; caption: string }>({ fileName: '', caption: '' });
   // plus de modal -> pas d'état d'ouverture
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<ContentForm>({
@@ -112,11 +112,21 @@ const InstructorLessonContentsPage = () => {
   };
 
   // Gestion de la sélection depuis le FilePicker (création): on stocke la clé fileName dans le formulaire
+  const deriveTypeFromMimeOrName = (mime?: string | null, name?: string): 'image' | 'pdf' | 'mp4' => {
+    const n = (name || '').toLowerCase();
+    const m = (mime || '').toLowerCase();
+    if (m === 'video/mp4' || n.endsWith('.mp4')) return 'mp4';
+    if (m === 'application/pdf' || n.endsWith('.pdf')) return 'pdf';
+    return 'image';
+  };
+
   const handlePickedForCreate = async (file: PickedFile) => {
+    setCreatePickedMime(file.mimeType || null);
     setValue('fileName', file.fileName, { shouldDirty: true, shouldValidate: true });
   };
 
   const handlePickedForEdit = async (file: PickedFile) => {
+    setEditPickedMime(file.mimeType || null);
     setEditVals((v) => ({ ...v, fileName: file.fileName }));
   };
 
@@ -130,9 +140,12 @@ const InstructorLessonContentsPage = () => {
     if (!lessonId) return;
     try {
       setSubmitting(true);
-      await api.post(`/lessons/${lessonId}/contents`, values);
+      // Déduire le type automatiquement
+      const contentType = deriveTypeFromMimeOrName(createPickedMime, values.fileName);
+      await api.post(`/lessons/${lessonId}/contents`, { ...values, contentType });
       await loadContents();
       reset();
+      setCreatePickedMime(null);
     } catch (err: unknown) {
       const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
       alert(msg ?? 'Impossible de créer le contenu');
@@ -143,7 +156,7 @@ const InstructorLessonContentsPage = () => {
 
   const startEdit = (c: ContentItem) => {
     setEditingId(c.id);
-    setEditVals({ contentType: c.contentType, fileName: c.fileName, caption: c.caption ?? '' });
+    setEditVals({ fileName: c.fileName, caption: c.caption ?? '' });
   };
 
   const cancelEdit = () => setEditingId(null);
@@ -151,14 +164,15 @@ const InstructorLessonContentsPage = () => {
   const saveEdit = async () => {
     if (!editingId) return;
     try {
-      // Validation basique: exiger un type et un fileName non vides
-      if (!editVals.contentType || !editVals.fileName) {
-        alert('Veuillez sélectionner un type et un fichier');
+      if (!editVals.fileName) {
+        alert('Veuillez sélectionner un fichier');
         return;
       }
-      await api.put(`/contents/${editingId}`, { contentType: editVals.contentType, fileName: editVals.fileName, caption: editVals.caption ?? '' });
+      const contentType = deriveTypeFromMimeOrName(editPickedMime, editVals.fileName);
+      await api.put(`/contents/${editingId}`, { contentType, fileName: editVals.fileName, caption: editVals.caption ?? '' });
       await loadContents();
       setEditingId(null);
+      setEditPickedMime(null);
     } catch (err: unknown) {
       const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
       alert(msg ?? 'Mise à jour impossible');
@@ -195,7 +209,7 @@ const InstructorLessonContentsPage = () => {
   return (
     <div className="container">
       <div style={{ marginBottom: '1rem' }}>
-        <button type="button" onClick={() => navigate(-1)}>← Retour</button>
+        <button type="button" className="btn btn-outline" onClick={() => navigate(-1)}>← Retour</button>
         {/* Modal/FilePicker supprimé ici; FilePicker inline conservé */}
       </div>
       <h2>Contenus de la leçon</h2>
@@ -204,15 +218,6 @@ const InstructorLessonContentsPage = () => {
         <h3 style={{ marginTop: 0 }}>Ajouter un contenu</h3>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div style={{ display: 'grid', gap: 8, maxWidth: 720 }}>
-            <label>
-              <div>Type</div>
-              <select defaultValue="" {...register('contentType')}>
-                <option value="" disabled>-- Sélectionner --</option>
-                <option value="image">Image</option>
-                <option value="pdf">PDF</option>
-                <option value="mp4">MP4</option>
-              </select>
-            </label>
             <label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span>Fichier</span>
@@ -226,7 +231,7 @@ const InstructorLessonContentsPage = () => {
             </label>
             {/* Légende supprimée à la création: editable après attachement via le mode édition */}
             <div>
-              <button type="submit" disabled={submitting}>{submitting ? 'Ajout…' : '+ Ajouter'}</button>
+              <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Ajout…' : '+ Ajouter'}</button>
             </div>
           </div>
         </form>
@@ -241,14 +246,6 @@ const InstructorLessonContentsPage = () => {
               <li key={c.id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '0.75rem' }}>
                 {editingId === c.id ? (
                   <div style={{ display: 'grid', gap: 8 }}>
-                    <label>
-                      <div>Type</div>
-                      <select value={editVals.contentType} onChange={(e) => setEditVals((v) => ({ ...v, contentType: e.target.value as ContentForm['contentType'] }))}>
-                        <option value="image">Image</option>
-                        <option value="pdf">PDF</option>
-                        <option value="mp4">MP4</option>
-                      </select>
-                    </label>
                     <label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <span>Fichier</span>
@@ -299,39 +296,44 @@ const InstructorLessonContentsPage = () => {
                           saveBackupDrafts(next);
                           return next;
                         })}
-                        placeholder="Ajouter une description"
                         style={{ width: '100%' }}
                       />
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, gridColumn: '1 / -1' }}>
-                      <button type="button" onClick={() => startEdit(c)}>Modifier</button>
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={() => saveCaption(c)}
-                        disabled={savingId === c.id}
-                      >
-                        {savingId === c.id ? 'Enregistrement…' : 'Enregistrer'}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-danger"
-                        onClick={async () => {
-                          if (!window.confirm('Supprimer ce contenu ?')) return;
-                          try {
-                            setSavingId(c.id);
-                            await api.delete(`/contents/${c.id}`);
-                            await loadContents();
-                          } catch (err) {
-                            const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
-                            alert(msg ?? 'Suppression impossible');
-                          } finally {
-                            setSavingId(null);
-                          }
-                        }}
-                      >
-                        Supprimer
-                      </button>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={() => saveCaption(c)}
+                          disabled={savingId === c.id}
+                        >
+                          {savingId === c.id ? 'Enregistrement…' : 'Enregistrer'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={() => startEdit(c)}
+                        >
+                          Modifier
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          onClick={async () => {
+                            if (!window.confirm('Supprimer ce contenu ?')) return;
+                            try {
+                              setSavingId(c.id);
+                              await api.delete(`/contents/${c.id}`);
+                              await loadContents();
+                            } catch (err) {
+                              const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
+                              alert(msg ?? 'Suppression impossible');
+                            } finally {
+                              setSavingId(null);
+                            }
+                          }}
+                        >
+                          Supprimer
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

@@ -11,14 +11,14 @@ import { subscribeCurrentDevice } from '../services/push';
 
 function isStandalonePWA(): boolean {
   // iOS
-  const iosStandalone = (window.navigator as any).standalone === true;
+  const iosStandalone = ('standalone' in window.navigator) && ((window.navigator as Navigator & { standalone?: boolean }).standalone === true);
   // Standard
   const mq = window.matchMedia('(display-mode: standalone)');
   return iosStandalone || mq.matches;
 }
 
 function isIOS(): boolean {
-  const ua = navigator.userAgent || navigator.vendor || (window as any).opera || '';
+  const ua = navigator.userAgent || navigator.vendor || '';
   return /iPad|iPhone|iPod/i.test(ua);
 }
 
@@ -47,7 +47,10 @@ export default function EnablePushBanner() {
       // Reagir aux changements d'affichage PWA (Android Chrome)
       const mq = window.matchMedia('(display-mode: standalone)');
       const onChange = () => {
-        const v = typeof Notification !== 'undefined' && Notification.permission === 'default' && (mq.matches || (window.navigator as any).standalone === true) && (platform === 'ios' || platform === 'android');
+        const v = typeof Notification !== 'undefined'
+          && Notification.permission === 'default'
+          && (mq.matches || (('standalone' in window.navigator) && ((window.navigator as Navigator & { standalone?: boolean }).standalone === true)))
+          && (platform === 'ios' || platform === 'android');
         setVisible(v);
       };
       mq.addEventListener?.('change', onChange);

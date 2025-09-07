@@ -119,6 +119,13 @@
   text-decoration: underline;
 }
 
+/* Bloc de liens secondaires (oubli de mot de passe / inscription) avec espacement lisible */
+.links {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
 /* Message d'erreur centré et lisible (si utilisé en inline) */
 .error {
   margin: 0.75rem auto 1rem auto;
