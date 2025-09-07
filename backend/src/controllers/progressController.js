@@ -245,6 +245,26 @@ exports.listMyPlayers = async (req, res, next) => {
         }
       },
       { $addFields: { mostAdvancedInProgress: { $first: '$advInProg' } } },
+      // Module le plus avancé (progress > 0%). On prend la leçon au rang max parmi statuts in_progress/completed
+      {
+        $lookup: {
+          from: 'userprogresses',
+          let: { uid: '$_id' },
+          as: 'advAnyCourse',
+          pipeline: [
+            { $match: { $expr: { $and: [ { $eq: ['$user', '$$uid'] }, { $in: ['$status', ['in_progress','completed']] } ] } } },
+            { $lookup: { from: 'lessons', localField: 'lesson', foreignField: '_id', as: 'lesson' } },
+            { $unwind: '$lesson' },
+            { $group: { _id: '$lesson.course', maxOrder: { $max: '$lesson.order' } } },
+            { $sort: { maxOrder: -1 } },
+            { $limit: 1 },
+            { $lookup: { from: 'courses', localField: '_id', foreignField: '_id', as: 'course' } },
+            { $unwind: '$course' },
+            { $project: { courseId: '$_id', courseTitle: '$course.title', maxOrder: 1 } }
+          ]
+        }
+      },
+      { $addFields: { topCourseByProgress: { $first: '$advAnyCourse' } } },
       {
         $project: {
           _id: 1,
@@ -257,6 +277,7 @@ exports.listMyPlayers = async (req, res, next) => {
           assignedInstructor: 1,
           lastProgressAt: 1,
           mostAdvancedInProgress: 1,
+          topCourseByProgress: 1,
         }
       }
     ];
