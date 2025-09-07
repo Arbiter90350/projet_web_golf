@@ -101,6 +101,7 @@ const QuizPage = () => {
       setScore(result.score);
       setPassed(result.passed);
       if (result.details) setDetails(result.details);
+      if (!result.passed) setDetails(null);
       if (typeof result.lockedUntil !== 'undefined') {
         setPlayer((prev) => prev ? { ...prev, lockedUntil: result.lockedUntil || null } : prev);
       }
@@ -237,8 +238,8 @@ const QuizPage = () => {
         </div>
       )}
 
-      {/* Corrections persistantes */}
-      {details && (
+      {/* Corrections: uniquement si réussite (courante ou passée) */}
+      {(passed || player?.passedAt) && details && (
         <div style={{ marginTop: 16 }}>
           {renderCorrections()}
         </div>
