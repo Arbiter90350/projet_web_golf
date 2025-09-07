@@ -21,6 +21,14 @@ export interface Quiz {
   questions: QuizQuestion[];
 }
 
+export interface PlayerQuizState {
+  lockedUntil: string | null;
+  passedAt: string | null;
+  lastScore: number | null;
+  lastAttemptAt: string | null;
+  lastDetails: Array<{ question: string; selectedIds: string[]; correctIds: string[]; isCorrect: boolean }>;
+}
+
 export interface SubmitAnswerItem {
   questionId: string;
   answerIds: string[]; // multi-réponses possibles
@@ -29,6 +37,8 @@ export interface SubmitAnswerItem {
 export interface SubmitQuizResult {
   score: number; // 0..100
   passed: boolean;
+  lockedUntil?: string | null;
+  details?: Array<{ question: string; selectedIds: string[]; correctIds: string[]; isCorrect: boolean }>;
   userProgress: {
     _id?: string;
     user: string;
@@ -59,10 +69,23 @@ export interface CreateQuizPayload {
 }
 
 const QuizzesService = {
-  // Récupère le quiz d'une leçon. Backend: GET /lessons/:lessonId/quiz
-  async getQuizForLesson(lessonId: string) {
-    const { data } = await api.get<{ status: string; data: Quiz }>(`/lessons/${lessonId}/quiz`);
-    return data.data;
+  // Récupère le quiz d'une leçon + état joueur (verrouillage, dernier résultat)
+  // Backend: GET /lessons/:lessonId/quiz
+  async getQuizForLesson(lessonId: string): Promise<{ quiz: Quiz; player: PlayerQuizState }> {
+    const { data } = await api.get<{ status: string; data: { quiz: Quiz; player: PlayerQuizState } | Quiz }>(`/lessons/${lessonId}/quiz`);
+    const payload = data.data;
+    if (payload && typeof payload === 'object' && 'quiz' in payload) {
+      return payload as { quiz: Quiz; player: PlayerQuizState };
+    }
+    // Rétrocompat: anciens serveurs renvoyaient directement le quiz
+    const emptyState: PlayerQuizState = {
+      lockedUntil: null,
+      passedAt: null,
+      lastScore: null,
+      lastAttemptAt: null,
+      lastDetails: [],
+    };
+    return { quiz: payload as Quiz, player: emptyState };
   },
 
   // Soumet les réponses d'un quiz. Backend: POST /quizzes/:id/submit

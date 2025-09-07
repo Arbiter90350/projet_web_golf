@@ -268,7 +268,8 @@ const InstructorLessonQuizPage = () => {
     setQuestions([]);
     try {
       // Tente de charger le quiz (GET /lessons/:lessonId/quiz)
-      const q = await QuizzesService.getQuizForLesson(lessonId);
+      const resp = await QuizzesService.getQuizForLesson(lessonId);
+      const q = (resp as unknown as { quiz: Quiz }).quiz ?? (resp as unknown as Quiz);
       setQuiz(q);
 
       // Charge les questions (gestion)

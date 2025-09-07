@@ -117,7 +117,14 @@
     "submitting": "Soumission...",
     "question_label": "Question {{index}}/{{total}}",
     "error_loading": "Erreur lors du chargement du QCM",
-    "error_submit": "Erreur lors de la soumission du QCM"
+    "error_submit": "Erreur lors de la soumission du QCM",
+    "locked_until": "Vous pourrez réessayer après le {{date}}.",
+    "already_passed_at": "QCM réussi le {{date}}. Vous ne pouvez plus le repasser.",
+    "cannot_retry_passed": "Vous avez déjà réussi ce QCM. Vous ne pouvez pas le repasser.",
+    "retry_after": "Vous pourrez réessayer après le {{date}}.",
+    "corrections": "Corrections",
+    "correct": "correct",
+    "incorrect": "incorrect"
   },
   "status": {
     "not_started": "À commencer",
