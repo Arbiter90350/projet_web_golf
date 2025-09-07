@@ -203,12 +203,65 @@ exports.getMyProgress = async (req, res, next) => {
 // @access  Private (Instructor, Admin)
 exports.listMyPlayers = async (req, res, next) => {
   try {
-    // Filtre: ne retourner que les comptes 'player' dont l'email est vérifié
-    const filter = { role: 'player', isEmailVerified: true };
-    const players = await User.find(filter)
-      .select('_id firstName lastName email isActive isEmailVerified lastLogin assignedInstructor')
-      .lean()
-      .maxTimeMS(MAX_TIME_MS);
+    // Nouvelle implémentation: retourne aussi
+    // - lastProgressAt: dernière maj de progression (UserProgress.updatedAt max)
+    // - mostAdvancedInProgress: leçon en cours avec l'ordre maximum et son module (course)
+    const pipeline = [
+      { $match: { role: 'player', isEmailVerified: true } },
+      // Dernière progression (tous statuts)
+      {
+        $lookup: {
+          from: 'userprogresses',
+          localField: '_id',
+          foreignField: 'user',
+          as: 'allProgress',
+          pipeline: [ { $project: { updatedAt: 1 } } ]
+        }
+      },
+      { $addFields: { lastProgressAt: { $max: '$allProgress.updatedAt' } } },
+      // Plus grande étape en cours (status = in_progress), avec jointures Lesson->Course
+      {
+        $lookup: {
+          from: 'userprogresses',
+          let: { uid: '$_id' },
+          as: 'advInProg',
+          pipeline: [
+            { $match: { $expr: { $and: [ { $eq: ['$user', '$$uid'] }, { $eq: ['$status', 'in_progress'] } ] } } },
+            { $lookup: { from: 'lessons', localField: 'lesson', foreignField: '_id', as: 'lesson' } },
+            { $unwind: '$lesson' },
+            { $lookup: { from: 'courses', localField: 'lesson.course', foreignField: '_id', as: 'course' } },
+            { $unwind: '$course' },
+            { $sort: { 'lesson.order': -1 } },
+            { $limit: 1 },
+            { $project: {
+              lessonId: '$lesson._id',
+              lessonTitle: '$lesson.title',
+              order: '$lesson.order',
+              courseId: '$course._id',
+              courseTitle: '$course.title',
+              updatedAt: 1,
+            } }
+          ]
+        }
+      },
+      { $addFields: { mostAdvancedInProgress: { $first: '$advInProg' } } },
+      {
+        $project: {
+          _id: 1,
+          firstName: 1,
+          lastName: 1,
+          email: 1,
+          isActive: 1,
+          isEmailVerified: 1,
+          lastLogin: 1,
+          assignedInstructor: 1,
+          lastProgressAt: 1,
+          mostAdvancedInProgress: 1,
+        }
+      }
+    ];
+
+    const players = await User.aggregate(pipeline).maxTimeMS(MAX_TIME_MS);
     return res.status(200).json({ status: 'success', count: players.length, data: players });
   } catch (error) {
     next(error);
