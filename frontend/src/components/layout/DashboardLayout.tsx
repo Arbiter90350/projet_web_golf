@@ -207,7 +207,13 @@ const DashboardLayout = () => {
         </nav>
       </aside>
 
-      <main style={{ padding: '1.5rem' }} className={isTransitioning ? 'route-fade-out' : 'route-fade-in'}>
+      <main
+        style={{
+          padding: '1.5rem',
+          background: '#fff', // évite la transparence sur le fond avec motif
+        }}
+        className={isTransitioning ? 'route-fade-out' : 'route-fade-in'}
+      >
         {/* Barre supérieure avec bouton hamburger en mobile */}
         {isMobile && (
           <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: 8 }}>

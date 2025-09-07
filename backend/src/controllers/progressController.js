@@ -261,7 +261,8 @@ exports.listMyPlayers = async (req, res, next) => {
       }
     ];
 
-    const players = await User.aggregate(pipeline).maxTimeMS(MAX_TIME_MS);
+    // Mongoose Aggregate ne supporte pas maxTimeMS() partout: utiliser option({ maxTimeMS })
+    const players = await User.aggregate(pipeline).option({ maxTimeMS: MAX_TIME_MS });
     return res.status(200).json({ status: 'success', count: players.length, data: players });
   } catch (error) {
     next(error);

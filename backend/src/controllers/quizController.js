@@ -65,7 +65,8 @@ exports.getQuizForLesson = async (req, res, next) => {
       passedAt: prog.passedAt || null,
       lastScore: prog.lastQuizScore ?? null,
       lastAttemptAt: prog.lastQuizAttemptAt || null,
-      lastDetails: Array.isArray(prog.lastQuizDetails)
+      // Ne renvoyer les détails que si le QCM a été réussi (politique: pas de corrections après échec)
+      lastDetails: prog.passedAt && Array.isArray(prog.lastQuizDetails)
         ? prog.lastQuizDetails.map((d) => ({
             question: d.question?.toString?.() || String(d.question),
             selectedIds: (d.selectedIds || []).map((id) => id.toString()),
@@ -300,7 +301,8 @@ exports.submitQuiz = async (req, res, next) => {
       score,
       lastQuizScore: score,
       lastQuizAttemptAt: now,
-      lastQuizDetails: details,
+      // Ne persister les détails qu'en cas de réussite
+      lastQuizDetails: passed ? details : [],
       quizLockedUntil: lockedUntil,
       passedAt: passed ? now : (existing?.passedAt || null),
     };
@@ -317,12 +319,13 @@ exports.submitQuiz = async (req, res, next) => {
         score,
         passed,
         lockedUntil,
-        details: details.map(d => ({
+        // Ne renvoyer les détails qu'en cas de réussite
+        ...(passed ? { details: details.map(d => ({
           question: d.question.toString(),
           selectedIds: d.selectedIds,
           correctIds: d.correctIds,
           isCorrect: d.isCorrect,
-        })),
+        })) } : {}),
         userProgress,
       }
     });

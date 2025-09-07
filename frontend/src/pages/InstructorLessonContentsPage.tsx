@@ -193,7 +193,7 @@ const InstructorLessonContentsPage = () => {
   if (error) return <div style={{ color: 'crimson' }}>{error}</div>;
 
   return (
-    <div>
+    <div className="container">
       <div style={{ marginBottom: '1rem' }}>
         <button type="button" onClick={() => navigate(-1)}>← Retour</button>
         {/* Modal/FilePicker supprimé ici; FilePicker inline conservé */}
@@ -312,6 +312,25 @@ const InstructorLessonContentsPage = () => {
                         disabled={savingId === c.id}
                       >
                         {savingId === c.id ? 'Enregistrement…' : 'Enregistrer'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        onClick={async () => {
+                          if (!window.confirm('Supprimer ce contenu ?')) return;
+                          try {
+                            setSavingId(c.id);
+                            await api.delete(`/contents/${c.id}`);
+                            await loadContents();
+                          } catch (err) {
+                            const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
+                            alert(msg ?? 'Suppression impossible');
+                          } finally {
+                            setSavingId(null);
+                          }
+                        }}
+                      >
+                        Supprimer
                       </button>
                     </div>
                   </div>
