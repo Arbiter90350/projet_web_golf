@@ -87,22 +87,16 @@ export default function LessonModal({
       ) : (
         <div style={{ display: 'grid', gap: '1rem' }}>
           {lessonInfo?.description && (
-            <div className="tile">
-              <div style={{ marginBottom: 8 }}>
-                <strong style={{ fontSize: 14 }}>{t('lessons.explanation')}</strong>
-              </div>
+            <div style={{ margin: '0 0 12px' }}>
               <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{lessonInfo.description}</div>
             </div>
           )}
 
           {contents.length === 0 && !lessonInfo?.description ? (
-            <div className="tile">{t('lessons.no_content')}</div>
+            <div style={{ color: '#64748b' }}>{t('lessons.no_content')}</div>
           ) : (
             contents.map((c) => (
-              <div key={c._id} className="tile">
-                <div style={{ marginBottom: 8 }}>
-                  <strong style={{ fontSize: 14 }}>{t(`lessons.content_type.${c.contentType}`)}</strong>
-                </div>
+              <div key={c._id} style={{ margin: '0 0 12px' }}>
                 {/* Media + légende en 2 colonnes sur desktop, empilé en mobile lorsque la légende existe */}
                 {c.caption ? (
                   <div className="grid grid-2 md:grid-1" style={{ gap: '0.75rem' }}>
@@ -110,9 +104,9 @@ export default function LessonModal({
                       {!c.url ? (
                         <div style={{ color: '#64748b', fontStyle: 'italic' }}>{t('lessons.no_content')}</div>
                       ) : c.contentType === 'image' ? (
-                        <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                        <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8 }} />
                       ) : c.contentType === 'mp4' || c.contentType === 'video' ? (
-                        <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                        <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8 }} />
                       ) : c.contentType === 'pdf' || c.contentType === 'doc' ? (
                         <iframe title={c.fileName || 'pdf'} src={c.url} style={{ width: '100%', height: 520, border: 'none', borderRadius: 8 }} />
                       ) : (
@@ -126,9 +120,9 @@ export default function LessonModal({
                     {!c.url ? (
                       <div style={{ color: '#64748b', fontStyle: 'italic' }}>{t('lessons.no_content')}</div>
                     ) : c.contentType === 'image' ? (
-                      <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                      <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8 }} />
                     ) : c.contentType === 'mp4' || c.contentType === 'video' ? (
-                      <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                      <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8 }} />
                     ) : c.contentType === 'pdf' || c.contentType === 'doc' ? (
                       <iframe title={c.fileName || 'pdf'} src={c.url} style={{ width: '100%', height: 520, border: 'none', borderRadius: 8 }} />
                     ) : (
