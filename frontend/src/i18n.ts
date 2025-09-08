@@ -7,6 +7,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 // Ressources locales (JSON)
 import frCommon from './locales/fr/common.json';
 import frAuth from './locales/fr/auth.json';
+import frLegal from './locales/fr/legal.json';
 
 void i18n
   .use(LanguageDetector)
@@ -16,12 +17,13 @@ void i18n
       fr: {
         common: frCommon,
         auth: frAuth,
+        legal: frLegal,
       },
     },
     supportedLngs: ['fr'],
     fallbackLng: 'fr',
     defaultNS: 'common',
-    ns: ['common', 'auth'],
+    ns: ['common', 'auth', 'legal'],
     interpolation: { escapeValue: false },
     detection: {
       // Détection simple; on force fr si rien

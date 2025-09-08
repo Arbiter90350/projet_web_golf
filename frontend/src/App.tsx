@@ -29,6 +29,7 @@ import InstructorPlayersPage from './pages/InstructorPlayersPage';
 import InstructorPlayerProgressPage from './pages/InstructorPlayerProgressPage';
 import ProfilePage from './pages/ProfilePage';
 import FileManagerPage from './pages/FileManagerPage';
+import LegalMentionsPage from './pages/LegalMentionsPage';
 
 // Redirection d'accueil selon le rôle
 function HomeRedirect() {
@@ -159,6 +160,9 @@ function App() {
           <Route path="/resend-verification" element={<ResendVerificationPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+
+          {/* Mentions légales — route publique */}
+          <Route path="/mentions-legales" element={<LegalMentionsPage />} />
 
           {/* Catch-all for not found pages */}
           <Route path="*" element={<NotFoundPage />} />
