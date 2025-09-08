@@ -174,7 +174,12 @@ const LoginPage = () => {
             {t('auth:links.to_register')}
           </Link>
         </div>
-
+        {/* Lien vers les Mentions légales (public) */}
+        <div className={styles.links} style={{ marginTop: 8 }}>
+          <Link to="/mentions-legales" className={styles.link}>
+            {t('legal:title', { ns: 'legal' })}
+          </Link>
+        </div>
       </div>
     </div>
   );

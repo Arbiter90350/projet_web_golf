@@ -190,6 +190,12 @@ const RegisterPage = () => {
         <Link to="/login" className={styles.link}>
           {t('auth:links.already_have_account')}
         </Link>
+        {/* Lien vers les Mentions légales (public) */}
+        <div style={{ marginTop: 8 }}>
+          <Link to="/mentions-legales" className={styles.link}>
+            {t('legal:title', { ns: 'legal' })}
+          </Link>
+        </div>
       </div>
     </div>
   );
