@@ -1,70 +1,65 @@
 {
   "title": "Mentions légales",
   "last_updated": "Dernière mise à jour : 8 septembre 2025",
-  "intro": "Conformément aux dispositions de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l'économie numérique, il est précisé aux utilisateurs de l'application l'identité des différents intervenants dans le cadre de sa réalisation et de son suivi.",
+  "intro": "Conformément à la loi pour la confiance dans l'économie numérique, voici les informations relatives à l'application.",
   "sections": {
     "publisher": {
       "title": "1. Éditeur de l'application",
       "content": [
-        "L'application est éditée par :",
-        "Golf de Rougemont-le-Château",
-        "Forme juridique : Société à responsabilité limitée (SARL)",
-        "Montant du capital social : 1 225 980,00 €",
-        "Adresse du siège social : Rue du Golf, 90110 Rougemont-le-Château, France",
-        "Numéro d’immatriculation au RCS : RCS Belfort B 349 726 711",
-        "Numéro de TVA intracommunautaire : FR63349726711",
+        "Dénomination : Golf de Rougemont-le-Château (SARL)",
+        "Capital social : 1 225 980,00 €",
+        "Siège social : Rue du Golf, 90110 Rougemont-le-Château, France",
+        "Immatriculation : RCS Belfort B 349 726 711",
+        "N° TVA : FR63349726711",
         "Directeur de la publication : M. Lionel Burnet",
-        "Adresse e‑mail de contact : contact@golf-rougemont.com"
+        "Contact : contact@golf-rougemont.com"
       ]
     },
     "hosting": {
       "title": "2. Hébergement",
       "content": [
-        "L'application est hébergée par :",
-        "OVHcloud — OVH SAS",
+        "Hébergeur : OVHcloud — OVH SAS",
         "Adresse : 2 rue Kellermann, 59100 Roubaix, France",
-        "Téléphone : 1007",
-        "Site web : www.ovhcloud.com"
+        "Contact : 1007 /www.ovhcloud.com"
       ]
     },
     "ip": {
       "title": "3. Propriété intellectuelle",
       "content": [
-        "L'ensemble des éléments constituant la présente application (textes, graphismes, logiciels, photographies, images, logos, code, etc.) ainsi que l'application elle-même, relèvent des législations françaises et internationales sur le droit d'auteur et la propriété intellectuelle.",
-        "Ces éléments sont la propriété exclusive de Golf de Rougemont‑le‑Château, sauf mention contraire.",
-        "Toute reproduction, représentation ou diffusion, intégrale ou partielle, du contenu de cette application sur quelque support ou par quelque procédé que ce soit, sans l'autorisation expresse de Golf de Rougemont‑le‑Château, est interdite et constituerait une contrefaçon sanctionnée par les articles L.335‑2 et suivants du Code de la Propriété Intellectuelle."
+        "Tous les éléments de l'application (textes, images, logos, etc.) sont la propriété exclusive de Golf de Rougemont‑le‑Château et sont protégés par le droit d'auteur.",
+        "Toute reproduction ou diffusion sans autorisation est interdite et constitue une contrefaçon, sanctionnée par les articles L.335‑2 et suivants du Code de la Propriété Intellectuelle."
       ]
     },
     "data_protection": {
       "title": "4. Protection des données personnelles (RGPD)",
-      "commitment": "Golf de Rougemont‑le‑Château s'engage à ce que la collecte et le traitement de vos données, effectués à partir de l'application, soient conformes au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés.",
-      "purposes_title": "Finalités des traitements",
+      "commitment": "Nous nous engageons à respecter le RGPD et la loi Informatique et Libertés.",
+      "purposes_title": "Finalités (Pourquoi nous traitons vos données)",
       "purposes": [
-        "Gestion du compte utilisateur (authentification via jeton JWT, réinitialisation du mot de passe, vérification d’e‑mail).",
-        "Suivi de votre progression pédagogique et de vos performances.",
-        "Fourniture de services personnalisés et de conseils techniques.",
-        "Envoi d’alertes et de notifications push (fonctionnalité optionnelle, soumise à votre consentement).",
-        "Sécurité de la plateforme, prévention de la fraude et journalisation technique (logs).",
-        "Gestion des fichiers pédagogiques (stockage sur OVH Object Storage, hors base de données)."
+        "Gestion de votre compte utilisateur.",
+        "Suivi de votre progression et de vos performances.",
+        "Fourniture de services personnalisés.",
+        "Envoi de notifications (avec votre consentement).",
+        "Sécurité de la plateforme et prévention de la fraude.",
+        "Gestion des fichiers pédagogiques."
       ],
-      "legal_bases_title": "Bases légales",
+      "legal_bases_title": "Bases légales du traitement",
       "legal_bases": [
-        "Exécution du contrat (création et gestion du compte, accès aux modules et leçons).",
-        "Intérêt légitime (sécurité, prévention des abus, amélioration du service).",
-        "Consentement (notifications push)."
+        "Exécution du contrat : pour la gestion de votre compte et l'accès aux services.",
+        "Intérêt légitime : pour la sécurité et l'amélioration du service.",
+        "Consentement : pour les notifications."
       ],
       "data_categories_title": "Catégories de données traitées",
       "data_categories": [
-        "Données d’identification : nom, prénom, e‑mail.",
-        "Données de connexion et d’usage : rôle, dates/horaires d’accès, activités pédagogiques.",
-        "Données techniques : identifiant d’abonnement push (endpoint) et clés publiques (p256dh, auth), user‑agent.",
-        "Contenus pédagogiques et documents associés (liens vers fichiers stockés hors base)."
+        "Identification : nom, prénom, e‑mail.",
+        "Connexion et usage : dates d'accès, activités réalisées.",
+        "Techniques : données nécessaires au fonctionnement des notifications.",
+        "Pédagogiques : documents et contenus liés à votre formation."
       ],
-      "recipients_title": "Destinataires et accès",
+      "recipients_title": "Destinataires",
       "recipients": [
-        "Personnel habilité du Golf de Rougemont‑le‑Château.",
-        "Instructeurs et administrateurs habilités, dans le respect d’un contrôle d’accès par rôles (RBAC).",
-        "Sous‑traitants techniques strictement nécessaires à la fourniture du service."
+        "Le personnel habilité du Golf.",
+        "Les instructeurs et administrateurs (avec un accès contrôlé par rôles).",
+        "Les sous-traitants techniques indispensables au service (hébergeur, service d'envoi d'e-mails)."
       ],
       "processors_title": "Sous‑traitants",
       "processors": [
@@ -72,48 +67,53 @@
         "Envoi d’e‑mails : SMTP OVH (par défaut) ou SendGrid (si activé selon l’environnement).",
         "Notifications Web Push : infrastructure VAPID auto‑hébergée (aucun prestataire tiers)."
       ],
-      "storage_title": "Localisation des données",
+      "storage_title": "Localisation et stockage des données",
       "storage": [
-        "Hébergement de l’application en France via OVHcloud.",
-        "Stockage des fichiers binaires (PDF, vidéos, etc.) sur OVH Object Storage ; les fichiers ne sont jamais stockés en base de données.",
-        "Les zones exactes de stockage peuvent varier selon la configuration d’infrastructure, avec une préférence pour l’Union européenne."
+        "Les données sont hébergées en France (OVHcloud), avec une préférence pour l'Union européenne.",
+        "Les fichiers (PDF, vidéos) sont stockés sur des serveurs dédiés et non dans la base de données principale."
       ],
       "retention_title": "Durées de conservation",
       "retention": [
-        "Compte et données liées au suivi pédagogique : pendant la durée d’utilisation du service, puis archivage jusqu’à 3 ans à des fins probatoires.",
-        "Abonnements aux notifications push : jusqu’à désinscription ; les abonnements invalides sont automatiquement supprimés.",
-        "Journaux techniques (logs) : jusqu’à 12 mois maximum."
+        "Données du compte : pendant l'utilisation du service, puis archivées jusqu’à 3 ans.",
+        "Données de notifications : jusqu’à votre désinscription.",
+        "Journaux techniques (logs) : 12 mois maximum."
       ],
       "rights_title": "Vos droits",
       "rights": [
-        "Droit d’accès, de rectification, d’effacement, de limitation, d’opposition et de portabilité.",
-        "Droit de retirer votre consentement à tout moment (par ex. pour les notifications push).",
-        "Pour exercer vos droits : contact@golf-rougemont.com. Une réponse vous sera apportée dans les délais légaux."
+        "Vous disposez d'un droit d’accès, de rectification, d’effacement, de limitation, d’opposition et de portabilité sur vos données.",
+        "Vous pouvez retirer votre consentement à tout moment.",
+        "Pour exercer vos droits : contact@golf-rougemont.com"
       ],
-      "cnil": "Si vous estimez, après nous avoir contactés, que vos droits ne sont pas respectés, vous pouvez saisir la CNIL."
+      "cnil": "En cas de litige : vous pouvez saisir la CNIL."
     },
     "cookies": {
       "title": "5. Cookies et traceurs",
       "items": [
-        "Aucun cookie de profilage ni outil de mesure d’audience tiers n’est utilisé.",
-        "Authentification : le jeton JWT est conservé dans le stockage local du navigateur (localStorage) pour maintenir votre session ; il est supprimé lors de la déconnexion ou en cas d’expiration.",
-        "Préférence de langue : i18n peut enregistrer la langue dans localStorage et/ou cookie technique.",
-        "Service worker : un service worker met en cache des ressources statiques pour un fonctionnement hors‑ligne. Les appels API ne sont pas mis en cache.",
-        "Notifications push (optionnelles) : l’activation est soumise à votre consentement ; l’abonnement enregistre un identifiant (endpoint) et des clés publiques (p256dh, auth) propres à votre navigateur/appareil ; vous pouvez vous désabonner à tout moment depuis l’application."
+        "Aucun cookie de profilage ou de mesure d’audience n'est utilisé.",
+        "Authentification : un traceur pour maintenir votre session active.",
+        "Préférences : un traceur pour mémoriser votre choix de langue.",
+        "Fonctionnement hors-ligne : une technologie pour mettre en cache certains éléments de l'application.",
+        "Notifications : si vous les acceptez, un identifiant technique est enregistré sur votre appareil pour permettre leur envoi."
       ]
     },
     "liability": {
       "title": "6. Responsabilité",
       "content": [
-        "Nous nous efforçons d’assurer l’exactitude et la mise à jour des informations diffusées. Toutefois, aucune garantie de complétude ou d’actualité n’est fournie.",
-        "Nous ne pourrons être tenus responsables des interruptions, erreurs, bugs ou dommages résultant d’une utilisation inappropriée de l’application ou de facteurs externes (réseaux, fournisseurs, etc.)."
+        "Nous nous efforçons d'assurer l'exactitude des informations mais ne pouvons garantir leur complétude.",
+        "Notre responsabilité ne saurait être engagée en cas de dysfonctionnement dû à une mauvaise utilisation ou à des facteurs externes."
       ]
     },
     "law": {
-      "title": "7. Droit applicable",
+      "title": "7. Droit applicable et juridiction",
       "content": [
-        "Les présentes mentions légales sont régies par le droit français.",
-        "Tout litige relèvera des juridictions compétentes du ressort de Belfort, sous réserve des règles d’ordre public applicables."
+        "Tant le présent site que les modalités et conditions de son utilisation sont régis par le droit français, quel que soit le lieu d’utilisation.",
+        "En cas de contestation éventuelle, et après l’échec de toute tentative de recherche d’une solution amiable, les tribunaux français seront seuls compétents pour connaître de ce litige."
+      ]
+    },
+    "terms_updates": {
+      "title": "8. Modifications des conditions générales d’utilisation",
+      "content": [
+        "La SARL Golf de Rougemont-le-Château se réserve la possibilité de modifier, à tout moment et sans préavis, les présentes conditions d’utilisation afin de les adapter aux évolutions du site et/ou de son exploitation."
       ]
     },
     "contact": {
