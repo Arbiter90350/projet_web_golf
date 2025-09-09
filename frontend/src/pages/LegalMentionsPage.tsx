@@ -11,6 +11,7 @@ export default function LegalMentionsPage() {
 
   // Utilitaire pour récupérer des tableaux depuis i18n
   const arr = (key: string): string[] => t(key, { returnObjects: true }) as unknown as string[];
+  const cnilText = (t('legal:sections.data_protection.cnil') as unknown as string) || '';
 
   return (
     <div className={styles.page}>
@@ -94,12 +95,16 @@ export default function LegalMentionsPage() {
             ))}
           </ul>
 
-          <h3>{t('legal:sections.data_protection.retention_title')}</h3>
-          <ul className={styles.list}>
-            {arr('legal:sections.data_protection.retention').map((line, idx) => (
-              <li key={idx}>{line}</li>
-            ))}
-          </ul>
+          {arr('legal:sections.data_protection.retention').length > 0 && (
+            <>
+              <h3>{t('legal:sections.data_protection.retention_title')}</h3>
+              <ul className={styles.list}>
+                {arr('legal:sections.data_protection.retention').map((line, idx) => (
+                  <li key={idx}>{line}</li>
+                ))}
+              </ul>
+            </>
+          )}
 
           <h3>{t('legal:sections.data_protection.rights_title')}</h3>
           <ul className={styles.list}>
@@ -108,7 +113,9 @@ export default function LegalMentionsPage() {
             ))}
           </ul>
 
-          <p>{t('legal:sections.data_protection.cnil')}</p>
+          {cnilText && cnilText.trim().length > 0 && (
+            <p>{cnilText}</p>
+          )}
         </section>
 
         {/* 5. Cookies et traceurs */}

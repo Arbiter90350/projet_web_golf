@@ -44,9 +44,9 @@ body {
   background-color: var(--brand-bg);
   background-image: url('/backgrounds/background.png');
   background-repeat: no-repeat;
-  background-position: center top;
-  /* Étendu pour un affichage complet en vertical */
-  background-size: auto 100vh;
+  background-position: center center;
+  /* Étendu pour couvrir toute la zone d'affichage de manière responsive */
+  background-size: cover;
   /* Le fond reste fixe, seul le contenu défile */
   background-attachment: fixed;
 }
