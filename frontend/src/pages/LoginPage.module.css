@@ -6,8 +6,8 @@
   align-items: center;
   min-height: 100vh;
   /* Arrière-plan + voile léger pour stabiliser la colorimétrie sous Chrome */
-  background: linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)),
-    url('https://images.unsplash.com/photo-1587174486073-ae5e3c2e6a44?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
+  background: linear-gradient(rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.14)),
+    url('/backgrounds/topography.svg') no-repeat center center/cover;
   background-color: var(--brand-bg); /* fallback couleur */
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
