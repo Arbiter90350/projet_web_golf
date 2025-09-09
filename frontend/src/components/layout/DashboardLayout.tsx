@@ -23,6 +23,7 @@ const DashboardLayout = () => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const role = user?.role;
+  const isPlayer = role === 'player';
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -91,7 +92,7 @@ const DashboardLayout = () => {
   const gridColumns = isMobile ? '1fr' : '260px 1fr';
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: gridColumns, minHeight: '100vh', position: 'relative' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: gridColumns, minHeight: '100vh', position: 'relative', background: isPlayer ? 'transparent' : '#ffffff' }}>
       {/* Backdrop cliquable en mobile */}
       {isMobile && menuOpen && (
         <div
@@ -211,7 +212,7 @@ const DashboardLayout = () => {
         style={{
           padding: '1.5rem',
           // Fond blanc pour instructeur/admin uniquement. Les pages "player" gardent le fond décoratif.
-          background: role === 'player' ? 'transparent' : '#fff',
+          background: isPlayer ? 'transparent' : '#fff',
         }}
         className={isTransitioning ? 'route-fade-out' : 'route-fade-in'}
       >

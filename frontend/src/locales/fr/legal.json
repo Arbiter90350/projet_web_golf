@@ -1,6 +1,6 @@
 {
   "title": "Mentions légales",
-  "last_updated": "Dernière mise à jour : 8 septembre 2025",
+  "last_updated": "Dernière mise à jour : 9 septembre 2025",
   "intro": "Conformément à la loi pour la confiance dans l'économie numérique, voici les informations relatives à l'application.",
   "sections": {
     "publisher": {
@@ -20,7 +20,8 @@
       "content": [
         "Hébergeur : OVHcloud — OVH SAS",
         "Adresse : 2 rue Kellermann, 59100 Roubaix, France",
-        "Contact : 1007 /www.ovhcloud.com"
+        "Téléphone : 1007",
+        "Site web : www.ovhcloud.com"
       ]
     },
     "ip": {
@@ -36,7 +37,7 @@
       "purposes_title": "Finalités (Pourquoi nous traitons vos données)",
       "purposes": [
         "Gestion de votre compte utilisateur.",
-        "Suivi de votre progression et de vos performances.",
+        "Suivi de votre progression.",
         "Fourniture de services personnalisés.",
         "Envoi de notifications (avec votre consentement).",
         "Sécurité de la plateforme et prévention de la fraude.",
@@ -63,35 +64,28 @@
       ],
       "processors_title": "Sous‑traitants",
       "processors": [
-        "OVHcloud (hébergement et Object Storage) – OVH SAS, 2 rue Kellermann, 59100 Roubaix, France.",
-        "Envoi d’e‑mails : SMTP OVH (par défaut) ou SendGrid (si activé selon l’environnement).",
-        "Notifications Web Push : infrastructure VAPID auto‑hébergée (aucun prestataire tiers)."
+        "OVHcloud (hébergement et Object Storage) – OVH SAS, 2 rue Kellermann, 59100 Roubaix, France."
       ],
       "storage_title": "Localisation et stockage des données",
       "storage": [
-        "Les données sont hébergées en France (OVHcloud), avec une préférence pour l'Union européenne.",
-        "Les fichiers (PDF, vidéos) sont stockés sur des serveurs dédiés et non dans la base de données principale."
+        "Les données sont hébergées en France (OVHcloud)"
       ],
       "retention_title": "Durées de conservation",
-      "retention": [
-        "Données du compte : pendant l'utilisation du service, puis archivées jusqu’à 3 ans.",
-        "Données de notifications : jusqu’à votre désinscription.",
-        "Journaux techniques (logs) : 12 mois maximum."
-      ],
+      "retention": [],
       "rights_title": "Vos droits",
       "rights": [
         "Vous disposez d'un droit d’accès, de rectification, d’effacement, de limitation, d’opposition et de portabilité sur vos données.",
         "Vous pouvez retirer votre consentement à tout moment.",
-        "Pour exercer vos droits : contact@golf-rougemont.com"
+        "Pour exercer vos droits : contact@golf-rougemont.com",
+        "En cas de litige : vous pouvez saisir la CNIL."
       ],
-      "cnil": "En cas de litige : vous pouvez saisir la CNIL."
+      "cnil": ""
     },
     "cookies": {
       "title": "5. Cookies et traceurs",
       "items": [
         "Aucun cookie de profilage ou de mesure d’audience n'est utilisé.",
         "Authentification : un traceur pour maintenir votre session active.",
-        "Préférences : un traceur pour mémoriser votre choix de langue.",
         "Fonctionnement hors-ligne : une technologie pour mettre en cache certains éléments de l'application.",
         "Notifications : si vous les acceptez, un identifiant technique est enregistré sur votre appareil pour permettre leur envoi."
       ]
