@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const { sendEmail } = require('../services/emailService');
+const { verificationEmail } = require('../services/emailTemplates');
 const crypto = require('crypto');
 
 // @desc    Generate JWT token
@@ -40,9 +41,13 @@ const resendVerification = async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
-    const emailHtml = `<p>Veuillez vérifier votre adresse email en cliquant sur le lien ci-dessous :</p><p><a href="${verificationUrl}">${verificationUrl}</a></p>`;
+    // Détection simple de la langue à partir de l'en-tête
+    const acceptLanguage = (req.headers['accept-language'] || '').toLowerCase();
+    const locale = acceptLanguage.startsWith('fr') ? 'fr' : 'en';
+    const publicOrigin = process.env.PUBLIC_ORIGIN || process.env.FRONTEND_URL;
+    const { subject, html } = verificationEmail({ verificationUrl, locale, publicOrigin });
 
-    await sendEmail(user.email, 'Vérification de votre email', emailHtml);
+    await sendEmail(user.email, subject, html);
 
     return res.status(200).json({ status: 'success', message: genericMsg });
   } catch (error) {
@@ -76,11 +81,14 @@ const register = async (req, res, next) => {
     const verificationToken = user.getEmailVerificationToken();
     await user.save({ validateBeforeSave: false });
 
-    // Send verification email
+    // Send verification email (template brandé)
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
-    const emailHtml = `<p>Please verify your email by clicking on the link below:</p><p><a href="${verificationUrl}">${verificationUrl}</a></p>`;
+    const acceptLanguage = (req.headers['accept-language'] || '').toLowerCase();
+    const locale = acceptLanguage.startsWith('fr') ? 'fr' : 'en';
+    const publicOrigin = process.env.PUBLIC_ORIGIN || process.env.FRONTEND_URL;
+    const { subject, html } = verificationEmail({ verificationUrl, locale, publicOrigin });
 
-    await sendEmail(user.email, 'Email Verification', emailHtml);
+    await sendEmail(user.email, subject, html);
 
     res.status(201).json({
       status: 'success',
