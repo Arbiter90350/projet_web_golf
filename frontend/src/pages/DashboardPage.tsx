@@ -4,6 +4,7 @@ import { isAxiosError } from 'axios';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
+import { sanitizeHtml } from '../utils/sanitize';
 
 const DashboardPage = () => {
   const { t } = useTranslation();
@@ -229,11 +230,11 @@ const DashboardPage = () => {
               <Link
                 to="/courses"
                 className="btn btn-primary"
-                onClick={(e) => {
-                  e.preventDefault();
-                  const main = document.querySelector('main');
-                  main?.classList.add('route-fade-out');
-                  window.setTimeout(() => navigate('/courses'), 140);
+                onClick={() => {
+                  // Navigation directe sans manipuler les classes CSS manuellement.
+                  // Évite de laisser la classe 'route-fade-out' collée sur <main>,
+                  // ce qui rendait la page /courses invisible.
+                  navigate('/courses');
                 }}
               >
                 {t('cta.view_my_courses')}
@@ -254,7 +255,9 @@ const DashboardPage = () => {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                   <span>{mostAdvanced.courseTitle || mostAdvanced.lessonTitle}</span>
                   <span style={{ color: 'var(--text-muted)' }}>• ordre {mostAdvanced.order}</span>
-                  <span className="chip">{t(`status.${mostAdvanced.status}`)}</span>
+                  {mostAdvanced.status !== 'not_started' && (
+                    <span className="chip">{t(`status.${mostAdvanced.status}`)}</span>
+                  )}
                 </div>
               ) : (
                 <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.none_in_progress')}</div>
@@ -268,7 +271,9 @@ const DashboardPage = () => {
                     <li key={`${c.lessonId ?? 'x'}-${idx}`} style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                       <span>{c.lessonTitle}</span>
                       {typeof c.order === 'number' && <span style={{ color: 'var(--text-muted)' }}>• ordre {c.order}</span>}
-                      <span className="chip">{t(`status.${c.status}`)}</span>
+                      {c.status !== 'not_started' && (
+                        <span className="chip">{t(`status.${c.status}`)}</span>
+                      )}
                       <span style={{ color: 'var(--text-muted)' }}>• {new Date(c.updatedAt).toLocaleDateString('fr-FR')}</span>
                     </li>
                   ))}
@@ -291,7 +296,7 @@ const DashboardPage = () => {
                   {scheduleTile.mediaUrl && (
                     <img src={scheduleTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
                   )}
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{scheduleTile.content}</div>
+                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(scheduleTile.content) }} />
                 </div>
               ) : (
                 <div style={{ color: 'var(--text-muted)' }}>—</div>
@@ -306,7 +311,7 @@ const DashboardPage = () => {
                   {eventsTile.mediaUrl && (
                     <img src={eventsTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
                   )}
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{eventsTile.content}</div>
+                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(eventsTile.content) }} />
                 </div>
               ) : (
                 <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.comms_desc')}</div>
@@ -324,7 +329,7 @@ const DashboardPage = () => {
                   <div style={{ fontWeight: 700 }}>{t.title || '—'}</div>
                   <div style={{ display: 'grid', gap: 8 }}>
                     {t.mediaUrl && <img src={t.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />}
-                    <div style={{ whiteSpace: 'pre-wrap' }}>{t.content}</div>
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(t.content) }} />
                   </div>
                 </div>
               ))}

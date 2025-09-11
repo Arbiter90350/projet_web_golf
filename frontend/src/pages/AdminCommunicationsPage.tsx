@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import api from '../services/api';
 import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
+import { sanitizeHtml } from '../utils/sanitize';
 import FilePicker from '../components/FileManager/FilePicker';
 import type { PickedFile } from '../components/FileManager/FilePicker';
 import { useToast } from '../contexts/toast-context';
@@ -257,11 +258,11 @@ const AdminCommunicationsPage = () => {
                 <div style={{ display: 'grid', gap: 8 }}>
                   <label>
                     <div>{t('admin.comms.field_content')}</div>
-                    <textarea value={editVals.content} onChange={(e) => setEditVals((v) => v ? { ...v, content: e.target.value } : v)} rows={4} />
+                    <textarea value={editVals.content} onChange={(e) => setEditVals((v) => v ? { ...v, content: e.target.value } : v)} rows={4} style={{ width: '100%' }} />
                   </label>
                   <label>
                     <div>{t('admin.comms.field_media')}</div>
-                    <input type="text" value={editVals.fileName || ''} onChange={(e) => setEditVals((v) => v ? { ...v, fileName: e.target.value || null } : v)} placeholder={t('admin.comms.file_name_placeholder')} />
+                    <input type="text" value={editVals.fileName || ''} onChange={(e) => setEditVals((v) => v ? { ...v, fileName: e.target.value || null } : v)} placeholder={t('admin.comms.file_name_placeholder')} style={{ width: '100%' }} />
                     <div style={{ marginTop: 8 }}>
                       <FilePicker mode="inline" onSelect={onPickedEdit} />
                     </div>
@@ -283,7 +284,7 @@ const AdminCommunicationsPage = () => {
                 </div>
               ) : (
                 <div style={{ display: 'grid', gap: 8 }}>
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{c.content}</div>
+                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.content) }} />
                   <div style={{ color: '#475569', fontSize: 12 }}>
                     {c.visibleFrom ? `${t('admin.comms.field_visible_from')}: ${new Date(c.visibleFrom).toLocaleString()}` : ''}
                     {c.visibleUntil ? ` — ${t('admin.comms.field_visible_until')}: ${new Date(c.visibleUntil).toLocaleString()}` : ''}
@@ -306,9 +307,29 @@ const AdminCommunicationsPage = () => {
 
       {/* Pagination simple */}
       <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-        <button className="btn" disabled={page <= 1 || loading} onClick={async () => { const np = Math.max(1, page - 1); setPage(np); await loadItems(np); }}>{t('common.prev')}</button>
+        <button
+          className="btn"
+          disabled={page <= 1 || loading}
+          onClick={async () => {
+            const np = Math.max(1, page - 1);
+            setPage(np);
+            await loadItems(np);
+          }}
+        >
+          {t('common.prev')}
+        </button>
         <span>{t('admin.comms.page_label', { page, totalPages })}</span>
-        <button className="btn" disabled={page >= totalPages || loading} onClick={async () => { const np = Math.min(totalPages, page + 1); setPage(np); await loadItems(np); }}>{t('common.next')}</button>
+        <button
+          className="btn"
+          disabled={page >= totalPages || loading}
+          onClick={async () => {
+            const np = Math.min(totalPages, page + 1);
+            setPage(np);
+            await loadItems(np);
+          }}
+        >
+          {t('common.next')}
+        </button>
       </div>
 
       {/* Modal de création simple (custom) */}
@@ -322,11 +343,11 @@ const AdminCommunicationsPage = () => {
             <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
               <label>
                 <div>{t('admin.comms.field_content')}</div>
-                <textarea rows={5} value={cContent} onChange={(e) => setCContent(e.target.value)} />
+                <textarea rows={5} value={cContent} onChange={(e) => setCContent(e.target.value)} style={{ width: '100%' }} />
               </label>
               <label>
                 <div>{t('admin.comms.field_media')}</div>
-                <input type="text" placeholder={t('admin.comms.file_name_placeholder')} value={cFileName} onChange={(e) => setCFileName(e.target.value)} />
+                <input type="text" placeholder={t('admin.comms.file_name_placeholder')} value={cFileName} onChange={(e) => setCFileName(e.target.value)} style={{ width: '100%' }} />
                 <div style={{ marginTop: 8 }}>
                   <FilePicker mode="inline" onSelect={onPickedCreate} />
                 </div>

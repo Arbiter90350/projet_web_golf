@@ -50,9 +50,6 @@ export default function AdminPushNotificationsPage() {
     <div className="container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
         <h2 className="mt-3">Notifications Push</h2>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <a className="btn btn-outline" href="/admin/tiles">Tuiles du Dashboard</a>
-        </div>
       </div>
 
       <div className="grid grid-2 md:grid-1" style={{ marginTop: 12, gap: 12 }}>
@@ -84,16 +81,16 @@ export default function AdminPushNotificationsPage() {
           <div style={{ fontWeight: 700 }}>Nouvelle notification</div>
           <label>
             <div>Titre</div>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre" />
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre" style={{ width: '100%' }} />
           </label>
           <label>
             <div>Message</div>
-            <textarea rows={6} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Votre message…" />
+            <textarea rows={6} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Votre message…" style={{ width: '100%' }} />
           </label>
           {/* Icône masquée côté UI: valeur par défaut utilisée côté envoi */}
           <label>
             <div>URL au clic (optionnel)</div>
-            <input type="text" value={clickUrl} onChange={(e) => setClickUrl(e.target.value)} placeholder="https://golf-rougemont.com/..." />
+            <input type="text" value={clickUrl} onChange={(e) => setClickUrl(e.target.value)} placeholder="https://golf-rougemont.com/..." style={{ width: '100%' }} />
           </label>
           {/* Section Actions retirée de l'UI admin pour simplification */}
           <div>

@@ -209,7 +209,8 @@ const QuizPage = () => {
           {quiz.questions.map((q, idx) => (
             <div className="card" key={q._id}>
               <div style={{ fontWeight: 600, marginBottom: 8 }}>
-                {t('quiz.question_label', { index: idx + 1, total: totalQuestions })} — {q.text}
+                <div>{t('quiz.question_label', { index: idx + 1, total: totalQuestions })}</div>
+                <div style={{ marginTop: 4 }}>{q.text}</div>
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 {(q.answers || []).map((a) => (

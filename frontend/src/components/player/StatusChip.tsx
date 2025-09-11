@@ -4,6 +4,8 @@ export type LessonStatus = 'not_started' | 'in_progress' | 'completed';
 
 export default function StatusChip({ status }: { status: LessonStatus }) {
   const { t } = useTranslation();
+  // Ne pas afficher de pastille pour le statut "À commencer" (not_started)
+  if (status === 'not_started') return null;
   const map: Record<LessonStatus, { bg: string; fg: string; label: string }> = {
     not_started: { bg: '#e5e7eb', fg: '#374151', label: t('status.not_started') },
     in_progress: { bg: '#fde68a', fg: '#7c2d12', label: t('status.in_progress') },

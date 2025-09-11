@@ -120,11 +120,11 @@ function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?:
         <>
           <label>
             <div>Titre</div>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre de la tuile" required />
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre de la tuile" required style={{ width: '100%' }} />
           </label>
           <label>
             <div>Texte</div>
-            <textarea rows={5} value={content} onChange={(e) => setContent(e.target.value)} />
+            <textarea rows={5} value={content} onChange={(e) => setContent(e.target.value)} style={{ width: '100%' }} />
           </label>
           {/* Zone contenus en cours + action d'ajout via modale */}
           <div>
@@ -164,7 +164,7 @@ function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?:
                 </div>
                 <label>
                   <div>Fichier média (optionnel)</div>
-                  <input type="text" value={tempPickedFileName} onChange={(e) => setTempPickedFileName(e.target.value)} placeholder="Nom du fichier (Object Storage)" />
+                  <input type="text" value={tempPickedFileName} onChange={(e) => setTempPickedFileName(e.target.value)} placeholder="Nom du fichier (Object Storage)" style={{ width: '100%' }} />
                 </label>
                 <div style={{ marginTop: 8 }}>
                   <FilePicker mode="inline" onSelect={onPicked} />

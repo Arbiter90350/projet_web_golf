@@ -119,6 +119,12 @@
   text-decoration: underline;
 }
 
+/* Lien d'inscription plus lisible */
+.registerLink {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
 /* Bloc de liens secondaires (oubli de mot de passe / inscription) avec espacement lisible */
 .links {
   margin-top: 1rem;

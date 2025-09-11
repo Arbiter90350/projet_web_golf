@@ -170,7 +170,7 @@ const LoginPage = () => {
           <Link to="/forgot-password" className={styles.link}>
             {t('auth:links.forgot_password')}
           </Link>
-          <Link to="/register" className={styles.link}>
+          <Link to="/register" className={`${styles.link} ${styles.registerLink}`}>
             {t('auth:links.to_register')}
           </Link>
         </div>
