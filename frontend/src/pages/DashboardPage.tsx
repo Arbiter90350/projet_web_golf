@@ -4,7 +4,7 @@ import { isAxiosError } from 'axios';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
-import { sanitizeHtml } from '../utils/sanitize';
+import { toSafeHtml } from '../utils/sanitize';
 
 const DashboardPage = () => {
   const { t } = useTranslation();
@@ -296,7 +296,7 @@ const DashboardPage = () => {
                   {scheduleTile.mediaUrl && (
                     <img src={scheduleTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
                   )}
-                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(scheduleTile.content) }} />
+                  <div dangerouslySetInnerHTML={{ __html: toSafeHtml(scheduleTile.content) }} />
                 </div>
               ) : (
                 <div style={{ color: 'var(--text-muted)' }}>—</div>
@@ -311,7 +311,7 @@ const DashboardPage = () => {
                   {eventsTile.mediaUrl && (
                     <img src={eventsTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
                   )}
-                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(eventsTile.content) }} />
+                  <div dangerouslySetInnerHTML={{ __html: toSafeHtml(eventsTile.content) }} />
                 </div>
               ) : (
                 <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.comms_desc')}</div>
@@ -329,7 +329,7 @@ const DashboardPage = () => {
                   <div style={{ fontWeight: 700 }}>{t.title || '—'}</div>
                   <div style={{ display: 'grid', gap: 8 }}>
                     {t.mediaUrl && <img src={t.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />}
-                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(t.content) }} />
+                    <div dangerouslySetInnerHTML={{ __html: toSafeHtml(t.content) }} />
                   </div>
                 </div>
               ))}

@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import FilePicker from '../components/FileManager/FilePicker';
 import type { PickedFile } from '../components/FileManager/FilePicker';
 import './InstructorLessonContentsPage.css';
+import RichTextEditor from '../components/RichTextEditor';
 // ConfirmDialog supprimé: UX demandée = bouton Enregistrer pour la description
 
 // Nouveau: on ne demande plus le type à l'utilisateur; il est déduit du fichier choisi
@@ -257,7 +258,7 @@ const InstructorLessonContentsPage = () => {
                     </label>
                     <label>
                       <div>Légende (optionnel)</div>
-                      <textarea rows={3} value={editVals.caption} onChange={(e) => setEditVals((v) => ({ ...v, caption: e.target.value }))} />
+                      <RichTextEditor value={editVals.caption} onChange={(val) => setEditVals((v) => ({ ...v, caption: val }))} placeholder="Légende…" />
                     </label>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button type="button" onClick={saveEdit}>Sauvegarder</button>
@@ -288,15 +289,14 @@ const InstructorLessonContentsPage = () => {
                     </div>
                     <div className="caption">
                       <div style={{ fontWeight: 600, marginBottom: 6 }}>Description</div>
-                      <textarea
-                        rows={3}
+                      <RichTextEditor
                         value={captionDraft[c.id] ?? ''}
-                        onChange={(e) => setCaptionDraft((m) => {
-                          const next = { ...m, [c.id]: e.target.value };
+                        onChange={(val) => setCaptionDraft((m) => {
+                          const next = { ...m, [c.id]: val };
                           saveBackupDrafts(next);
                           return next;
                         })}
-                        style={{ width: '100%' }}
+                        placeholder="Ajouter une description…"
                       />
                       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                         <button

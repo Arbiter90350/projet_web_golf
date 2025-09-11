@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '../contexts/toast-context';
 import api from '../services/api';
 import Modal from '../components/Modal';
+import RichTextEditor from '../components/RichTextEditor';
+import { htmlToPlainText } from '../utils/sanitize';
 // Note: Icône par défaut fixée; on ne propose plus l'édition côté UI admin
 
 // Page d'administration — Notifications Push (squelette UI)
@@ -85,7 +87,7 @@ export default function AdminPushNotificationsPage() {
           </label>
           <label>
             <div>Message</div>
-            <textarea rows={6} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Votre message…" style={{ width: '100%' }} />
+            <RichTextEditor value={message} onChange={setMessage} placeholder="Votre message…" />
           </label>
           {/* Icône masquée côté UI: valeur par défaut utilisée côté envoi */}
           <label>
@@ -99,7 +101,7 @@ export default function AdminPushNotificationsPage() {
               <button className="btn btn-primary" disabled={sending || !title || !message || !icon} onClick={async () => {
                 try {
                   setSending(true);
-                  await api.post('/admin/push/messages', { title, body: message, icon, clickUrl: clickUrl || undefined, actions: [] });
+                  await api.post('/admin/push/messages', { title, body: htmlToPlainText(message), icon, clickUrl: clickUrl || undefined, actions: [] });
                   toast.success('Notification envoyée');
                   await loadHistory();
                 } catch {
