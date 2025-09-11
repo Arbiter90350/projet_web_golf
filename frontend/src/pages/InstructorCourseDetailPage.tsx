@@ -330,7 +330,7 @@ const InstructorCourseDetailPage = () => {
                         </label>
                         <label>
                           <div>Description</div>
-                          <textarea rows={3} value={editVals.description ?? ''} onChange={(e) => setEditVals((v) => ({ ...v, description: e.target.value }))} />
+                          <RichTextEditor value={editVals.description ?? ''} onChange={(val) => setEditVals((v) => ({ ...v, description: val }))} minHeight={220} />
                         </label>
                         <div className={styles.actions}>
                           <button type="button" className="btn btn-primary" onClick={saveEdit}>Sauvegarder</button>
