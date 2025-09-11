@@ -61,18 +61,30 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
   }, [internalHtml]);
 
   const applyCommand = useCallback((cmd: string, value?: string) => {
-    // Ne rien faire s'il n'y a pas de sélection valide dans l'éditeur
+    // Utiliser la sélection courante si valide dans cet éditeur, sinon retomber sur lastRangeRef
     const el = editorRef.current;
-    const rng = lastRangeRef.current;
-    if (!el || !rng || rng.collapsed) return;
-    const startNode = rng.startContainer instanceof Element ? rng.startContainer : rng.startContainer?.parentElement;
-    const endNode = rng.endContainer instanceof Element ? rng.endContainer : rng.endContainer?.parentElement;
-    if (!startNode || !endNode) return;
-    if (!el.contains(startNode) || !el.contains(endNode)) return;
-
-    // Restaurer la sélection mémorisée et garder le focus dans l'éditeur
-    el.focus({ preventScroll: true });
+    if (!el) return;
+    let rng: Range | null = null;
     const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const cur = sel.getRangeAt(0);
+      const sNode = cur.startContainer instanceof Element ? cur.startContainer : cur.startContainer?.parentElement;
+      const eNode = cur.endContainer instanceof Element ? cur.endContainer : cur.endContainer?.parentElement;
+      if (!cur.collapsed && sNode && eNode && el.contains(sNode) && el.contains(eNode)) {
+        rng = cur.cloneRange();
+      }
+    }
+    if (!rng && lastRangeRef.current && !lastRangeRef.current.collapsed) {
+      const sNode = lastRangeRef.current.startContainer instanceof Element ? lastRangeRef.current.startContainer : lastRangeRef.current.startContainer?.parentElement;
+      const eNode = lastRangeRef.current.endContainer instanceof Element ? lastRangeRef.current.endContainer : lastRangeRef.current.endContainer?.parentElement;
+      if (sNode && eNode && el.contains(sNode) && el.contains(eNode)) {
+        rng = lastRangeRef.current.cloneRange();
+      }
+    }
+    if (!rng) return;
+
+    // Restaurer la sélection et garder le focus dans l'éditeur
+    el.focus({ preventScroll: true });
     if (sel) {
       try {
         sel.removeAllRanges();
@@ -81,7 +93,30 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
         // ignore
       }
     }
-    document.execCommand(cmd, false, value);
+    try {
+      // Forcer l'usage des balises (pas de styles inline) pour la compatibilité avec la sanitation
+      document.execCommand('styleWithCSS', false, 'false');
+    } catch { /* no-op */ }
+
+    if (cmd === 'formatBlock' && value) {
+      // Compat: tenter plusieurs formats (Chrome/Firefox/Safari)
+      const candidates = [value, value.toLowerCase(), `<${value}>`, `<${value.toLowerCase()}>`];
+      let applied = false;
+      for (const v of candidates) {
+        try {
+          if (document.execCommand('formatBlock', false, v)) { applied = true; break; }
+        } catch { /* ignore */ }
+      }
+      if (!applied) {
+        // Fallback: wrap sélection dans un élément block
+        try {
+          const wrapper = document.createElement(value.toLowerCase());
+          rng.surroundContents(wrapper);
+        } catch { /* no-op */ }
+      }
+    } else {
+      document.execCommand(cmd, false, value);
+    }
     // Après mutation, envoyer la version nettoyée
     const html = editorRef.current?.innerHTML || '';
     const safe = sanitizeHtml(html);
@@ -115,6 +150,14 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
       setShowToolbar(false);
       return;
     }
+    const editorEl = editorRef.current;
+    if (!editorEl) return;
+    const common = range.commonAncestorContainer as Node;
+    const commonEl = (common.nodeType === 1 ? (common as Element) : common.parentElement) as Element | null;
+    if (!commonEl || !editorEl.contains(commonEl)) {
+      setShowToolbar(false);
+      return;
+    }
     // Utiliser le dernier rectangle de la sélection (plus stable quand la sélection traverse plusieurs lignes)
     let rect = range.getBoundingClientRect();
     const rects = range.getClientRects?.();
@@ -125,6 +168,8 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
       setShowToolbar(false);
       return;
     }
+    // Mémoriser la sélection pour la toolbar
+    lastRangeRef.current = range.cloneRange();
     const wrapper = editorRef.current?.parentElement as HTMLElement | null; // wrapper has position:relative
     if (!wrapper) return;
     const wrapRect = wrapper.getBoundingClientRect();
