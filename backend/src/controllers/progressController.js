@@ -153,10 +153,17 @@ exports.proValidate = async (req, res, next) => {
       newStatus = 'completed'; // défaut: marquer acquis
     }
 
-    // Construire la mise à jour: si reset (not_started), on supprime le score
+    // Construire la mise à jour: si reset (not_started), on supprime toutes les traces liées au QCM
     let updateDoc;
     if (newStatus === 'not_started') {
-      updateDoc = { $set: { status: newStatus }, $unset: { score: '' } };
+      updateDoc = { $set: { status: newStatus }, $unset: {
+        score: '',            // compat ancien
+        lastQuizScore: '',
+        lastQuizAttemptAt: '',
+        quizLockedUntil: '',
+        passedAt: '',
+        lastQuizDetails: ''
+      } };
     } else {
       updateDoc = { $set: { status: newStatus } };
     }

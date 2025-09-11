@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from '../../components/Modal';
 import api from '../../services/api';
+import { sanitizeHtml } from '../../utils/sanitize';
 import { useTranslation } from 'react-i18next';
 
 export type LessonRef = {
@@ -88,7 +89,7 @@ export default function LessonModal({
         <div style={{ display: 'grid', gap: '1rem' }}>
           {lessonInfo?.description && (
             <div style={{ margin: '0 0 12px' }}>
-              <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{lessonInfo.description}</div>
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(lessonInfo.description) }} />
             </div>
           )}
 
@@ -113,7 +114,7 @@ export default function LessonModal({
                         <div style={{ color: '#64748b', fontStyle: 'italic' }}>Unsupported content type</div>
                       )}
                     </div>
-                    <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{c.caption}</div>
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.caption) }} />
                   </div>
                 ) : (
                   <>
