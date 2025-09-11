@@ -61,14 +61,22 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
   }, [internalHtml]);
 
   const applyCommand = useCallback((cmd: string, value?: string) => {
-    // Restaurer la sélection mémorisée et garder le focus dans l'éditeur
+    // Ne rien faire s'il n'y a pas de sélection valide dans l'éditeur
     const el = editorRef.current;
-    if (el) el.focus({ preventScroll: true });
+    const rng = lastRangeRef.current;
+    if (!el || !rng || rng.collapsed) return;
+    const startNode = rng.startContainer instanceof Element ? rng.startContainer : rng.startContainer?.parentElement;
+    const endNode = rng.endContainer instanceof Element ? rng.endContainer : rng.endContainer?.parentElement;
+    if (!startNode || !endNode) return;
+    if (!el.contains(startNode) || !el.contains(endNode)) return;
+
+    // Restaurer la sélection mémorisée et garder le focus dans l'éditeur
+    el.focus({ preventScroll: true });
     const sel = window.getSelection();
-    if (sel && lastRangeRef.current) {
+    if (sel) {
       try {
         sel.removeAllRanges();
-        sel.addRange(lastRangeRef.current);
+        sel.addRange(rng);
       } catch {
         // ignore
       }
@@ -161,6 +169,7 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
     const sel = window.getSelection();
     if (!editor || !sel || sel.rangeCount === 0) {
       setShowToolbar(false);
+      lastRangeRef.current = null;
       return;
     }
     const rng = sel.getRangeAt(0);
@@ -168,12 +177,16 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
     const within = editor.contains(container.nodeType === 1 ? container : container.parentElement);
     if (!within) {
       setShowToolbar(false);
+      lastRangeRef.current = null;
       return;
     }
     // Mémoriser la sélection courante (si non-collapsée) pour la restaurer au clic sur la toolbar
     if (!editor.contains(rng.commonAncestorContainer)) return;
     if (!rng.collapsed) {
       lastRangeRef.current = rng.cloneRange();
+    } else {
+      lastRangeRef.current = null;
+      setShowToolbar(false);
     }
     updateToolbarPosition();
   }, [updateToolbarPosition]);
@@ -194,6 +207,21 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
     };
   }, [updateToolbarPosition]);
 
+  // Cacher la toolbar lors d'un clic en dehors de l'éditeur/toolbar
+  useEffect(() => {
+    const onDocMouseDown = (e: MouseEvent) => {
+      const editor = editorRef.current;
+      const tb = toolbarRef.current;
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (editor && editor.contains(target)) return; // clic dans l'éditeur: géré par onMouseDown de l'éditeur
+      if (tb && tb.contains(target)) return; // clic dans la toolbar
+      setShowToolbar(false);
+    };
+    document.addEventListener('mousedown', onDocMouseDown, true);
+    return () => document.removeEventListener('mousedown', onDocMouseDown, true);
+  }, []);
+
   const onInput = useCallback(() => {
     const html = editorRef.current?.innerHTML || '';
     // Sanitize en sortie
@@ -206,7 +234,8 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
     pointerEvents: 'none',
     opacity: 0.5,
     color: 'var(--text-muted)',
-    padding: '8px 10px'
+    padding: '8px 10px',
+    userSelect: 'none'
   }), []);
 
   return (
@@ -218,9 +247,11 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
         onPaste={onPaste}
         onInput={onInput}
         onFocus={updateToolbarPosition}
-        onMouseDown={() => { isMouseDownRef.current = true; }}
+        onMouseDown={() => { isMouseDownRef.current = true; setShowToolbar(false); lastRangeRef.current = null; }}
         onMouseUp={() => { isMouseDownRef.current = false; requestAnimationFrame(() => updateToolbarPosition()); }}
         onKeyUp={updateToolbarPosition}
+        onKeyDown={(e) => { if (e.key === 'Escape') { setShowToolbar(false); } }}
+        onBlur={() => { setShowToolbar(false); lastRangeRef.current = null; }}
         style={{
           width: '100%',
           minHeight,
@@ -239,14 +270,68 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
       )}
 
       {showToolbar && (
-        <div ref={toolbarRef} style={{ ...TOOLBAR_STYLE, top: toolbarPos.top, left: toolbarPos.left }} tabIndex={-1} onMouseDown={(e) => e.preventDefault()}>
-          <button type="button" style={BUTTON_STYLE} title="Gras" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCommand('bold')}>B</button>
-          <button type="button" style={BUTTON_STYLE} title="Italique" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCommand('italic')}><i>I</i></button>
-          <button type="button" style={BUTTON_STYLE} title="Souligné" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCommand('underline')}><u>U</u></button>
-          <button type="button" style={BUTTON_STYLE} title="Titre 1" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCommand('formatBlock', 'H1')}>H1</button>
-          <button type="button" style={BUTTON_STYLE} title="Titre 2" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCommand('formatBlock', 'H2')}>H2</button>
-          <button type="button" style={BUTTON_STYLE} title="Titre 3" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCommand('formatBlock', 'H3')}>H3</button>
-          <button type="button" style={BUTTON_STYLE} title="Effacer la mise en forme" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCommand('removeFormat')}>↺</button>
+        <div
+          ref={toolbarRef}
+          style={{ ...TOOLBAR_STYLE, top: toolbarPos.top, left: toolbarPos.left }}
+          tabIndex={-1}
+          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        >
+          <button
+            type="button"
+            style={BUTTON_STYLE}
+            title="Gras"
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyCommand('bold'); }}
+          >
+            B
+          </button>
+          <button
+            type="button"
+            style={BUTTON_STYLE}
+            title="Italique"
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyCommand('italic'); }}
+          >
+            <i>I</i>
+          </button>
+          <button
+            type="button"
+            style={BUTTON_STYLE}
+            title="Souligné"
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyCommand('underline'); }}
+          >
+            <u>U</u>
+          </button>
+          <button
+            type="button"
+            style={BUTTON_STYLE}
+            title="Titre 1"
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyCommand('formatBlock', 'H1'); }}
+          >
+            H1
+          </button>
+          <button
+            type="button"
+            style={BUTTON_STYLE}
+            title="Titre 2"
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyCommand('formatBlock', 'H2'); }}
+          >
+            H2
+          </button>
+          <button
+            type="button"
+            style={BUTTON_STYLE}
+            title="Titre 3"
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyCommand('formatBlock', 'H3'); }}
+          >
+            H3
+          </button>
+          <button
+            type="button"
+            style={BUTTON_STYLE}
+            title="Effacer la mise en forme"
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyCommand('removeFormat'); }}
+          >
+            ↺
+          </button>
         </div>
       )}
     </div>

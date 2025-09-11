@@ -15,6 +15,8 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useToast } from '../contexts/toast-context';
+import RichTextEditor from '../components/RichTextEditor';
+import { toSafeHtml } from '../utils/sanitize';
 
 type BackendCourse = {
   _id?: string;
@@ -76,7 +78,7 @@ function SortableCourseRow({ course, deletingId, onEdit, onDeleteClick }: Sortab
           </button>
           <div>
             <div style={{ fontWeight: 600 }}>{course.title}</div>
-            <div style={{ fontSize: 14, color: '#475569' }}>{course.description}</div>
+            <div style={{ fontSize: 14, color: '#475569' }} dangerouslySetInnerHTML={{ __html: toSafeHtml(course.description) }} />
             <div style={{ fontSize: 12, opacity: 0.8 }}>
               {t('instructor.courses.status_label')}: {course.isPublished ? t('instructor.courses.status_published') : t('instructor.courses.status_draft')}
             </div>
@@ -109,7 +111,7 @@ const InstructorCoursesPage = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<{ open: boolean; id: string | null }>({ open: false, id: null });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CourseForm>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CourseForm>({
     resolver: zodResolver(courseSchema),
     defaultValues: { title: '', description: '', isPublished: false },
   });
@@ -292,7 +294,12 @@ const InstructorCoursesPage = () => {
                 </label>
                 <label>
                   <div>{t('instructor.courses.field_description')}</div>
-                  <textarea rows={3} placeholder="Description du module" {...register('description')} />
+                  <RichTextEditor
+                    value={watch('description') || ''}
+                    onChange={(val) => setValue('description', val, { shouldDirty: true })}
+                    placeholder="Description du module"
+                    minHeight={160}
+                  />
                   {errors.description && <div style={{ color: 'crimson' }}>{errors.description.message}</div>}
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -328,10 +335,10 @@ const InstructorCoursesPage = () => {
               </label>
               <label>
                 <div>{t('instructor.courses.field_description')}</div>
-                <textarea
-                  rows={3}
+                <RichTextEditor
                   value={editVals.description}
-                  onChange={(e) => setEditVals((v) => ({ ...v, description: e.target.value }))}
+                  onChange={(val) => setEditVals((v) => ({ ...v, description: val }))}
+                  minHeight={160}
                 />
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
