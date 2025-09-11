@@ -186,7 +186,7 @@ const InstructorCourseDetailPage = () => {
             </label>
             <label>
               <div>Description</div>
-              <RichTextEditor value={editVals.description ?? ''} onChange={(val) => setEditVals((v) => ({ ...v, description: val }))} />
+              <RichTextEditor value={editVals.description ?? ''} onChange={(val) => setEditVals((v) => ({ ...v, description: val }))} minHeight={220} />
             </label>
             <div className={styles.actions}>
               <button type="button" className="btn btn-primary" onClick={saveEdit}>Sauvegarder</button>
@@ -293,6 +293,7 @@ const InstructorCourseDetailPage = () => {
                 value={watch('description') || ''}
                 onChange={(val) => setValue('description', val, { shouldDirty: true })}
                 placeholder={"Texte/HTML d'explication (affiché dans la modale joueur)"}
+                minHeight={220}
               />
             </label>
             <div>
