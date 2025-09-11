@@ -24,7 +24,7 @@ const BUTTON_STYLE: React.CSSProperties = {
 };
 
 const TOOLBAR_STYLE: React.CSSProperties = {
-  position: 'fixed',
+  position: 'absolute',
   zIndex: 1000,
   display: 'flex',
   gap: 6,
@@ -43,6 +43,7 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
   // Mémoriser la dernière sélection (range) pour pouvoir la restaurer lors d'un clic sur la toolbar
   const lastRangeRef = useRef<Range | null>(null);
   const isMouseDownRef = useRef(false);
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
 
   // MàJ interne depuis la prop (contrôlée) sans perdre la sélection si focus externe
   useEffect(() => {
@@ -106,16 +107,52 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
       setShowToolbar(false);
       return;
     }
-    const rect = range.getBoundingClientRect();
-    if (!rect || rect.width === 0 && rect.height === 0) {
+    // Utiliser le dernier rectangle de la sélection (plus stable quand la sélection traverse plusieurs lignes)
+    let rect = range.getBoundingClientRect();
+    const rects = range.getClientRects?.();
+    if (rects && rects.length > 0) {
+      rect = rects[rects.length - 1];
+    }
+    if (!rect || (rect.width === 0 && rect.height === 0)) {
       setShowToolbar(false);
       return;
     }
-    // Position pour 'position: fixed' (viewport), ne pas ajouter le scroll
-    const top = Math.max(8, rect.top - 44);
-    const left = Math.max(8, rect.left + rect.width / 2 - 160);
+    const wrapper = editorRef.current?.parentElement as HTMLElement | null; // wrapper has position:relative
+    if (!wrapper) return;
+    const wrapRect = wrapper.getBoundingClientRect();
+    const tb = toolbarRef.current;
+    const tbW = tb?.offsetWidth ?? 260;
+    const tbH = tb?.offsetHeight ?? 38;
+
+    let left = (rect.left - wrapRect.left) + rect.width / 2 - tbW / 2; // centré relatif au wrapper
+    let top = (rect.top - wrapRect.top) - tbH - 8; // au-dessus par défaut
+
+    // Si manque de place en haut, placer en dessous
+    if (top < 8) top = (rect.bottom - wrapRect.top) + 8;
+
+    // Clamp dans le wrapper (marge 8px)
+    const maxLeft = Math.max(8, (wrapRect.width - tbW - 8));
+    const maxTop = Math.max(8, (wrapRect.height - tbH - 8));
+    left = Math.max(8, Math.min(left, maxLeft));
+    top = Math.max(8, Math.min(top, maxTop));
+
     setToolbarPos({ top, left });
     setShowToolbar(true);
+
+    // Re-mesurer après affichage effectif de la toolbar (premier render)
+    requestAnimationFrame(() => {
+      const tb2 = toolbarRef.current;
+      const tb2W = tb2?.offsetWidth ?? tbW;
+      const tb2H = tb2?.offsetHeight ?? tbH;
+      let l2 = (rect.left - wrapRect.left) + rect.width / 2 - tb2W / 2;
+      let t2 = (rect.top - wrapRect.top) - tb2H - 8;
+      if (t2 < 8) t2 = (rect.bottom - wrapRect.top) + 8;
+      const maxLeft2 = Math.max(8, (wrapRect.width - tb2W - 8));
+      const maxTop2 = Math.max(8, (wrapRect.height - tb2H - 8));
+      l2 = Math.max(8, Math.min(l2, maxLeft2));
+      t2 = Math.max(8, Math.min(t2, maxTop2));
+      setToolbarPos({ top: t2, left: l2 });
+    });
   }, []);
 
   const onSelectionChange = useCallback(() => {
@@ -145,6 +182,17 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
     document.addEventListener('selectionchange', onSelectionChange);
     return () => document.removeEventListener('selectionchange', onSelectionChange);
   }, [onSelectionChange]);
+
+  // Repositionner la toolbar sur scroll/resize (ex: conteneurs scrollables, fenêtre)
+  useEffect(() => {
+    const handler = () => updateToolbarPosition();
+    window.addEventListener('scroll', handler, { passive: true });
+    window.addEventListener('resize', handler);
+    return () => {
+      window.removeEventListener('scroll', handler);
+      window.removeEventListener('resize', handler);
+    };
+  }, [updateToolbarPosition]);
 
   const onInput = useCallback(() => {
     const html = editorRef.current?.innerHTML || '';
@@ -191,7 +239,7 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
       )}
 
       {showToolbar && (
-        <div style={{ ...TOOLBAR_STYLE, top: toolbarPos.top, left: toolbarPos.left }} tabIndex={-1} onMouseDown={(e) => e.preventDefault()}>
+        <div ref={toolbarRef} style={{ ...TOOLBAR_STYLE, top: toolbarPos.top, left: toolbarPos.left }} tabIndex={-1} onMouseDown={(e) => e.preventDefault()}>
           <button type="button" style={BUTTON_STYLE} title="Gras" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCommand('bold')}>B</button>
           <button type="button" style={BUTTON_STYLE} title="Italique" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCommand('italic')}><i>I</i></button>
           <button type="button" style={BUTTON_STYLE} title="Souligné" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCommand('underline')}><u>U</u></button>
