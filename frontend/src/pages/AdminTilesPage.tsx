@@ -6,6 +6,7 @@ import { useToast } from '../contexts/toast-context';
 import Modal from '../components/Modal';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import RichTextEditor from '../components/RichTextEditor';
 
 // Page d'administration: édition simple de 2 tuiles du dashboard
 // - dashboard.green_card_schedule
@@ -124,7 +125,7 @@ function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?:
           </label>
           <label>
             <div>Texte</div>
-            <textarea rows={5} value={content} onChange={(e) => setContent(e.target.value)} style={{ width: '100%' }} />
+            <RichTextEditor value={content} onChange={setContent} placeholder="Contenu de la tuile…" />
           </label>
           {/* Zone contenus en cours + action d'ajout via modale */}
           <div>

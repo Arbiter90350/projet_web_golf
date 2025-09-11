@@ -8,7 +8,8 @@ import { useEffect, useMemo, useState } from 'react';
 import api from '../services/api';
 import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
-import { sanitizeHtml } from '../utils/sanitize';
+import { toSafeHtml } from '../utils/sanitize';
+import RichTextEditor from '../components/RichTextEditor';
 import FilePicker from '../components/FileManager/FilePicker';
 import type { PickedFile } from '../components/FileManager/FilePicker';
 import { useToast } from '../contexts/toast-context';
@@ -258,7 +259,7 @@ const AdminCommunicationsPage = () => {
                 <div style={{ display: 'grid', gap: 8 }}>
                   <label>
                     <div>{t('admin.comms.field_content')}</div>
-                    <textarea value={editVals.content} onChange={(e) => setEditVals((v) => v ? { ...v, content: e.target.value } : v)} rows={4} style={{ width: '100%' }} />
+                    <RichTextEditor value={editVals.content} onChange={(val) => setEditVals((v) => v ? { ...v, content: val } : v)} />
                   </label>
                   <label>
                     <div>{t('admin.comms.field_media')}</div>
@@ -284,7 +285,7 @@ const AdminCommunicationsPage = () => {
                 </div>
               ) : (
                 <div style={{ display: 'grid', gap: 8 }}>
-                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.content) }} />
+                  <div dangerouslySetInnerHTML={{ __html: toSafeHtml(c.content) }} />
                   <div style={{ color: '#475569', fontSize: 12 }}>
                     {c.visibleFrom ? `${t('admin.comms.field_visible_from')}: ${new Date(c.visibleFrom).toLocaleString()}` : ''}
                     {c.visibleUntil ? ` — ${t('admin.comms.field_visible_until')}: ${new Date(c.visibleUntil).toLocaleString()}` : ''}
@@ -343,7 +344,7 @@ const AdminCommunicationsPage = () => {
             <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
               <label>
                 <div>{t('admin.comms.field_content')}</div>
-                <textarea rows={5} value={cContent} onChange={(e) => setCContent(e.target.value)} style={{ width: '100%' }} />
+                <RichTextEditor value={cContent} onChange={setCContent} placeholder={t('admin.comms.field_content')} />
               </label>
               <label>
                 <div>{t('admin.comms.field_media')}</div>

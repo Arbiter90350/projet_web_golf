@@ -4,7 +4,7 @@
 // Note: cette sanitation est volontairement restrictive.
 
 const ALLOWED_TAGS = new Set([
-  'b', 'strong', 'i', 'em', 'u', 'br', 'p', 'ul', 'ol', 'li',
+  'b', 'strong', 'i', 'em', 'u', 'br', 'p', 'ul', 'ol', 'li', 'div',
   'h1','h2','h3','h4','h5','h6','blockquote', 'hr', 'span', 'a'
 ]);
 
@@ -91,5 +91,44 @@ export function sanitizeHtml(input: string | null | undefined): string {
     const div = document.createElement('div');
     div.textContent = html;
     return div.innerHTML;
+  }
+}
+
+function escapeHtml(raw: string): string {
+  return raw
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Conserve les retours à la ligne pour les contenus texte simples.
+// - Si aucun tag HTML n'est détecté: on échappe le texte et on convertit \n en <br/>
+// - Sinon: on applique sanitizeHtml normalement.
+export function toSafeHtml(input: string | null | undefined): string {
+  const str = (input ?? '').toString();
+  if (!str) return '';
+  const looksLikeHtml = /<\w+[^>]*>/i.test(str);
+  if (looksLikeHtml) return sanitizeHtml(str);
+  // Texte brut: échapper puis transformer les retours
+  const escaped = escapeHtml(str);
+  return escaped.replace(/\r?\n/g, '<br/>');
+}
+
+export { escapeHtml };
+
+// Convertit un HTML (potentiellement sanitizable) en texte brut, en préservant les sauts de ligne.
+export function htmlToPlainText(input: string | null | undefined): string {
+  const html = (input ?? '').toString();
+  if (!html) return '';
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(sanitizeHtml(html), 'text/html');
+    const text = doc.body.textContent || '';
+    return text.replace(/\u00a0/g, ' ').trim();
+  } catch {
+    // Fallback: retirer les balises grossièrement
+    return html.replace(/<br\s*\/?>(?=\s|$)/gi, '\n').replace(/<[^>]+>/g, '').trim();
   }
 }
