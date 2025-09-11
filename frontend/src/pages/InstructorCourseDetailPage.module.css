@@ -15,7 +15,7 @@
 .formGrid {
   display: grid;
   gap: 12px;
-  max-width: 720px;
+  width: 100%;
 }
 /* Exception: sur la page cours, agrandir les champs pour plus de confort (sans changer la taille de police) */
 .formGrid input,
