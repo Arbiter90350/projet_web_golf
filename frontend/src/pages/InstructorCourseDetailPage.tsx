@@ -14,6 +14,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { reorderLessons as reorderLessonsApi } from '../services/lessons';
 import ConfirmDialog from '../components/ConfirmDialog';
 import styles from './InstructorCourseDetailPage.module.css';
+import RichTextEditor from '../components/RichTextEditor';
+import { toSafeHtml } from '../utils/sanitize';
 
 // Schéma de création: l'ordre est géré automatiquement côté backend (append en fin)
 const lessonSchema = z.object({
@@ -62,7 +64,7 @@ const InstructorCourseDetailPage = () => {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<LessonForm>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<LessonForm>({
     resolver: zodResolver(lessonSchema),
     defaultValues: { title: '', validationMode: 'read', description: '' },
   });
@@ -184,7 +186,7 @@ const InstructorCourseDetailPage = () => {
             </label>
             <label>
               <div>Description</div>
-              <textarea rows={3} value={editVals.description ?? ''} onChange={(e) => setEditVals((v) => ({ ...v, description: e.target.value }))} />
+              <RichTextEditor value={editVals.description ?? ''} onChange={(val) => setEditVals((v) => ({ ...v, description: val }))} />
             </label>
             <div className={styles.actions}>
               <button type="button" className="btn btn-primary" onClick={saveEdit}>Sauvegarder</button>
@@ -196,7 +198,7 @@ const InstructorCourseDetailPage = () => {
             <div className={styles.left}>
               <div className={styles.name}>#{l.order} — {l.title}</div>
               <div><span className="badge badge-mode">{l.validationMode.toUpperCase()}</span></div>
-              {l.description && <div className={styles.desc}>{l.description}</div>}
+              {l.description && <div className={styles.desc} dangerouslySetInnerHTML={{ __html: toSafeHtml(l.description) }} />}
             </div>
             <div className={styles.actions}>
               <span
@@ -287,7 +289,11 @@ const InstructorCourseDetailPage = () => {
             </label>
             <label>
               <div>Description</div>
-              <textarea rows={3} placeholder="Texte/HTML d'explication (affiché dans la modale joueur)" {...register('description')} />
+              <RichTextEditor
+                value={watch('description') || ''}
+                onChange={(val) => setValue('description', val, { shouldDirty: true })}
+                placeholder={"Texte/HTML d'explication (affiché dans la modale joueur)"}
+              />
             </label>
             <div>
               <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Création…' : '+ Créer la leçon'}</button>

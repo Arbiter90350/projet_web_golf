@@ -162,7 +162,7 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
   }), []);
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', width: '100%' }}>
       <div
         ref={editorRef}
         contentEditable
@@ -174,6 +174,7 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
         onMouseUp={() => { isMouseDownRef.current = false; requestAnimationFrame(() => updateToolbarPosition()); }}
         onKeyUp={updateToolbarPosition}
         style={{
+          width: '100%',
           minHeight,
           border: '1px solid #e5e7eb',
           borderRadius: 8,
