@@ -53,7 +53,9 @@
     "most_advanced_in_progress": "Étape la plus avancée en cours",
     "none_in_progress": "Aucune leçon en cours",
     "latest_changes": "Dernières mises à jour",
-    "no_recent_changes": "Aucune mise à jour récente"
+    "no_recent_changes": "Aucune mise à jour récente",
+    "last_completed_title": "Dernière étape validée",
+    "none_completed_recently": "Aucune étape validée récemment"
   },
   "forbidden": {
     "title": "Accès interdit",
@@ -137,6 +139,7 @@
     "view_my_courses": "Voir mes cours",
     "track_learning": "Suivre mes apprentissages",
     "club_signup": "Inscription au club",
+    "access_program": "Accéder au programme",
     "club_signup_desc": "Rejoignez le club et profitez des avantages."
   },
   "instructor": {
