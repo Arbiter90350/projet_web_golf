@@ -24,7 +24,7 @@ export default function LessonModal({
 }) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [contents, setContents] = useState<Array<{ _id: string; contentType: 'image' | 'pdf' | 'mp4' | 'video' | 'doc'; fileName?: string; url?: string; caption?: string }>>([]);
+  const [contents, setContents] = useState<Array<{ _id: string; contentType: 'image' | 'pdf' | 'mp4' | 'video' | 'doc'; fileName?: string; url?: string; caption?: string; linkUrl?: string }>>([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [lessonInfo, setLessonInfo] = useState<{ description?: string } | null>(null);
 
@@ -105,9 +105,21 @@ export default function LessonModal({
                       {!c.url ? (
                         <div style={{ color: '#64748b', fontStyle: 'italic' }}>{t('lessons.no_content')}</div>
                       ) : c.contentType === 'image' ? (
-                        <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8 }} />
+                        c.linkUrl ? (
+                          <a href={c.linkUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                            <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8 }} />
+                          </a>
+                        ) : (
+                          <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8 }} />
+                        )
                       ) : c.contentType === 'mp4' || c.contentType === 'video' ? (
-                        <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8 }} />
+                        c.linkUrl ? (
+                          <a href={c.linkUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                            <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8 }} />
+                          </a>
+                        ) : (
+                          <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8 }} />
+                        )
                       ) : c.contentType === 'pdf' || c.contentType === 'doc' ? (
                         <iframe title={c.fileName || 'pdf'} src={c.url} style={{ width: '100%', height: 520, border: 'none', borderRadius: 8 }} />
                       ) : (
@@ -121,9 +133,21 @@ export default function LessonModal({
                     {!c.url ? (
                       <div style={{ color: '#64748b', fontStyle: 'italic' }}>{t('lessons.no_content')}</div>
                     ) : c.contentType === 'image' ? (
-                      <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8 }} />
+                      c.linkUrl ? (
+                        <a href={c.linkUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                          <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8 }} />
+                        </a>
+                      ) : (
+                        <img src={c.url} alt={c.fileName || 'image'} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8 }} />
+                      )
                     ) : c.contentType === 'mp4' || c.contentType === 'video' ? (
-                      <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8 }} />
+                      c.linkUrl ? (
+                        <a href={c.linkUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                          <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8 }} />
+                        </a>
+                      ) : (
+                        <video controls src={c.url} style={{ width: '100%', maxHeight: 480, borderRadius: 8 }} />
+                      )
                     ) : c.contentType === 'pdf' || c.contentType === 'doc' ? (
                       <iframe title={c.fileName || 'pdf'} src={c.url} style={{ width: '100%', height: 520, border: 'none', borderRadius: 8 }} />
                     ) : (
