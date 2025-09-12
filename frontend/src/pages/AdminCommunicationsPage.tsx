@@ -344,7 +344,7 @@ const AdminCommunicationsPage = () => {
             <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
               <label>
                 <div>{t('admin.comms.field_content')}</div>
-                <RichTextEditor value={cContent} onChange={setCContent} placeholder={t('admin.comms.field_content')} />
+                <RichTextEditor value={cContent} onChange={setCContent} />
               </label>
               <label>
                 <div>{t('admin.comms.field_media')}</div>

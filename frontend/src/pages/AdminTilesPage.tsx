@@ -129,7 +129,7 @@ function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?:
           </label>
           <label>
             <div>Texte</div>
-            <RichTextEditor value={content} onChange={setContent} placeholder="Contenu de la tuile…" />
+            <RichTextEditor value={content} onChange={setContent} />
           </label>
           <label>
             <div>Lien (URL de redirection — optionnel)</div>
