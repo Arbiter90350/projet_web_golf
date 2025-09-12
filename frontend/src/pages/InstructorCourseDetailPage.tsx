@@ -292,7 +292,6 @@ const InstructorCourseDetailPage = () => {
               <RichTextEditor
                 value={watch('description') || ''}
                 onChange={(val) => setValue('description', val, { shouldDirty: true })}
-                placeholder={"Texte/HTML d'explication (affiché dans la modale joueur)"}
                 minHeight={220}
               />
             </label>
