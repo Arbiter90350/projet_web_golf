@@ -276,7 +276,7 @@ const InstructorCourseDetailPage = () => {
           <div className={styles.formGrid}>
             <label>
               <div>Titre</div>
-              <input type="text" placeholder="Ex: Posture de base" {...register('title')} />
+              <input type="text" placeholder="" {...register('title')} />
               {errors.title && <div style={{ color: 'crimson' }}>{errors.title.message}</div>}
             </label>
             <label>

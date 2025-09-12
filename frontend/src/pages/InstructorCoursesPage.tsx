@@ -297,7 +297,6 @@ const InstructorCoursesPage = () => {
                   <RichTextEditor
                     value={watch('description') || ''}
                     onChange={(val) => setValue('description', val, { shouldDirty: true })}
-                    placeholder="Description du module"
                     minHeight={160}
                   />
                   {errors.description && <div style={{ color: 'crimson' }}>{errors.description.message}</div>}

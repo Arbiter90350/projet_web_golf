@@ -298,7 +298,7 @@ const InstructorLessonContentsPage = () => {
                     </label>
                     <label>
                       <div>Légende (optionnel)</div>
-                      <RichTextEditor value={editVals.caption} onChange={(val) => setEditVals((v) => ({ ...v, caption: val }))} placeholder="Légende…" />
+                      <RichTextEditor value={editVals.caption} onChange={(val) => setEditVals((v) => ({ ...v, caption: val }))} />
                     </label>
                     <label>
                       <div>Lien (URL de redirection — optionnel)</div>
@@ -352,7 +352,6 @@ const InstructorLessonContentsPage = () => {
                           saveBackupDrafts(next);
                           return next;
                         })}
-                        placeholder="Ajouter une description…"
                       />
                       <div style={{ marginTop: 8 }}>
                         <label>
