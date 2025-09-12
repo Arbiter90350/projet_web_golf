@@ -22,6 +22,20 @@ const contentSchema = new mongoose.Schema({
     maxlength: 1000,
     default: ''
   },
+  // Lien optionnel pour rediriger lorsqu'on clique le contenu
+  linkUrl: {
+    type: String,
+    trim: true,
+    maxlength: 512,
+    validate: {
+      validator: function (v) {
+        if (!v) return true;
+        return /^(https?:\/\/|mailto:)/i.test(v);
+      },
+      message: 'linkUrl must start with http(s):// or mailto:'
+    },
+    default: ''
+  },
   // Référence à la leçon
   lesson: {
     type: mongoose.Schema.Types.ObjectId,

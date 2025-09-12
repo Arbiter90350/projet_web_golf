@@ -27,6 +27,7 @@ exports.validateUpsert = [
   body('title').optional({ values: 'falsy' }).isString().trim().isLength({ max: 160 }),
   body('content').optional({ values: 'falsy' }).isString().trim().isLength({ max: 8000 }),
   body('mediaFileName').optional({ values: 'falsy' }).isString().trim(),
+  body('linkUrl').optional({ values: 'falsy' }).isString().trim().isLength({ max: 512 }),
 ];
 
 // GET /api/settings/list?prefix=... (admin)
@@ -47,6 +48,7 @@ exports.getSettingsByPrefixAdmin = async (req, res, next) => {
         content: s.content || '',
         mediaFileName: s.mediaFileName || null,
         mediaUrl: s.mediaFileName ? await storageService.getSignedUrl(s.mediaFileName) : null,
+        linkUrl: s.linkUrl || null,
         updatedAt: s.updatedAt,
       }))
     );
@@ -93,7 +95,7 @@ exports.getSettingAdmin = async (req, res, next) => {
     if (!s) return res.status(200).json({ status: 'success', data: { setting: null } });
 
     const mediaUrl = s.mediaFileName ? await storageService.getSignedUrl(s.mediaFileName) : null;
-    return res.status(200).json({ status: 'success', data: { setting: { key: s.key, title: s.title || null, content: s.content || '', mediaFileName: s.mediaFileName || null, mediaUrl, updatedAt: s.updatedAt } } });
+    return res.status(200).json({ status: 'success', data: { setting: { key: s.key, title: s.title || null, content: s.content || '', mediaFileName: s.mediaFileName || null, mediaUrl, linkUrl: s.linkUrl || null, updatedAt: s.updatedAt } } });
   } catch (error) { next(error); }
 };
 
@@ -115,6 +117,7 @@ exports.getSettingsByPrefixPublic = async (req, res, next) => {
         content: s.content || '',
         mediaFileName: s.mediaFileName || null,
         mediaUrl: s.mediaFileName ? await storageService.getSignedUrl(s.mediaFileName) : null,
+        linkUrl: s.linkUrl || null,
         updatedAt: s.updatedAt,
       }))
     );
@@ -129,7 +132,7 @@ exports.upsertSettingAdmin = async (req, res, next) => {
     if (!errors.isEmpty()) return res.status(400).json({ status: 'error', message: 'Validation failed', errors: errors.array() });
 
     const { key } = req.params;
-    const { title, content, mediaFileName } = req.body || {};
+    const { title, content, mediaFileName, linkUrl } = req.body || {};
     // Construction précise de l'update:
     // - $set pour les champs fournis
     // - $unset si mediaFileName === null ou '' afin de SUPPRIMER le média associé
@@ -140,6 +143,11 @@ exports.upsertSettingAdmin = async (req, res, next) => {
       updateDoc.$unset = { ...(updateDoc.$unset || {}), mediaFileName: '' };
     } else if (typeof mediaFileName === 'string' && mediaFileName) {
       updateDoc.$set.mediaFileName = mediaFileName;
+    }
+    if (linkUrl === null || linkUrl === '') {
+      updateDoc.$unset = { ...(updateDoc.$unset || {}), linkUrl: '' };
+    } else if (typeof linkUrl === 'string') {
+      updateDoc.$set.linkUrl = linkUrl;
     }
 
     const updated = await Setting.findOneAndUpdate(
@@ -152,7 +160,7 @@ exports.upsertSettingAdmin = async (req, res, next) => {
 
     logger.info('Admin upsert setting', { key, actorId: req.user?._id });
 
-    return res.status(200).json({ status: 'success', data: { setting: { key: updated.key, title: updated.title || null, content: updated.content || '', mediaFileName: updated.mediaFileName || null, mediaUrl, updatedAt: updated.updatedAt } } });
+    return res.status(200).json({ status: 'success', data: { setting: { key: updated.key, title: updated.title || null, content: updated.content || '', mediaFileName: updated.mediaFileName || null, mediaUrl, linkUrl: updated.linkUrl || null, updatedAt: updated.updatedAt } } });
   } catch (error) { next(error); }
 };
 
@@ -169,6 +177,6 @@ exports.getSettingPublic = async (req, res, next) => {
     if (!s) return res.status(200).json({ status: 'success', data: { setting: null } });
 
     const mediaUrl = s.mediaFileName ? await storageService.getSignedUrl(s.mediaFileName) : null;
-    return res.status(200).json({ status: 'success', data: { setting: { key: s.key, title: s.title || null, content: s.content || '', mediaFileName: s.mediaFileName || null, mediaUrl, updatedAt: s.updatedAt } } });
+    return res.status(200).json({ status: 'success', data: { setting: { key: s.key, title: s.title || null, content: s.content || '', mediaFileName: s.mediaFileName || null, mediaUrl, linkUrl: s.linkUrl || null, updatedAt: s.updatedAt } } });
   } catch (error) { next(error); }
 };

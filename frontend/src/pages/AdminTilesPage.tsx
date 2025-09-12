@@ -19,6 +19,7 @@ type Setting = {
   content: string;
   mediaFileName: string | null;
   mediaUrl: string | null;
+  linkUrl?: string | null;
   updatedAt?: string;
 };
 
@@ -31,6 +32,7 @@ function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?:
   const [content, setContent] = useState('');
   const [mediaFileName, setMediaFileName] = useState('');
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [linkUrl, setLinkUrl] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [tempPickedFileName, setTempPickedFileName] = useState('');
@@ -48,6 +50,7 @@ function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?:
       setContent(s?.content ?? '');
       setMediaFileName(s?.mediaFileName ?? '');
       setMediaUrl(s?.mediaUrl ?? null);
+      setLinkUrl(s?.linkUrl ?? '');
     } catch {
       setError('Erreur de chargement');
     } finally {
@@ -92,6 +95,7 @@ function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?:
         content: content || undefined,
         // IMPORTANT: si vide, envoyer null pour effacer côté serveur (undefined = pas de changement)
         mediaFileName: mediaFileName === '' ? null : mediaFileName,
+        linkUrl: linkUrl.trim() === '' ? null : linkUrl.trim(),
       } as const;
       const { data } = await api.put(`/settings/${encodeURIComponent(settingKey)}`, payload);
       const s = data?.data?.setting as Setting;
@@ -126,6 +130,19 @@ function TileEditor({ settingKey, onDeleted }: { settingKey: string; onDeleted?:
           <label>
             <div>Texte</div>
             <RichTextEditor value={content} onChange={setContent} placeholder="Contenu de la tuile…" />
+          </label>
+          <label>
+            <div>Lien (URL de redirection — optionnel)</div>
+            <input
+              type="url"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="https://exemple.com ou mailto:contact@exemple.com"
+              style={{ width: '100%' }}
+            />
+            <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+              Si renseigné, la tuile sera cliquable et ouvrira ce lien dans un nouvel onglet.
+            </div>
           </label>
           {/* Zone contenus en cours + action d'ajout via modale */}
           <div>
