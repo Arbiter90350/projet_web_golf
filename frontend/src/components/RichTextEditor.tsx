@@ -372,6 +372,30 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
           <button
             type="button"
             style={BUTTON_STYLE}
+            title="Insérer un lien"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const raw = window.prompt('Entrer une URL (https:// ou mailto:)', 'https://');
+              if (!raw) return;
+              const url = (/^(https?:\/\/|mailto:)/i.test(raw) ? raw : (raw.startsWith('www.') ? `https://${raw}` : null));
+              if (!url) return alert('URL invalide. Utilisez https:// ou mailto:');
+              applyCommand('createLink', url);
+            }}
+          >
+            🔗 Lien
+          </button>
+          <button
+            type="button"
+            style={BUTTON_STYLE}
+            title="Supprimer le lien"
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyCommand('unlink'); }}
+          >
+            ⛓️‍✂️
+          </button>
+          <button
+            type="button"
+            style={BUTTON_STYLE}
             title="Effacer la mise en forme"
             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyCommand('removeFormat'); }}
           >

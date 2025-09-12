@@ -28,6 +28,7 @@ exports.getContents = async (req, res, next) => {
         contentType: c.contentType,
         fileName: c.fileName,
         caption: c.caption ?? '',
+        linkUrl: c.linkUrl || '',
         // compat FE: expose aussi `url` pour lien direct temporaire
         url: signedUrl,
         lesson: c.lesson,
@@ -77,6 +78,7 @@ exports.addContent = async (req, res, next) => {
       contentType,
       fileName,
       caption: typeof req.body.caption === 'string' ? req.body.caption : '',
+      linkUrl: typeof req.body.linkUrl === 'string' ? req.body.linkUrl : '',
       lesson: req.params.lessonId,
     });
 
@@ -88,6 +90,7 @@ exports.addContent = async (req, res, next) => {
         contentType: content.contentType,
         fileName: content.fileName,
         caption: content.caption ?? '',
+        linkUrl: content.linkUrl || '',
         url: signedUrl,
         lesson: content.lesson,
         createdAt: content.createdAt,
@@ -118,6 +121,7 @@ exports.getContent = async (req, res, next) => {
               contentType: content.contentType,
               fileName: content.fileName,
               caption: content.caption ?? '',
+              linkUrl: content.linkUrl || '',
               url: signedUrl,
               lesson: content.lesson,
               createdAt: content.createdAt,
@@ -152,6 +156,7 @@ exports.updateContent = async (req, res, next) => {
         if (typeof req.body.contentType === 'string') payload.contentType = req.body.contentType;
         if (typeof req.body.fileName === 'string') payload.fileName = req.body.fileName;
         if (typeof req.body.caption === 'string') payload.caption = req.body.caption;
+        if (typeof req.body.linkUrl === 'string') payload.linkUrl = req.body.linkUrl;
 
         content = await Content.findByIdAndUpdate(req.params.id, payload, {
             new: true,

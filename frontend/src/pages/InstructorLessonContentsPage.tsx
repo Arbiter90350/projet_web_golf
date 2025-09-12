@@ -17,6 +17,8 @@ import RichTextEditor from '../components/RichTextEditor';
 const contentSchema = z.object({
   fileName: z.string().min(1, 'Fichier requis'),
   caption: z.string().max(1000).optional().default(''),
+  linkUrl: z.string().trim().optional().default('')
+    .refine((v) => v === '' || /^(https?:\/\/|mailto:)/i.test(v), { message: 'URL invalide (https:// ou mailto:)' }),
 });
 
 type ContentForm = z.infer<typeof contentSchema>;
@@ -27,6 +29,7 @@ type BackendContent = {
   contentType: 'image' | 'pdf' | 'mp4';
   fileName: string;
   caption?: string;
+  linkUrl?: string;
   url?: string; // URL signée fournie par le backend pour l'affichage
 };
 
@@ -35,6 +38,7 @@ type ContentItem = {
   contentType: 'image' | 'pdf' | 'mp4';
   fileName: string;
   caption?: string;
+  linkUrl?: string;
   url?: string;
 };
 
@@ -53,7 +57,7 @@ const InstructorLessonContentsPage = () => {
   // Brouillon de légende par contenu (édition inline)
   const [captionDraft, setCaptionDraft] = useState<Record<string, string>>({});
   // Edition locale: on sépare du schéma pour permettre un état vide puis validation via backend si besoin
-  const [editVals, setEditVals] = useState<{ fileName: string; caption: string }>({ fileName: '', caption: '' });
+  const [editVals, setEditVals] = useState<{ fileName: string; caption: string; linkUrl: string }>({ fileName: '', caption: '', linkUrl: '' });
   // plus de modal -> pas d'état d'ouverture
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<ContentForm>({
@@ -91,6 +95,7 @@ const InstructorLessonContentsPage = () => {
         contentType: c.contentType,
         fileName: c.fileName,
         caption: c.caption ?? '',
+        linkUrl: c.linkUrl ?? '',
         url: c.url,
       })).filter((c) => !!c.id);
       setContents(mapped);
@@ -157,7 +162,7 @@ const InstructorLessonContentsPage = () => {
 
   const startEdit = (c: ContentItem) => {
     setEditingId(c.id);
-    setEditVals({ fileName: c.fileName, caption: c.caption ?? '' });
+    setEditVals({ fileName: c.fileName, caption: c.caption ?? '', linkUrl: c.linkUrl ?? '' });
   };
 
   const cancelEdit = () => setEditingId(null);
@@ -170,7 +175,7 @@ const InstructorLessonContentsPage = () => {
         return;
       }
       const contentType = deriveTypeFromMimeOrName(editPickedMime, editVals.fileName);
-      await api.put(`/contents/${editingId}`, { contentType, fileName: editVals.fileName, caption: editVals.caption ?? '' });
+      await api.put(`/contents/${editingId}`, { contentType, fileName: editVals.fileName, caption: editVals.caption ?? '', linkUrl: editVals.linkUrl ?? '' });
       await loadContents();
       setEditingId(null);
       setEditPickedMime(null);
@@ -230,6 +235,11 @@ const InstructorLessonContentsPage = () => {
                 <FilePicker mode="inline" onSelect={handlePickedForCreate} />
               </div>
             </label>
+            <label>
+              <div>Lien (URL de redirection — optionnel)</div>
+              <input type="url" placeholder="https://exemple.com ou mailto:..." {...register('linkUrl')} />
+              {errors.linkUrl && <div style={{ color: 'crimson' }}>{errors.linkUrl.message}</div>}
+            </label>
             {/* Légende supprimée à la création: editable après attachement via le mode édition */}
             <div>
               <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Ajout…' : '+ Ajouter'}</button>
@@ -260,6 +270,10 @@ const InstructorLessonContentsPage = () => {
                       <div>Légende (optionnel)</div>
                       <RichTextEditor value={editVals.caption} onChange={(val) => setEditVals((v) => ({ ...v, caption: val }))} placeholder="Légende…" />
                     </label>
+                    <label>
+                      <div>Lien (URL de redirection — optionnel)</div>
+                      <input type="url" value={editVals.linkUrl} onChange={(e) => setEditVals((v) => ({ ...v, linkUrl: e.target.value }))} placeholder="https://exemple.com ou mailto:..." />
+                    </label>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button type="button" onClick={saveEdit}>Sauvegarder</button>
                       <button type="button" onClick={cancelEdit}>Annuler</button>
@@ -275,11 +289,23 @@ const InstructorLessonContentsPage = () => {
                       <div>
                         {c.url ? (
                           c.contentType === 'image' ? (
-                            <img src={c.url} alt={c.fileName} style={{ maxWidth: '100%', maxHeight: 380, objectFit: 'contain', border: '1px solid #e5e7eb', borderRadius: 6 }} />
+                            c.linkUrl ? (
+                              <a href={c.linkUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                                <img src={c.url} alt={c.fileName} style={{ maxWidth: '100%', maxHeight: 380, objectFit: 'contain', border: '1px solid #e5e7eb', borderRadius: 6 }} />
+                              </a>
+                            ) : (
+                              <img src={c.url} alt={c.fileName} style={{ maxWidth: '100%', maxHeight: 380, objectFit: 'contain', border: '1px solid #e5e7eb', borderRadius: 6 }} />
+                            )
                           ) : c.contentType === 'mp4' ? (
-                            <video src={c.url} controls style={{ width: '100%', maxHeight: 420, border: '1px solid #e5e7eb', borderRadius: 6 }} />
+                            c.linkUrl ? (
+                              <a href={c.linkUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                                <video src={c.url} controls style={{ width: '100%', maxHeight: 420, border: '1px solid #e5e7eb', borderRadius: 6 }} />
+                              </a>
+                            ) : (
+                              <video src={c.url} controls style={{ width: '100%', maxHeight: 420, border: '1px solid #e5e7eb', borderRadius: 6 }} />
+                            )
                           ) : (
-                            // PDF inline via iframe
+                            // PDF inline via iframe (on ne wrap pas dans un lien car déjà cliquable)
                             <iframe title={c.fileName} src={c.url} style={{ width: '100%', height: 500, border: '1px solid #e5e7eb', borderRadius: 6 }} />
                           )
                         ) : (

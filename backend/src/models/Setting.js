@@ -11,6 +11,20 @@ const SettingSchema = new mongoose.Schema(
     title: { type: String, required: false, trim: true, maxlength: 160 },
     content: { type: String, required: false, trim: true, maxlength: 8000 },
     mediaFileName: { type: String, required: false },
+    // Lien de redirection optionnel (utilisé sur le dashboard au clic sur la tuile)
+    linkUrl: {
+      type: String,
+      required: false,
+      trim: true,
+      maxlength: 512,
+      validate: {
+        validator: function (v) {
+          if (!v) return true;
+          return /^(https?:\/\/|mailto:)/i.test(v);
+        },
+        message: 'linkUrl must start with http(s):// or mailto:'
+      }
+    },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false, select: false },
   },
   {

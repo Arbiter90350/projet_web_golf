@@ -14,9 +14,9 @@ const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [lessonsCompleted, setLessonsCompleted] = useState<number>(0);
   const [totalLessons, setTotalLessons] = useState<number>(0);
-  const [scheduleTile, setScheduleTile] = useState<{ title?: string | null; content: string; mediaUrl: string | null } | null>(null);
-  const [eventsTile, setEventsTile] = useState<{ title?: string | null; content: string; mediaUrl: string | null } | null>(null);
-  const [extraTiles, setExtraTiles] = useState<Array<{ key: string; title?: string | null; content: string; mediaUrl: string | null }>>([]);
+  const [scheduleTile, setScheduleTile] = useState<{ title?: string | null; content: string; mediaUrl: string | null; linkUrl?: string | null } | null>(null);
+  const [eventsTile, setEventsTile] = useState<{ title?: string | null; content: string; mediaUrl: string | null; linkUrl?: string | null } | null>(null);
+  const [extraTiles, setExtraTiles] = useState<Array<{ key: string; title?: string | null; content: string; mediaUrl: string | null; linkUrl?: string | null }>>([]);
   const [mostAdvanced, setMostAdvanced] = useState<{
     lessonId: string;
     lessonTitle: string;
@@ -86,22 +86,22 @@ const DashboardPage = () => {
         }
 
         if (scheduleRes.status === 'fulfilled') {
-          const s = (scheduleRes.value?.data?.data?.setting ?? null) as { title?: string | null; content?: string; mediaUrl?: string | null } | null;
-          setScheduleTile(s ? { title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null } : null);
+          const s = (scheduleRes.value?.data?.data?.setting ?? null) as { title?: string | null; content?: string; mediaUrl?: string | null; linkUrl?: string | null } | null;
+          setScheduleTile(s ? { title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null, linkUrl: s.linkUrl ?? null } : null);
         } else {
           setScheduleTile(null);
         }
 
         if (eventsRes.status === 'fulfilled') {
-          const s = (eventsRes.value?.data?.data?.setting ?? null) as { title?: string | null; content?: string; mediaUrl?: string | null } | null;
-          setEventsTile(s ? { title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null } : null);
+          const s = (eventsRes.value?.data?.data?.setting ?? null) as { title?: string | null; content?: string; mediaUrl?: string | null; linkUrl?: string | null } | null;
+          setEventsTile(s ? { title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null, linkUrl: s.linkUrl ?? null } : null);
         } else {
           setEventsTile(null);
         }
 
         if (extraRes.status === 'fulfilled') {
-          const arr = (extraRes.value?.data?.data?.settings ?? []) as Array<{ key: string; title?: string | null; content?: string; mediaUrl?: string | null }>;
-          const mapped = arr.map((s) => ({ key: s.key, title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null }));
+          const arr = (extraRes.value?.data?.data?.settings ?? []) as Array<{ key: string; title?: string | null; content?: string; mediaUrl?: string | null; linkUrl?: string | null }>;
+          const mapped = arr.map((s) => ({ key: s.key, title: s.title ?? null, content: s.content || '', mediaUrl: s.mediaUrl ?? null, linkUrl: s.linkUrl ?? null }));
           setExtraTiles(mapped);
         } else {
           setExtraTiles([]);
@@ -292,12 +292,23 @@ const DashboardPage = () => {
             <div className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontWeight: 700 }}>{scheduleTile?.title || t('dashboard.green_card_schedule_title')}</div>
               {scheduleTile ? (
-                <div style={{ display: 'grid', gap: 8 }}>
-                  {scheduleTile.mediaUrl && (
-                    <img src={scheduleTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
-                  )}
-                  <div dangerouslySetInnerHTML={{ __html: toSafeHtml(scheduleTile.content) }} />
-                </div>
+                scheduleTile.linkUrl ? (
+                  <a href={scheduleTile.linkUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      {scheduleTile.mediaUrl && (
+                        <img src={scheduleTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
+                      )}
+                      <div dangerouslySetInnerHTML={{ __html: toSafeHtml(scheduleTile.content) }} />
+                    </div>
+                  </a>
+                ) : (
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {scheduleTile.mediaUrl && (
+                      <img src={scheduleTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
+                    )}
+                    <div dangerouslySetInnerHTML={{ __html: toSafeHtml(scheduleTile.content) }} />
+                  </div>
+                )
               ) : (
                 <div style={{ color: 'var(--text-muted)' }}>—</div>
               )}
@@ -307,12 +318,23 @@ const DashboardPage = () => {
             <div className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontWeight: 700 }}>{eventsTile?.title || t('dashboard.comms_title')}</div>
               {eventsTile ? (
-                <div style={{ display: 'grid', gap: 8 }}>
-                  {eventsTile.mediaUrl && (
-                    <img src={eventsTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
-                  )}
-                  <div dangerouslySetInnerHTML={{ __html: toSafeHtml(eventsTile.content) }} />
-                </div>
+                eventsTile.linkUrl ? (
+                  <a href={eventsTile.linkUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      {eventsTile.mediaUrl && (
+                        <img src={eventsTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
+                      )}
+                      <div dangerouslySetInnerHTML={{ __html: toSafeHtml(eventsTile.content) }} />
+                    </div>
+                  </a>
+                ) : (
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {eventsTile.mediaUrl && (
+                      <img src={eventsTile.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />
+                    )}
+                    <div dangerouslySetInnerHTML={{ __html: toSafeHtml(eventsTile.content) }} />
+                  </div>
+                )
               ) : (
                 <div style={{ color: 'var(--text-muted)' }}>{t('dashboard.comms_desc')}</div>
               )}
@@ -327,10 +349,19 @@ const DashboardPage = () => {
               {extraTiles.map((t) => (
                 <div key={t.key} className="tile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ fontWeight: 700 }}>{t.title || '—'}</div>
-                  <div style={{ display: 'grid', gap: 8 }}>
-                    {t.mediaUrl && <img src={t.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />}
-                    <div dangerouslySetInnerHTML={{ __html: toSafeHtml(t.content) }} />
-                  </div>
+                  {t.linkUrl ? (
+                    <a href={t.linkUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <div style={{ display: 'grid', gap: 8 }}>
+                        {t.mediaUrl && <img src={t.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />}
+                        <div dangerouslySetInnerHTML={{ __html: toSafeHtml(t.content) }} />
+                      </div>
+                    </a>
+                  ) : (
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      {t.mediaUrl && <img src={t.mediaUrl} alt="media" style={{ maxWidth: '100%', borderRadius: 6 }} />}
+                      <div dangerouslySetInnerHTML={{ __html: toSafeHtml(t.content) }} />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
