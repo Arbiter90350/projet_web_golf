@@ -87,7 +87,7 @@ export default function AdminPushNotificationsPage() {
           </label>
           <label>
             <div>Message</div>
-            <RichTextEditor value={message} onChange={setMessage} placeholder="Votre message…" />
+            <RichTextEditor value={message} onChange={setMessage} />
           </label>
           {/* Icône masquée côté UI: valeur par défaut utilisée côté envoi */}
           <label>

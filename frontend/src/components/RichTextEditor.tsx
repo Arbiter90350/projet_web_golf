@@ -284,7 +284,7 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
   }), []);
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <div style={{ position: 'relative', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
       <div
         ref={editorRef}
         contentEditable
@@ -299,6 +299,8 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
         onBlur={() => { setShowToolbar(false); lastRangeRef.current = null; }}
         style={{
           width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
           minHeight,
           border: '1px solid #e5e7eb',
           borderRadius: 8,
