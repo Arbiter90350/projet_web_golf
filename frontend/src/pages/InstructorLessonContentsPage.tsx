@@ -11,14 +11,14 @@ import FilePicker from '../components/FileManager/FilePicker';
 import type { PickedFile } from '../components/FileManager/FilePicker';
 import './InstructorLessonContentsPage.css';
 import RichTextEditor from '../components/RichTextEditor';
+import { useToast } from '../contexts/toast-context';
 // ConfirmDialog supprimé: UX demandée = bouton Enregistrer pour la description
 
 // Nouveau: on ne demande plus le type à l'utilisateur; il est déduit du fichier choisi
+// Le lien est éditable uniquement sur les contenus déjà créés (pas à la création)
 const contentSchema = z.object({
   fileName: z.string().min(1, 'Fichier requis'),
   caption: z.string().max(1000).optional().default(''),
-  linkUrl: z.string().trim().optional().default('')
-    .refine((v) => v === '' || /^(https?:\/\/|mailto:)/i.test(v), { message: 'URL invalide (https:// ou mailto:)' }),
 });
 
 type ContentForm = z.infer<typeof contentSchema>;
@@ -45,6 +45,7 @@ type ContentItem = {
 const InstructorLessonContentsPage = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [contents, setContents] = useState<ContentItem[]>([]);
@@ -56,6 +57,8 @@ const InstructorLessonContentsPage = () => {
   const [editPickedMime, setEditPickedMime] = useState<string | null>(null);
   // Brouillon de légende par contenu (édition inline)
   const [captionDraft, setCaptionDraft] = useState<Record<string, string>>({});
+  // Brouillon de lien par contenu (édition inline)
+  const [linkDraft, setLinkDraft] = useState<Record<string, string>>({});
   // Edition locale: on sépare du schéma pour permettre un état vide puis validation via backend si besoin
   const [editVals, setEditVals] = useState<{ fileName: string; caption: string; linkUrl: string }>({ fileName: '', caption: '', linkUrl: '' });
   // plus de modal -> pas d'état d'ouverture
@@ -66,6 +69,7 @@ const InstructorLessonContentsPage = () => {
 
   // -------------------- Sauvegarde locale des brouillons (backup) --------------------
   const storageKey = (id?: string) => `contents-caption-drafts:${id ?? ''}`;
+  const storageKeyLink = (id?: string) => `contents-link-drafts:${id ?? ''}`;
   const loadBackupDrafts = (): Record<string, string> => {
     try {
       if (!lessonId) return {};
@@ -79,6 +83,23 @@ const InstructorLessonContentsPage = () => {
     try {
       if (!lessonId) return;
       localStorage.setItem(storageKey(lessonId), JSON.stringify(drafts));
+    } catch {
+      // ignore quota errors
+    }
+  };
+  const loadBackupLinkDrafts = (): Record<string, string> => {
+    try {
+      if (!lessonId) return {};
+      const raw = localStorage.getItem(storageKeyLink(lessonId));
+      return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    } catch {
+      return {};
+    }
+  };
+  const saveBackupLinkDrafts = (drafts: Record<string, string>) => {
+    try {
+      if (!lessonId) return;
+      localStorage.setItem(storageKeyLink(lessonId), JSON.stringify(drafts));
     } catch {
       // ignore quota errors
     }
@@ -106,6 +127,13 @@ const InstructorLessonContentsPage = () => {
       const merged: Record<string, string> = { ...serverDraft, ...backup };
       setCaptionDraft(merged);
       saveBackupDrafts(merged);
+      // Idem pour les liens
+      const serverLinkDraft: Record<string, string> = {};
+      for (const c of mapped) serverLinkDraft[c.id] = c.linkUrl ?? '';
+      const backupLink = loadBackupLinkDrafts();
+      const mergedLink: Record<string, string> = { ...serverLinkDraft, ...backupLink };
+      setLinkDraft(mergedLink);
+      saveBackupLinkDrafts(mergedLink);
     } catch (err: unknown) {
       const fallback = 'Erreur lors du chargement des contenus';
       if (isAxiosError(err)) {
@@ -189,8 +217,9 @@ const InstructorLessonContentsPage = () => {
     try {
       setSavingId(c.id);
       const newCaption = captionDraft[c.id] ?? '';
-      // On envoie les champs nécessaires pour une mise à jour complète
-      await api.put(`/contents/${c.id}`, { contentType: c.contentType, fileName: c.fileName, caption: newCaption });
+      const newLink = linkDraft[c.id] ?? '';
+      // On envoie les champs nécessaires pour une mise à jour complète (incl. lien)
+      await api.put(`/contents/${c.id}`, { contentType: c.contentType, fileName: c.fileName, caption: newCaption, linkUrl: newLink });
       await loadContents();
       // Nettoyer le backup pour cet élément (il est désormais enregistré)
       setCaptionDraft((prev) => {
@@ -199,6 +228,13 @@ const InstructorLessonContentsPage = () => {
         saveBackupDrafts(next);
         return next;
       });
+      setLinkDraft((prev) => {
+        const next = { ...prev };
+        next[c.id] = newLink;
+        saveBackupLinkDrafts(next);
+        return next;
+      });
+      toast.success('Contenu enregistré');
     } catch (err: unknown) {
       const msg = isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
       alert(msg ?? 'Enregistrement impossible');
@@ -235,12 +271,6 @@ const InstructorLessonContentsPage = () => {
                 <FilePicker mode="inline" onSelect={handlePickedForCreate} />
               </div>
             </label>
-            <label>
-              <div>Lien (URL de redirection — optionnel)</div>
-              <input type="url" placeholder="https://exemple.com ou mailto:..." {...register('linkUrl')} />
-              {errors.linkUrl && <div style={{ color: 'crimson' }}>{errors.linkUrl.message}</div>}
-            </label>
-            {/* Légende supprimée à la création: editable après attachement via le mode édition */}
             <div>
               <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Ajout…' : '+ Ajouter'}</button>
             </div>
@@ -324,6 +354,25 @@ const InstructorLessonContentsPage = () => {
                         })}
                         placeholder="Ajouter une description…"
                       />
+                      <div style={{ marginTop: 8 }}>
+                        <label>
+                          <div>Lien (URL de redirection — optionnel)</div>
+                          <input
+                            type="url"
+                            value={linkDraft[c.id] ?? ''}
+                            placeholder="https://exemple.com ou mailto:..."
+                            onChange={(e) => setLinkDraft((prev) => {
+                              const next = { ...prev, [c.id]: e.target.value };
+                              saveBackupLinkDrafts(next);
+                              return next;
+                            })}
+                            style={{ width: '100%' }}
+                          />
+                          <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                            Renseignez une URL pour rendre le contenu cliquable.
+                          </div>
+                        </label>
+                      </div>
                       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                         <button
                           type="button"
